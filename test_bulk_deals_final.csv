@@ -1,0 +1,6 @@
+brandName,productDetails,productLink,marketplace,dealType,reviewType,reviewSlots,ratingSlots,onlyOrderSlots,submittedSlots,commission,juhiCommission,originalCommission,productImage,userRemarks,mediatorRemarks,remarks,mediators
+SAMSUNG,S24 Ultra Armor Shield Case,https://amazon.in/s24-case,Amazon,Original,REVIEW,10,0,0,0,150,180,200,https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=500&auto=format&fit=crop,Must ship next day,Internal dispatch standard,Premium sample,ALL
+APPLE,iPhone 15 Liquid Crystal Gel,https://flipkart.com/iph15,Flipkart,Original,"REVIEW,RATING",5,5,0,0,100,120,150,https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=500&auto=format&fit=crop,Placeholder image will apply automatically,,,ALL
+UNKNOWN_BRAND,S24 Ultra Screen Protector,https://amazon.in/s24-protector,Amazon,Original,REVIEW,15,0,0,0,120,150,180,,Demonstrates unregistered brand error,,,ALL
+mAjeSticAGRA,Galaxy Case,https://amazon.in/s24-case,Amazon,Original,REVIEW,5,0,0,0,150,180,200,,Demonstrates unregistered mediator error,,Testing error,Nonexistent Mediator
+PTRON,buds,https://amazon.in/s24-case,Amazon,Original,review,10,,,,-200,-150,0,https://m.media-amazon.com/images/I/614oQ3godSL.jpg,no review = no refund ,,,toufik

@@ -1,0 +1,191 @@
+import { NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import connectToDatabase from "@/lib/db";
+import { User, IUser } from "@/modules/user/user.model";
+import redis from "@/lib/redis";
+import { headers } from "next/headers";
+
+
+import { DefaultSession, DefaultUser } from "next-auth";
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      role: string;
+      isProfileComplete: boolean;
+      totalCompletedOrders: number;
+    } & DefaultSession["user"];
+  }
+
+  interface User extends DefaultUser {
+    role: string;
+    isProfileComplete: boolean;
+    totalCompletedOrders: number;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    role: string;
+    isProfileComplete: boolean;
+    totalCompletedOrders: number;
+  }
+}
+
+export const authOptions: NextAuthOptions = {
+  session: {
+    strategy: "jwt",
+  },
+  providers: [
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Invalid credentials");
+        }
+
+        const normalizedEmail = credentials.email.toLowerCase().trim();
+
+        // --- BRUTE-FORCE PROTECTION ---
+        // Lock account for 15 minutes after 5 failed attempts
+        const lockKey = `login_lock:${normalizedEmail}`;
+        const attemptsKey = `login_attempts:${normalizedEmail}`;
+
+        const isLocked = await redis.get(lockKey);
+        if (isLocked) {
+          const ttl = await redis.ttl(lockKey);
+          const waitMins = Math.ceil(ttl / 60);
+          throw new Error(`Account temporarily locked due to too many failed attempts. Try again in ${waitMins} minute(s).`);
+        }
+        // --------------------------------
+
+        await connectToDatabase();
+
+        const user = await User.findOne({ email: normalizedEmail });
+
+        if (!user) {
+          // Increment failed attempts even for non-existent emails (prevent enumeration)
+          const attempts = await redis.incr(attemptsKey);
+          if (attempts === 1) await redis.expire(attemptsKey, 900);
+          throw new Error("Invalid credentials");
+        }
+
+        // @ts-ignore - comparePassword is added via Mongoose schema methods
+        const isValid = await user.comparePassword(credentials.password);
+
+        if (!isValid) {
+          // Increment failed attempts and lock if threshold exceeded
+          const attempts = await redis.incr(attemptsKey);
+          if (attempts === 1) await redis.expire(attemptsKey, 900); // 15-min window
+          if (attempts >= 5) {
+            await redis.set(lockKey, "1", { ex: 900 }); // Lock for 15 minutes
+            await redis.del(attemptsKey);
+            throw new Error("Account temporarily locked due to too many failed attempts. Try again in 15 minute(s).");
+          }
+          throw new Error("Invalid credentials");
+        }
+
+        // --- Login success: clear brute-force counters ---
+        await redis.del(attemptsKey);
+        await redis.del(lockKey);
+        // -------------------------------------------------
+
+        if (!user.isActive) {
+          throw new Error("Account is inactive");
+        }
+
+        if (user.role === "MEDIATOR" && user.isApproved === false) {
+          throw new Error("Your registration is pending approval. Please check back later.");
+        }
+
+        return {
+          id: user._id.toString(),
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          isProfileComplete: user.isProfileComplete || false,
+          totalCompletedOrders: user.totalCompletedOrders || 0,
+        };
+      },
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, user, trigger, session }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+        token.isProfileComplete = user.isProfileComplete;
+        token.totalCompletedOrders = user.totalCompletedOrders;
+      }
+      
+      if (trigger === "update" && session) {
+        token = { ...token, ...session };
+      }
+
+      return token;
+    },
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+        session.user.isProfileComplete = token.isProfileComplete as boolean;
+        session.user.totalCompletedOrders = token.totalCompletedOrders as number;
+      }
+      return session;
+    },
+  },
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
+  events: {
+    async signIn({ user }) {
+      if (user?.email) {
+        try {
+          let ip = "Client Authorized";
+          let device = "Web Browser";
+          
+          try {
+            const headersList = headers();
+            const ua = headersList.get("user-agent");
+            if (ua) device = ua;
+            
+            const forwardedFor = headersList.get("x-forwarded-for");
+            if (forwardedFor) {
+              ip = forwardedFor.split(",")[0].trim();
+            } else {
+              const realIp = headersList.get("x-real-ip");
+              if (realIp) ip = realIp;
+            }
+          } catch (headerError) {
+            console.warn("Could not read headers during login logging:", headerError);
+          }
+
+          await connectToDatabase();
+          await User.findOneAndUpdate(
+            { email: user.email.toLowerCase() },
+            { 
+              $push: { 
+                "securitySettings.loginHistory": {
+                  ip: ip,
+                  device: device,
+                  timestamp: new Date()
+                } 
+              },
+              $set: { lastLogin: new Date() }
+            }
+          );
+        } catch (error) {
+          console.error("Failed to log login history:", error);
+        }
+      }
+    }
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+};
