@@ -15,6 +15,7 @@ declare module "next-auth" {
       role: string;
       isProfileComplete: boolean;
       totalCompletedOrders: number;
+      mfaPending?: boolean;
     } & DefaultSession["user"];
   }
 
@@ -22,6 +23,7 @@ declare module "next-auth" {
     role: string;
     isProfileComplete: boolean;
     totalCompletedOrders: number;
+    mfaPending?: boolean;
   }
 }
 
@@ -31,6 +33,7 @@ declare module "next-auth/jwt" {
     role: string;
     isProfileComplete: boolean;
     totalCompletedOrders: number;
+    mfaPending?: boolean;
   }
 }
 
@@ -104,6 +107,33 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Your registration is pending approval. Please check back later.");
         }
 
+        const isMfaRequired = user.role === "ADMIN" || user.role === "SUBADMIN";
+        let isMfaPending = false;
+
+        if (isMfaRequired) {
+          // Generate 6-digit OTP code using crypto
+          const { randomInt } = await import("crypto");
+          const mfaOtp = randomInt(100000, 999999).toString();
+
+          // Save in Redis for 5 minutes
+          const mfaRedisKey = `admin_mfa_otp:${user._id.toString()}`;
+          await redis.set(mfaRedisKey, mfaOtp, { ex: 300 });
+
+          // Send Email OTP!
+          try {
+            const { sendOTPEmail } = await import("@/services/emailService");
+            await sendOTPEmail(user.email, user.name, mfaOtp);
+            console.log(`[MFA] Sent OTP ${mfaOtp} to email ${user.email}`);
+          } catch (mailError) {
+            console.error("[MFA] Failed to send OTP email, fallback print:", mailError);
+            console.log(`\n==================================================`);
+            console.log(`[MFA FALLBACK] OTP Code for ${user.email}: ${mfaOtp}`);
+            console.log(`==================================================\n`);
+          }
+
+          isMfaPending = true;
+        }
+
         return {
           id: user._id.toString(),
           email: user.email,
@@ -111,6 +141,7 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
           isProfileComplete: user.isProfileComplete || false,
           totalCompletedOrders: user.totalCompletedOrders || 0,
+          mfaPending: isMfaPending,
         };
       },
     }),
@@ -122,6 +153,7 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role;
         token.isProfileComplete = user.isProfileComplete;
         token.totalCompletedOrders = user.totalCompletedOrders;
+        token.mfaPending = (user as any).mfaPending;
       }
       
       if (trigger === "update" && session) {
@@ -136,6 +168,7 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as string;
         session.user.isProfileComplete = token.isProfileComplete as boolean;
         session.user.totalCompletedOrders = token.totalCompletedOrders as number;
+        session.user.mfaPending = token.mfaPending as boolean;
       }
       return session;
     },
@@ -173,9 +206,13 @@ export const authOptions: NextAuthOptions = {
             { 
               $push: { 
                 "securitySettings.loginHistory": {
-                  ip: ip,
-                  device: device,
-                  timestamp: new Date()
+                  $each: [{
+                    ip: ip,
+                    device: device,
+                    location: "Unknown",
+                    timestamp: new Date()
+                  }],
+                  $slice: -5
                 } 
               },
               $set: { lastLogin: new Date() }

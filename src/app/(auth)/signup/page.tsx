@@ -64,6 +64,14 @@ export default function SignupPage() {
     password: "",
     confirmPassword: "",
   });
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
+
+  useEffect(() => {
+    const checkScreen = () => setIsLargeScreen(window.innerWidth >= 1024);
+    checkScreen();
+    window.addEventListener("resize", checkScreen);
+    return () => window.removeEventListener("resize", checkScreen);
+  }, []);
 
   const container: Variants = {
     hidden: { opacity: 0 },
@@ -158,7 +166,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="fixed inset-0 lg:relative lg:min-h-screen flex flex-col lg:justify-center bg-white lg:bg-transparent pt-8 lg:py-0 overflow-hidden lg:overflow-visible">
+    <div className="relative min-h-[100dvh] lg:min-h-screen flex flex-col lg:justify-center bg-white lg:bg-transparent pt-8 lg:py-0 overflow-visible">
       <motion.div 
         variants={container}
         initial="hidden"
@@ -189,29 +197,31 @@ export default function SignupPage() {
         >
         <div className="relative group overflow-hidden rounded-none lg:rounded-[56px] bg-white lg:bg-white/40 backdrop-blur-2xl border-none lg:border lg:border-white/60 shadow-none lg:shadow-[0_32px_80px_-15px_rgba(0,0,0,0.1)] flex-1 flex flex-col min-h-0">
             {/* SPEEDY ANIMATED BACKGROUND - Primary Visual Layer */}
-            <div className="hidden lg:block absolute inset-0 overflow-hidden pointer-events-none">
-               <div className="absolute inset-0 bg-white/40" />
-               <div className="absolute inset-0 opacity-[0.45]">
-                 {[...Array(15)].map((_, i) => (
-                   <motion.div
-                     key={i}
-                     initial={{ x: "-100%", y: `${i * 6.5 + 2}%`, opacity: 0 }}
-                     animate={{ 
-                       x: "200%", 
-                       opacity: [0, 1, 0] 
-                     }}
-                     transition={{ 
-                       duration: 0.8 + Math.random() * 1.5, 
-                       repeat: Infinity, 
-                       delay: i * 0.15,
-                       ease: "linear"
-                     }}
-                     className="absolute h-[3px] w-80 bg-blue-600 shadow-[0_0_25px_rgba(37,99,235,0.9)]"
-                   />
-                 ))}
-               </div>
-               <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-40" />
-            </div>
+            {isLargeScreen && (
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                 <div className="absolute inset-0 bg-white/40" />
+                 <div className="absolute inset-0 opacity-[0.45]">
+                   {[...Array(15)].map((_, i) => (
+                     <motion.div
+                       key={i}
+                       initial={{ x: "-100%", y: `${i * 6.5 + 2}%`, opacity: 0 }}
+                       animate={{ 
+                         x: "200%", 
+                         opacity: [0, 1, 0] 
+                       }}
+                       transition={{ 
+                         duration: 0.8 + Math.random() * 1.5, 
+                         repeat: Infinity, 
+                         delay: i * 0.15,
+                         ease: "linear"
+                       }}
+                       className="absolute h-[3px] w-80 bg-blue-600 shadow-[0_0_25px_rgba(37,99,235,0.9)]"
+                     />
+                   ))}
+                 </div>
+                 <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-40" />
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="relative z-10 flex-1 flex flex-col min-h-0">
 

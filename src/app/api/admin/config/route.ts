@@ -61,7 +61,7 @@ export async function GET(req: Request) {
 export async function PUT(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if ((session?.user as any)?.role !== 'ADMIN') {
+    if (!session || !session.user || (session.user as any).role !== 'ADMIN') {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
     }
 
@@ -76,6 +76,10 @@ export async function PUT(req: Request) {
       { $set: { value } },
       { new: true, upsert: true }
     );
+
+    // Record administrative configuration update audit trail
+    const { recordAudit } = await import("@/utils/audit");
+    await recordAudit(session.user.id, "SYSTEM_CONFIG_UPDATE", { key });
 
     return NextResponse.json({ success: true, data: config?.value });
   } catch (error) {

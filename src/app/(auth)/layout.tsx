@@ -17,6 +17,14 @@ export default function AuthLayout({
 }) {
   const { status } = useSession();
   const router = useRouter();
+  const [isLargeScreen, setIsLargeScreen] = React.useState(false);
+
+  useEffect(() => {
+    const checkScreen = () => setIsLargeScreen(window.innerWidth >= 1024);
+    checkScreen();
+    window.addEventListener("resize", checkScreen);
+    return () => window.removeEventListener("resize", checkScreen);
+  }, []);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -28,24 +36,33 @@ export default function AuthLayout({
     <div className={`flex min-h-[100dvh] w-full bg-slate-50 relative overflow-hidden ${outfit.className} antialiased`}>
       {/* BACKGROUND AESTHETICS - Shared across both sides */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <motion.div 
-          animate={{ 
-            scale: [1, 1.2, 1],
-            rotate: [0, 90, 0],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] bg-blue-100 rounded-full blur-[120px] mix-blend-multiply"
-        />
-        <motion.div 
-          animate={{ 
-            scale: [1, 1.3, 1],
-            rotate: [0, -90, 0],
-            opacity: [0.2, 0.4, 0.2]
-          }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          className="absolute -bottom-[10%] -right-[5%] w-[50%] h-[50%] bg-indigo-100 rounded-full blur-[100px] mix-blend-multiply"
-        />
+        {isLargeScreen ? (
+          <>
+            <motion.div 
+              animate={{ 
+                scale: [1, 1.2, 1],
+                rotate: [0, 90, 0],
+                opacity: [0.3, 0.5, 0.3]
+              }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] bg-blue-100 rounded-full blur-[120px] mix-blend-multiply"
+            />
+            <motion.div 
+              animate={{ 
+                scale: [1, 1.3, 1],
+                rotate: [0, -90, 0],
+                opacity: [0.2, 0.4, 0.2]
+              }}
+              transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+              className="absolute -bottom-[10%] -right-[5%] w-[50%] h-[50%] bg-indigo-100 rounded-full blur-[100px] mix-blend-multiply"
+            />
+          </>
+        ) : (
+          <>
+            <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] bg-blue-100 rounded-full blur-[120px] opacity-40 mix-blend-multiply" />
+            <div className="absolute -bottom-[10%] -right-[5%] w-[50%] h-[50%] bg-indigo-100 rounded-full blur-[100px] opacity-30 mix-blend-multiply" />
+          </>
+        )}
       </div>
 
       {/* LEFT VISUAL SIDE - Desktop Only */}

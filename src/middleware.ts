@@ -5,6 +5,15 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
+    // Enforce Admin MFA redirection
+    if (token?.mfaPending && path !== "/admin/mfa") {
+      return Response.redirect(new URL("/admin/mfa", req.url));
+    }
+
+    if (!token?.mfaPending && path === "/admin/mfa") {
+      return Response.redirect(new URL("/dashboard", req.url));
+    }
+
     if (path.startsWith("/dashboard/admin") && token?.role !== "ADMIN" && token?.role !== "SUBADMIN") {
       return Response.redirect(new URL("/dashboard", req.url));
     }
@@ -39,5 +48,5 @@ export default withAuth(
 
 // Protect the dashboard and any other private routes
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/admin/mfa"],
 };

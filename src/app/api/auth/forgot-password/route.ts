@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // --- FIX: Store HASHED OTP in DB, not plaintext ---
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(8);
     const hashedOtp = await bcrypt.hash(rawOtp, salt);
 
     user.resetPasswordOTP = hashedOtp;   // bcrypt hash stored

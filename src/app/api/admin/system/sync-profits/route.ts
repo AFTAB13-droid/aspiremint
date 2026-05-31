@@ -70,6 +70,14 @@ export async function GET(req: Request) {
       }
     }
 
+    // Record profit synchronization audit event
+    const { recordAudit } = await import("@/utils/audit");
+    await recordAudit(session.user.id, "SYNC_PROFITS", {
+      updatedCount,
+      juhiCount,
+      totalCount: orders.length
+    });
+
     return NextResponse.json({ 
       success: true, 
       message: `Sync completed. Updated ${updatedCount} orders (${juhiCount} Juhi orders).`,
