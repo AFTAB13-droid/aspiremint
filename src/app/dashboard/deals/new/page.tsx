@@ -706,7 +706,7 @@ export default function NewOrderPage() {
                   {/* Section 4: Capture Logic (File Upload) */}
                   <div className="space-y-6 pt-4">
                      <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-3">
-                        <div className="h-4 w-1 bg-amber-500 rounded-full" /> Order Evidence Capture
+                        <div className="h-4 w-1 bg-amber-500 rounded-full" /> Order Screenshot
                      </h3>
                      
                      <div className="relative group">
@@ -717,7 +717,7 @@ export default function NewOrderPage() {
                                  <div className="h-16 w-16 bg-white rounded-3xl shadow-lg border border-slate-100 flex items-center justify-center mx-auto mb-6 text-slate-400 group-hover:text-blue-500 transition-colors">
                                     <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                  </div>
-                                 <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-2">Upload Transaction SS</h4>
+                                 <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-2">Upload SS</h4>
                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest max-w-[200px] mx-auto leading-relaxed">Mandatory artifact for escrow initialization</p>
                               </div>
                            </label>

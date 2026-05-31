@@ -93,7 +93,7 @@ export default function TrackOrderPage() {
               <span className="text-[8px] md:text-[10px] font-black text-slate-500 md:text-blue-600 uppercase tracking-widest">Live Ledger Control</span>
            </motion.div>
            <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tighter leading-tight">Track Your Order</h1>
-           <p className="text-slate-400 text-[10px] md:text-sm font-bold uppercase tracking-widest px-4">Enter your unique Order ID to audit real-time progress.</p>
+           <p className="text-slate-400 text-[10px] md:text-sm font-bold uppercase tracking-widest px-4">enter your order id to track order..</p>
 
            <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative group mt-6 md:mt-10">
               <input 

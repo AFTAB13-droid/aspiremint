@@ -122,7 +122,7 @@ export default function RefundVerifyPage() {
              <RefreshCw className="w-6 h-6 md:w-8 md:h-8" />
           </div>
           <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-none">Refund Form</h1>
-          <p className="text-[10px] md:text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] md:tracking-[0.3em] mt-3 md:mt-4 leading-relaxed md:leading-loose">Verify your Transaction ID to proceed with the claim</p>
+          <p className="text-[10px] md:text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] md:tracking-[0.3em] mt-3 md:mt-4 leading-relaxed md:leading-loose">enter order id to proceed here</p>
         </div>
 
         <div className="flex-1 flex flex-col">
@@ -170,7 +170,7 @@ export default function RefundVerifyPage() {
                 disabled={loading || !orderId.trim()}
                 className="w-full h-20 bg-slate-900 text-white rounded-[28px] font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-indigo-600 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale shadow-xl shadow-slate-900/10 mt-8"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Verify Identity <ArrowRight className="w-4 h-4" /></>}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Verify Order ID <ArrowRight className="w-4 h-4" /></>}
               </button>
             </motion.form>
           ) : (

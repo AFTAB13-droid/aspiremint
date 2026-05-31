@@ -133,7 +133,7 @@ export const OnboardingModal = () => {
               <div className="space-y-4">
                 {/* UPI Section */}
                 <div>
-                  <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">UPI Identifier (Primary) <span className="text-red-500">*</span></label>
+                  <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">UPI ID <span className="text-red-500">*</span></label>
                   <input
                     name="upiId" type="text" required value={formData.upiId} onChange={handleChange} placeholder="phone@upi"
                     className="block w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition-all focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-500"
@@ -198,7 +198,7 @@ export const OnboardingModal = () => {
                     {loading ? (
                       <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     ) : (
-                      "Complete Profile Setup"
+                      "Update Payment Details"
                     )}
                   </button>
                   <p className="mt-4 text-center text-[10px] font-bold text-slate-300 uppercase tracking-widest">Ensured by AspireMint Escrow Protection</p>

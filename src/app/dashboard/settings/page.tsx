@@ -553,7 +553,7 @@ export default function SettingsPage() {
 
                           <div className="space-y-8">
                              <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Primary UPI Identifier</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">UPI ID</label>
                                 <div className="relative group">
                                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-slate-900 transition-colors">
                                       <Smartphone className="w-5 h-5" />
@@ -893,7 +893,7 @@ export default function SettingsPage() {
                        <div className="space-y-4">
                           <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
                              <div className="space-y-1">
-                                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Primary UPI Identifier</label>
+                                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">UPI ID</label>
                                 <div className="relative">
                                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300">
                                       <Smartphone className="w-4 h-4" />
