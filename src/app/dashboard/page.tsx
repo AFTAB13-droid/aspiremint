@@ -27,7 +27,7 @@ export default async function DashboardPage() {
     Order.countDocuments({ ...query, status: OrderStatus.ACTIVE_ESCROW }),
     Order.countDocuments({ ...query, status: { $in: [OrderStatus.PENDING_APPROVAL, OrderStatus.APPROVED, OrderStatus.ESCROW_PAYMENT_PENDING, OrderStatus.ACTIVE_ESCROW] } }),
     Order.countDocuments({ ...query, status: OrderStatus.COMPLETED }),
-    Order.countDocuments({ ...query, status: { $nin: [OrderStatus.CANCELLED, OrderStatus.INVALIDATED] } }),
+    Order.countDocuments(query),
     Order.find(query).sort({ updatedAt: -1 }).limit(4).lean(),
     Order.aggregate([
       { $match: { ...query, createdAt: { $gte: sevenDaysAgo } } },
@@ -106,7 +106,7 @@ export default async function DashboardPage() {
       { $sort: { count: -1 } }
     ]),
     Order.aggregate([
-      { $group: { _id: "$brandName", completed: { $sum: { $cond: [{ $eq: ["$status", OrderStatus.COMPLETED] }, 1, 0] } } } }
+      { $group: { _id: "$brandName", completed: { $sum: { $cond: [{ $ne: ["$status", OrderStatus.CANCELLED] }, 1, 0] } } } }
     ])
   ]);
 

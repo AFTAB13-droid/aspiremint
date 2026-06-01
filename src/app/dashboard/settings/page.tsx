@@ -147,7 +147,18 @@ export default function SettingsPage() {
   const [showPaymentOtp, setShowPaymentOtp] = useState(false);
   const [paymentOtp, setPaymentOtp] = useState("");
   const [sendingPaymentOtp, setSendingPaymentOtp] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
   const [originalData, setOriginalData] = useState<any>(null);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendCountdown > 0) {
+      timer = setTimeout(() => {
+        setResendCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCountdown]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -206,11 +217,12 @@ export default function SettingsPage() {
       const res = await fetch(`https://ifsc.razorpay.com/${formData.ifscCode}`);
       if (!res.ok) throw new Error("Invalid IFSC Code");
       const data = await res.json();
+      const resolvedBankName = data.BRANCH ? `${data.BANK} - ${data.BRANCH}` : data.BANK;
       setFormData({
         ...formData,
-        bankName: data.BANK,
-        branchName: data.BRANCH,
-        bankDetails: `${data.BANK} - ${data.BRANCH}`
+        bankName: resolvedBankName,
+        branchName: data.BRANCH || "",
+        bankDetails: resolvedBankName
       });
       toast.success("Bank Registry Authenticated");
     } catch (err) {
@@ -227,6 +239,7 @@ export default function SettingsPage() {
       const json = await res.json();
       if (json.success) {
         setShowPaymentOtp(true);
+        setResendCountdown(30); // 30 seconds cooldown for OTP resend
         toast.success("Security Code Dispatched to Email");
       } else {
         toast.error(json.message);
@@ -241,8 +254,7 @@ export default function SettingsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const isProfileComplete = (session?.user as any)?.isProfileComplete !== false;
-    if (activeTab === "payments" && isProfileComplete && !showPaymentOtp) {
+    if (activeTab === "payments" && !showPaymentOtp) {
       handleSendPaymentOtp();
       return;
     }
@@ -610,9 +622,17 @@ export default function SettingsPage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Calculated Bank</label>
+                                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Bank Name</label>
                                    <input 
                                      disabled type="text" value={formData.bankName}
+                                     className="w-full h-16 px-6 bg-slate-50 border-none rounded-[24px] shadow-inner font-bold text-sm outline-none opacity-60 cursor-not-allowed"
+                                   />
+                                </div>
+
+                                <div className="space-y-2">
+                                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Branch Name</label>
+                                   <input 
+                                     disabled type="text" value={formData.branchName || ""}
                                      className="w-full h-16 px-6 bg-slate-50 border-none rounded-[24px] shadow-inner font-bold text-sm outline-none opacity-60 cursor-not-allowed"
                                    />
                                 </div>
@@ -628,11 +648,29 @@ export default function SettingsPage() {
                                      : "bg-blue-50 border-blue-100"
                                  }`}
                                >
-                                  <div className="flex items-center gap-3">
-                                     <Shield className="w-5 h-5 text-blue-600" />
-                                     <h4 className="text-sm font-black uppercase tracking-tight text-blue-900">Payment Security Verification</h4>
+                                  <div className="flex justify-between items-center">
+                                     <div className="flex items-center gap-3">
+                                        <Shield className={`w-5 h-5 ${isAdm ? "text-indigo-600" : "text-blue-600"}`} />
+                                        <h4 className={`text-sm font-black uppercase tracking-tight ${isAdm ? "text-indigo-900" : "text-blue-900"}`}>Payment Security Verification</h4>
+                                     </div>
+                                     <button
+                                       type="button"
+                                       disabled={sendingPaymentOtp || saving || resendCountdown > 0}
+                                       onClick={handleSendPaymentOtp}
+                                       className={`text-[10px] font-black uppercase tracking-widest hover:underline disabled:opacity-50 flex items-center gap-1 transition-all ${
+                                         isAdm ? "text-indigo-600 hover:text-indigo-800" : "text-blue-600 hover:text-blue-800"
+                                       }`}
+                                     >
+                                       {sendingPaymentOtp ? (
+                                         "Resending..."
+                                       ) : resendCountdown > 0 ? (
+                                         `Resend in ${resendCountdown}s`
+                                       ) : (
+                                         "Resend Code"
+                                       )}
+                                     </button>
                                   </div>
-                                  <p className="text-[10px] font-bold text-blue-600/60 uppercase tracking-widest leading-relaxed">
+                                  <p className={`text-[10px] font-bold uppercase tracking-widest leading-relaxed ${isAdm ? "text-indigo-600/60" : "text-blue-600/60"}`}>
                                      A 6-digit security code has been transmitted to your email. <br/> Please verify to authorize banking modifications.
                                   </p>
                                   <input 
@@ -641,7 +679,11 @@ export default function SettingsPage() {
                                     value={paymentOtp}
                                     onChange={(e) => setPaymentOtp(e.target.value.replace(/[^0-9]/g, ''))}
                                     placeholder="ENTER 6-DIGIT CODE"
-                                    className="w-full h-16 px-6 bg-white border-2 border-blue-200 focus:border-blue-500 rounded-[24px] shadow-sm font-black text-lg outline-none transition-all text-center tracking-[0.5em] text-blue-600"
+                                    className={`w-full h-16 px-6 bg-white border-2 rounded-[24px] shadow-sm font-black text-lg outline-none transition-all text-center tracking-[0.5em] ${
+                                      isAdm 
+                                        ? "border-indigo-200 focus:border-indigo-500 text-indigo-600" 
+                                        : "border-blue-200 focus:border-blue-500 text-blue-600"
+                                    }`}
                                   />
                                </motion.div>
                              )}
@@ -744,7 +786,7 @@ export default function SettingsPage() {
                         </div>
                         
                         <button 
-                          type="submit" disabled={saving || sendingPaymentOtp || activeTab === 'security'}
+                          type="submit" disabled={saving || (activeTab === 'payments' && !showPaymentOtp && false) || activeTab === 'security'}
                           className={`flex-1 md:flex-none md:min-w-[240px] h-16 md:h-18 rounded-[24px] text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 ${
                             isAdm ? "bg-slate-900 shadow-slate-900/20" : "bg-blue-600 shadow-blue-600/20 hover:bg-blue-700"
                           } disabled:opacity-50 disabled:grayscale`}
@@ -950,12 +992,21 @@ export default function SettingsPage() {
                                 </div>
                              </div>
 
-                             <div className="space-y-1">
-                                <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Calculated Bank</label>
-                                <input 
-                                  disabled type="text" value={formData.bankName}
-                                  className="w-full h-11 px-3 bg-white/60 border border-slate-200/20 rounded-xl shadow-sm font-bold text-xs outline-none opacity-70 cursor-not-allowed text-slate-800"
-                                />
+                             <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                   <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Bank Name</label>
+                                   <input 
+                                     disabled type="text" value={formData.bankName}
+                                     className="w-full h-11 px-3 bg-white/60 border border-slate-200/20 rounded-xl shadow-sm font-bold text-xs outline-none opacity-70 cursor-not-allowed text-slate-800"
+                                   />
+                                </div>
+                                <div className="space-y-1">
+                                   <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">Branch Name</label>
+                                   <input 
+                                     disabled type="text" value={formData.branchName || ""}
+                                     className="w-full h-11 px-3 bg-white/60 border border-slate-200/20 rounded-xl shadow-sm font-bold text-xs outline-none opacity-70 cursor-not-allowed text-slate-800"
+                                   />
+                                </div>
                              </div>
                           </div>
 
@@ -967,11 +1018,29 @@ export default function SettingsPage() {
                                 isAdm ? "bg-indigo-50 border-indigo-100" : "bg-blue-50 border-blue-100"
                               }`}
                             >
-                               <div className="flex items-center gap-2">
-                                  <Shield className="w-4 h-4 text-blue-600" />
-                                  <h4 className="text-[10px] font-black uppercase tracking-tight text-blue-900">Security Verification</h4>
+                               <div className="flex justify-between items-center">
+                                  <div className="flex items-center gap-2">
+                                     <Shield className={`w-4 h-4 ${isAdm ? "text-indigo-600" : "text-blue-600"}`} />
+                                     <h4 className={`text-[10px] font-black uppercase tracking-tight ${isAdm ? "text-indigo-900" : "text-blue-900"}`}>Security Verification</h4>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    disabled={sendingPaymentOtp || saving || resendCountdown > 0}
+                                    onClick={handleSendPaymentOtp}
+                                    className={`text-[8px] font-black uppercase tracking-widest hover:underline disabled:opacity-50 flex items-center gap-1 transition-all ${
+                                      isAdm ? "text-indigo-600 hover:text-indigo-800" : "text-blue-600 hover:text-blue-800"
+                                    }`}
+                                  >
+                                    {sendingPaymentOtp ? (
+                                      "Resending..."
+                                    ) : resendCountdown > 0 ? (
+                                      `Resend in ${resendCountdown}s`
+                                    ) : (
+                                      "Resend Code"
+                                    )}
+                                  </button>
                                </div>
-                               <p className="text-[8px] font-bold text-blue-600/60 uppercase tracking-wider">
+                               <p className={`text-[8px] font-bold uppercase tracking-wider ${isAdm ? "text-indigo-600/60" : "text-blue-600/60"}`}>
                                   Enter the 6-digit code sent to your email.
                                 </p>
                                <input 
@@ -980,7 +1049,11 @@ export default function SettingsPage() {
                                  value={paymentOtp}
                                  onChange={(e) => setPaymentOtp(e.target.value.replace(/[^0-9]/g, ''))}
                                  placeholder="CODE"
-                                 className="w-full h-11 px-4 bg-white border border-blue-200 focus:border-blue-500 rounded-xl shadow-sm font-black text-sm outline-none text-center tracking-[0.2em] text-blue-600"
+                                 className={`w-full h-11 px-4 bg-white border rounded-xl shadow-sm font-black text-sm outline-none text-center tracking-[0.2em] ${
+                                   isAdm 
+                                     ? "border-indigo-200 focus:border-indigo-500 text-indigo-600" 
+                                     : "border-blue-200 focus:border-blue-500 text-blue-600"
+                                 }`}
                                />
                             </motion.div>
                           )}

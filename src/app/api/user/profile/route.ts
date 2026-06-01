@@ -50,9 +50,7 @@ export async function PUT(req: Request) {
       return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
     }
 
-    const isFirstTimeSetup = !dbUser.isProfileComplete;
-
-    if (hasPaymentChanges && !isFirstTimeSetup) {
+    if (hasPaymentChanges) {
       if (!otp) {
         return NextResponse.json({ success: false, message: 'OTP verification required for payment updates' }, { status: 400 });
       }

@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { Order, OrderStatus } from '@/modules/order/order.model';
 import connectToDatabase from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { invalidateDealsCache } from '@/lib/redis';
 import { NotificationService } from '@/services/notification.service';
 import { NotificationType } from '@/modules/notification/notification.model';

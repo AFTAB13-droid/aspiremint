@@ -23,7 +23,9 @@ export default function TrackOrderPage() {
     setLoading(true);
     setHasSearched(true);
     try {
-      const res = await fetch(`/api/orders?aspireOrderId=${encodeURIComponent(tid)}`);
+      const res = await fetch(`/api/orders?aspireOrderId=${encodeURIComponent(tid)}&t=${Date.now()}`, {
+        cache: 'no-store'
+      });
       const json = await res.json();
       
       if (json.success && json.data.length > 0) {
@@ -119,7 +121,23 @@ export default function TrackOrderPage() {
 
         {/* Results Area */}
         <AnimatePresence mode="wait">
-          {!hasSearched ? (
+          {loading ? (
+             <motion.div 
+               key="loading" 
+               initial={{ opacity: 0, scale: 0.95 }} 
+               animate={{ opacity: 1, scale: 1 }} 
+               exit={{ opacity: 0, scale: 0.95 }}
+               className="bg-white rounded-[40px] p-12 md:p-20 shadow-sm border border-slate-100 text-center space-y-6 flex flex-col items-center justify-center relative overflow-hidden"
+             >
+                <div className="absolute top-0 right-0 h-48 w-48 bg-blue-500/5 blur-[60px] rounded-full -mr-24 -mt-24" />
+                <div className="relative mb-4 md:mb-6">
+                   <div className="absolute inset-0 bg-blue-500/10 rounded-full blur-xl animate-pulse" />
+                   <div className="h-16 w-16 md:h-24 md:w-24 rounded-full border-4 border-blue-50 border-t-blue-600 animate-spin relative z-10" />
+                </div>
+                <h3 className="text-xs md:text-sm font-black text-slate-900 uppercase tracking-[0.2em] animate-pulse">Syncing Live Ledger Registry...</h3>
+                <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed max-w-xs mx-auto">Please wait while we establish a secure database connection and locate your transaction records.</p>
+             </motion.div>
+          ) : !hasSearched ? (
             <>
                {/* Desktop Empty State */}
                <motion.div 

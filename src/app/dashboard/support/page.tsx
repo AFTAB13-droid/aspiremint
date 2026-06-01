@@ -93,13 +93,13 @@ export default function SupportPage() {
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          const MAX_SIZE = 1000;
+          const MAX_SIZE = 2000;
           if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } }
           else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
           canvas.width = width; canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
-          canvas.toBlob((blob) => { if (blob) resolve(blob); else reject(new Error('Compression failed')); }, 'image/jpeg', 0.6);
+          canvas.toBlob((blob) => { if (blob) resolve(blob); else reject(new Error('Compression failed')); }, 'image/jpeg', 0.85);
         };
         img.onerror = () => reject(new Error('Image failed'));
       };

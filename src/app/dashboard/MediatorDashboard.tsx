@@ -4,9 +4,11 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { BannerConfig } from "@/components/admin/BannerManager";
+import { usePusher } from "@/hooks/usePusher";
+import toast from "react-hot-toast";
 import { 
   TrendingUp, Package, RefreshCw, MoreVertical, Clock, CheckCircle2, ChevronRight,
-  Bell, X, Zap, ShieldCheck, Info, Search, Filter, Activity, Cpu, Database, Sparkles, AlertCircle, Megaphone, User as UserIcon, ArrowUpRight
+  Bell, X, Zap, ShieldCheck, Info, Search, Filter, Activity, Cpu, Database, Sparkles, AlertCircle, Megaphone, User as UserIcon, ArrowUpRight, Gift
 } from "lucide-react";
 import { useMotionValue, useTransform, useSpring } from "framer-motion";
 import { 
@@ -57,6 +59,19 @@ export default function MediatorDashboard({
   const [activeTab, setActiveTab] = useState('intelligence');
   const [bannerConfig, setBannerConfig] = useState<BannerConfig | null>(null);
   const [isLoadingBanner, setIsLoadingBanner] = useState(true);
+  const [activeDeals, setActiveDeals] = useState<any[]>([]);
+
+  const fetchActiveDeals = async () => {
+    try {
+      const res = await fetch("/api/deals/active");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setActiveDeals(json.data);
+      }
+    } catch (err) {
+      console.warn("Failed to fetch active deals:", err);
+    }
+  };
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -74,7 +89,35 @@ export default function MediatorDashboard({
       })
       .catch(() => {})
       .finally(() => setIsLoadingBanner(false));
+
+    fetchActiveDeals();
   }, []);
+
+  usePusher(
+    "public-deals",
+    "deal-created",
+    (newDeal: any) => {
+      console.log("[Pusher Live Deal Event] New deal added:", newDeal);
+      fetchActiveDeals();
+      toast.success(`🔥 New Sponsor Campaign: ${newDeal.brandName}! Claim commissions!`, {
+        duration: 6000,
+        style: {
+          background: "#0f172a",
+          color: "#fff",
+          borderRadius: "16px",
+          border: "1px solid rgba(236, 72, 153, 0.3)"
+        }
+      });
+    }
+  );
+
+  usePusher(
+    "public-deals",
+    "inventory-updated",
+    () => {
+      fetchActiveDeals();
+    }
+  );
 
   const rotateX = useSpring(useTransform(mouseY, [-500, 500], [10, -10]), { stiffness: 100, damping: 30 });
   const rotateY = useSpring(useTransform(mouseX, [-500, 500], [-10, 10]), { stiffness: 100, damping: 30 });
@@ -152,15 +195,28 @@ export default function MediatorDashboard({
                   {bannerConfig.icon === "sparkles" ? <Sparkles className="w-8 h-8" /> : 
                    bannerConfig.icon === "alert" ? <AlertCircle className="w-8 h-8" /> : 
                    bannerConfig.icon === "megaphone" ? <Megaphone className="w-8 h-8" /> : 
+                   bannerConfig.icon === "shield" ? <ShieldCheck className="w-8 h-8" /> : 
+                   bannerConfig.icon === "zap" ? <Zap className="w-8 h-8" /> : 
+                   bannerConfig.icon === "gift" ? <Gift className="w-8 h-8" /> : 
                    <UserIcon className="w-8 h-8" />}
                </motion.div>
                <div>
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-white text-[9px] font-black uppercase tracking-widest mb-2 backdrop-blur-md border border-white/30 shadow-sm">
                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse shadow-[0_0_8px_white]" />
-                     {bannerConfig.template === "SALE" ? "EXCLUSIVE OFFER" : "SYSTEM NOTICE"}
+                     {bannerConfig.template === "SALE" ? "EXCLUSIVE OFFER" : 
+                      bannerConfig.template === "NEW_DEALS" ? `🔥 LIVE CAMPAIGNS: ${activeDeals.length} ACTIVE` :
+                      "SYSTEM NOTICE"}
                   </div>
-                  <h1 className="text-3xl font-black text-white tracking-tight leading-tight drop-shadow-md">{bannerConfig.title}</h1>
-                  <p className="text-white/90 text-sm font-bold mt-1 drop-shadow-sm">{bannerConfig.subtitle}</p>
+                  <h1 className="text-3xl font-black text-white tracking-tight leading-tight drop-shadow-md">
+                     {bannerConfig.template === "NEW_DEALS" && activeDeals.length > 0 
+                        ? `🔥 ${activeDeals.length} NEW SPONSORS ONLINE` 
+                        : bannerConfig.title}
+                  </h1>
+                  <p className="text-white/90 text-sm font-bold mt-1 drop-shadow-sm">
+                     {bannerConfig.template === "NEW_DEALS" && activeDeals.length > 0 
+                        ? `Secure yields for ${activeDeals.slice(0, 3).map(d => d.brandName).join(", ")}${activeDeals.length > 3 ? ' & others' : ''} now!` 
+                        : bannerConfig.subtitle}
+                  </p>
                </div>
             </div>
 
@@ -171,11 +227,15 @@ export default function MediatorDashboard({
                    onClick={() => {
                       if (bannerConfig.actionLink) {
                          window.location.href = bannerConfig.actionLink;
+                      } else if (bannerConfig.template === "NEW_DEALS") {
+                         window.location.href = "/dashboard/deals";
                       }
                    }}
                    className="px-8 py-4 bg-white text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-colors shadow-2xl flex items-center gap-2 mr-4 hidden sm:flex"
                 >
-                   {bannerConfig.template === "SALE" ? "Claim Offer" : "View Details"}
+                   {bannerConfig.template === "SALE" ? "Claim Offer" : 
+                    bannerConfig.template === "NEW_DEALS" ? "Earn Commissions" : 
+                    "View Details"}
                    <ArrowUpRight className="w-4 h-4" />
                 </motion.button>
                <button 

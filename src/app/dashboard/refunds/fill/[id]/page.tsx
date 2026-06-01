@@ -107,13 +107,13 @@ export default function FillRefundPage() {
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          const MAX_SIZE = 1000;
+          const MAX_SIZE = 2000;
           if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } }
           else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
           canvas.width = width; canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
-          canvas.toBlob((blob) => { if (blob) resolve(blob); else reject(new Error('Compression failed')); }, 'image/jpeg', 0.6);
+          canvas.toBlob((blob) => { if (blob) resolve(blob); else reject(new Error('Compression failed')); }, 'image/jpeg', 0.85);
         };
         img.onerror = () => reject(new Error('Image failed'));
       };
@@ -155,22 +155,38 @@ export default function FillRefundPage() {
     if (isUploading) return toast.error("Please wait for uploads to complete");
     setSubmitting(true);
 
-    // Strict Validation for Mandatory Fields
-    const isReviewDeal = ["REVIEW", "Rating", "Review", "RATING", "ORDER_REVIEW", "ORDER_RATING", "Video Review", "VIDEO_REVIEW"].includes(formData.dealType);
-    
-    if (isReviewDeal) {
+    // Strict Validation for Mandatory Fields based on Order's Review Type
+    const rt = (order.reviewType || "").toUpperCase();
+    const isReview = rt === "REVIEW";
+    const isRating = rt === "RATING";
+    const isSubmitted = rt === "SUBMITTED" || rt === "REVIEW SUBMITTED" || rt === "REVIEW_SUBMITTED";
+    const isOnlyOrder = rt === "ORDER" || rt === "ONLY_ORDER" || rt === "ONLY-ORDER";
+
+    if (isReview) {
        if (!formData.reviewLink || formData.reviewLink.trim() === '') {
-          toast.error("Please provide the Live Review Link");
+          toast.error("Please provide the Live Review URL");
           setSubmitting(false);
           return;
        }
+    }
+
+    if (isReview || isRating || isSubmitted) {
        if (!formData.reviewScreenshot) {
-          toast.error("Please upload the Review/Rating Screenshot");
+          const ssLabel = isSubmitted ? "Review Submitted Screenshot" : isReview ? "Review Snapshot" : "Rating Snapshot";
+          toast.error(`Please upload the ${ssLabel}`);
           setSubmitting(false);
           return;
        }
        if (!formData.returnPeriodScreenshot) {
-          toast.error("Please upload the Return Period Screenshot");
+          toast.error("Please upload the Return Period Over Screenshot");
+          setSubmitting(false);
+          return;
+       }
+    }
+
+    if (isOnlyOrder) {
+       if (!formData.deliveryScreenshot) {
+          toast.error("Please upload the Order Delivered Screenshot");
           setSubmitting(false);
           return;
        }

@@ -203,6 +203,12 @@ export function MobileActiveDeals({
                   </div>
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 truncate">{deal.brandName}</p>
                   
+                  {deal.productDetails && (
+                     <p className="text-[10px] font-black text-slate-700 uppercase tracking-tight mt-1 leading-relaxed break-words line-clamp-2">
+                       {deal.productDetails}
+                     </p>
+                   )}
+                  
                   <div className="flex items-center gap-2 mt-2.5">
                     <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tight border ${
                       deal.dealType === 'Original' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : 
@@ -224,7 +230,7 @@ export function MobileActiveDeals({
                           <div className="h-7 w-7 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center border border-blue-100 group-hover/link:bg-blue-600 group-hover/link:text-white transition-all">
                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                           </div>
-                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Store</span>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Link</span>
                        </a>
                     )}
                     <div 
@@ -263,25 +269,27 @@ export function MobileActiveDeals({
                 </div>
 
                 <div className="flex items-center justify-between pt-1">
-                  <div className="flex flex-col">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Amount</p>
-                    <p className={`text-base font-black tracking-tighter mt-1 ${deal.displayPayout >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                      {deal.displayPayout >= 0 ? '+' : '-'}₹{Math.abs(deal.displayPayout || 0)}
-                    </p>
-                  </div>
+                  {role !== 'USER' && (
+                    <div className="flex flex-col">
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Amount</p>
+                      <p className={`text-base font-black tracking-tighter mt-1 ${deal.displayPayout >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        {deal.displayPayout >= 0 ? '+' : '-'}₹{Math.abs(deal.displayPayout || 0)}
+                      </p>
+                    </div>
+                  )}
 
-                  <div className="flex items-center gap-2">
+                  <div className={`flex items-center gap-2 ${role === 'USER' ? 'w-full' : ''}`}>
                     {role === 'USER' ? (
                       deal.remainingSlots > 0 ? (
                         <Link 
                           href={`/dashboard/deals/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
-                          className="h-11 px-6 bg-blue-600 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-blue-600/20 active:scale-95 transition-all"
+                          className="h-11 px-6 bg-blue-600 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 active:scale-95 transition-all w-full"
                         >
                           Fill Form
                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                         </Link>
                       ) : (
-                        <div className="h-11 px-6 bg-slate-50 border border-slate-100 text-slate-300 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 cursor-not-allowed">
+                        <div className="h-11 px-6 bg-slate-50 border border-slate-100 text-slate-300 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 cursor-not-allowed w-full">
                           Sold Out
                         </div>
                       )

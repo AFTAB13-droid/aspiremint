@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
-import { Save, Megaphone, AlertCircle, Sparkles, User, RefreshCw, LayoutTemplate, ArrowUpRight } from "lucide-react";
+import { Save, Megaphone, AlertCircle, Sparkles, User, RefreshCw, LayoutTemplate, ArrowUpRight, ShieldCheck, Zap, Gift } from "lucide-react";
 
-export type BannerTemplateType = "DEFAULT" | "SALE" | "NOTICE" | "MILESTONE";
+export type BannerTemplateType = "DEFAULT" | "SALE" | "NOTICE" | "MILESTONE" | "PROMO" | "NEW_DEALS" | "HOLO" | "EARN";
 export type BannerTargetAudience = "ALL" | "BUYER" | "MEDIATOR";
 
 export interface BannerConfig {
@@ -21,6 +21,17 @@ export interface BannerConfig {
   targetAudience: BannerTargetAudience;
   actionLink?: string;
 }
+
+const getColorClasses = (color: string) => {
+  switch (color) {
+    case "rose": return "bg-rose-100 text-rose-600 border-rose-200";
+    case "amber": return "bg-amber-100 text-amber-600 border-amber-200";
+    case "indigo": return "bg-indigo-100 text-indigo-600 border-indigo-200";
+    case "emerald": return "bg-emerald-100 text-emerald-600 border-emerald-200";
+    case "purple": return "bg-purple-100 text-purple-600 border-purple-200";
+    default: return "bg-blue-100 text-blue-600 border-blue-200";
+  }
+};
 
 const TEMPLATES: Record<BannerTemplateType, BannerConfig> = {
   DEFAULT: {
@@ -66,6 +77,50 @@ const TEMPLATES: Record<BannerTemplateType, BannerConfig> = {
     primaryColor: "indigo",
     bgGradient: "linear-gradient(135deg, #4f46e5, #4338ca, #3730a3)",
     animationType: "SPARKLE",
+    targetAudience: "ALL"
+  },
+  PROMO: {
+    isActive: true,
+    template: "PROMO",
+    title: "VIP ACCESS GRANTED",
+    subtitle: "Premium multipliers and double cashbacks activated for authorized accounts.",
+    icon: "gift",
+    primaryColor: "emerald",
+    bgGradient: "linear-gradient(135deg, #059669, #10b981, #d97706, #10b981, #059669)",
+    animationType: "SHIMMER",
+    targetAudience: "ALL"
+  },
+  NEW_DEALS: {
+    isActive: true,
+    template: "NEW_DEALS",
+    title: "NEW DEALS ALIVE",
+    subtitle: "New premium sponsor campaigns have been activated. Claim your cashbacks now!",
+    icon: "zap",
+    primaryColor: "rose",
+    bgGradient: "linear-gradient(135deg, #ff007f, #7928ca, #ff007f)",
+    animationType: "SHIMMER",
+    targetAudience: "ALL"
+  },
+  HOLO: {
+    isActive: true,
+    template: "HOLO",
+    title: "HOLOSPARK COMMUNITY EVENTS",
+    subtitle: "Join our interactive guild discussions for tips on maximizing earnings.",
+    icon: "sparkles",
+    primaryColor: "purple",
+    bgGradient: "linear-gradient(135deg, #a855f7, #6366f1, #3b82f6, #ec4899, #a855f7)",
+    animationType: "SPARKLE",
+    targetAudience: "ALL"
+  },
+  EARN: {
+    isActive: true,
+    template: "EARN",
+    title: "CASHBACK BOOSTER WEEK",
+    subtitle: "Boost mediator commissions and earn up to +15% profit on top campaigns.",
+    icon: "zap",
+    primaryColor: "indigo",
+    bgGradient: "linear-gradient(135deg, #7c3aed, #db2777, #eab308, #db2777, #7c3aed)",
+    animationType: "SHIMMER",
     targetAudience: "ALL"
   }
 };
@@ -123,6 +178,9 @@ export const BannerManager = () => {
       case "sparkles": return <Sparkles className={className} />;
       case "alert": return <AlertCircle className={className} />;
       case "megaphone": return <Megaphone className={className} />;
+      case "shield": return <ShieldCheck className={className} />;
+      case "zap": return <Zap className={className} />;
+      case "gift": return <Gift className={className} />;
       default: return <User className={className} />;
     }
   };
@@ -158,7 +216,7 @@ export const BannerManager = () => {
                   className={`p-4 rounded-2xl border text-left transition-all ${config.template === type ? 'border-blue-500 bg-blue-50 shadow-md ring-2 ring-blue-200' : 'border-slate-200 hover:border-blue-300 bg-white'}`}
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    <div className={`p-2 rounded-xl bg-${TEMPLATES[type].primaryColor}-100 text-${TEMPLATES[type].primaryColor}-600`}>
+                    <div className={`p-2 rounded-xl ${getColorClasses(TEMPLATES[type].primaryColor)}`}>
                       {renderIcon(TEMPLATES[type].icon, "w-4 h-4")}
                     </div>
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">{type}</span>

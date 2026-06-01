@@ -47,6 +47,17 @@ export default function SignupPage() {
   const [otp, setOtp] = useState("");
   const [sendingOtp, setSendingOtp] = useState(false);
   const otpInputRef = useRef<HTMLInputElement>(null);
+  const [resendCountdown, setResendCountdown] = useState(0);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendCountdown > 0) {
+      timer = setTimeout(() => {
+        setResendCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCountdown]);
 
   useEffect(() => {
     if (showOtp && otpInputRef.current) {
@@ -114,6 +125,7 @@ export default function SignupPage() {
       if (result.success) {
         toast.success("Identity Verification Code Sent");
         setShowOtp(true);
+        setResendCountdown(30); // 30 seconds cooldown for OTP resend
       } else {
         toast.error(result.message || "Failed to send OTP");
       }
@@ -409,7 +421,23 @@ export default function SignupPage() {
                     animate={{ opacity: 1, y: 0 }} 
                     className="space-y-1.5 lg:space-y-2 pt-2 relative z-10 shrink-0"
                   >
-                    <label className="text-[8px] lg:text-[11px] font-black text-blue-600 uppercase tracking-widest ml-1">Identity Verification Code</label>
+                    <div className="flex justify-between items-center px-1">
+                      <label className="text-[8px] lg:text-[11px] font-black text-blue-600 uppercase tracking-widest">Identity Verification Code</label>
+                      <button
+                        type="button"
+                        disabled={sendingOtp || isLoading || resendCountdown > 0}
+                        onClick={handleSendOtp}
+                        className="text-[8px] lg:text-[10px] font-black text-blue-600 hover:text-blue-800 uppercase tracking-widest hover:underline disabled:opacity-50 flex items-center gap-1 transition-all"
+                      >
+                        {sendingOtp ? (
+                          "Resending..."
+                        ) : resendCountdown > 0 ? (
+                          `Resend in ${resendCountdown}s`
+                        ) : (
+                          "Resend Code"
+                        )}
+                      </button>
+                    </div>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-5 flex items-center text-blue-600">
                         <Shield className="w-4 h-4 lg:w-5 lg:h-5" />
@@ -437,7 +465,7 @@ export default function SignupPage() {
                 >
                    <div className="absolute inset-0 bg-blue-600 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500" />
                    <span className="relative z-10">
-                     {sendingOtp ? "TRANSMITTING..." : isLoading ? "VALIDATING..." : showOtp ? "FINALIZE ENROLLMENT" : "CREATE ACCOUNT"}
+                     {sendingOtp ? "VERIFYING..." : isLoading ? "VALIDATING..." : showOtp ? "VERIFY" : "CREATE ACCOUNT"}
                    </span>
                    {(!isLoading && !sendingOtp) && <ArrowRight className="w-4 h-4 relative z-10 group-hover/btn:translate-x-2 transition-transform" />}
                 </button>

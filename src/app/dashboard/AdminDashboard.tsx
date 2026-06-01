@@ -184,7 +184,7 @@ export default function AdminDashboard({
                      <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between group hover:bg-slate-100 transition-all">
                         <div>
                            <p className="text-xs font-black text-slate-900 uppercase">{brand.name}</p>
-                           <p className="text-[9px] font-bold text-slate-400 uppercase mt-1">Completed: {brand.completed}</p>
+                           <p className="text-[9px] font-bold text-slate-400 uppercase mt-1">Done: {brand.completed}</p>
                         </div>
                         <div className="text-right">
                            <p className="text-[10px] font-black text-emerald-600 uppercase">{brand.stock} Slots Left</p>
@@ -422,7 +422,7 @@ export default function AdminDashboard({
                         </div>
                         <div>
                            <div className="flex items-center gap-3">
-                              <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">{order.aspireOrderId}</h4>
+                              <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">{order.userOrderId || order.aspireOrderId}</h4>
                               <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[8px] font-black uppercase tracking-widest">{order.brandName}</span>
                            </div>
                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1 flex items-center gap-2">
@@ -487,7 +487,7 @@ export default function AdminDashboard({
                                  </div>
                                  <div>
                                     <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{order.brandName} Order Processed</p>
-                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">ID: {order.aspireOrderId}</p>
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">ID: {order.userOrderId || order.aspireOrderId}</p>
                                  </div>
                               </div>
                               <div className="text-right">
@@ -729,7 +729,7 @@ export default function AdminDashboard({
                                     {[...stats.brandStats || []].sort((a, b) => b.completed - a.completed).slice(0, 3).map((brand, i) => (
                                        <div key={i} className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 flex items-center justify-between">
                                           <span className="text-xs font-black text-indigo-900 uppercase">{brand.name}</span>
-                                          <span className="text-[10px] font-black text-indigo-600">{brand.completed} COMPLETED</span>
+                                          <span className="text-[10px] font-black text-indigo-600">{brand.completed} DONE</span>
                                        </div>
                                     ))}
                                  </div>
@@ -741,7 +741,7 @@ export default function AdminDashboard({
                                     {[...stats.brandStats || []].sort((a, b) => a.completed - b.completed).slice(0, 3).map((brand, i) => (
                                        <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
                                           <span className="text-xs font-black text-slate-900 uppercase">{brand.name}</span>
-                                          <span className="text-[10px] font-black text-slate-400">{brand.completed} COMPLETED</span>
+                                          <span className="text-[10px] font-black text-slate-400">{brand.completed} DONE</span>
                                        </div>
                                     ))}
                                  </div>

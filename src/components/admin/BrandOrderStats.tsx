@@ -65,9 +65,11 @@ export function BrandOrderStats({ orders, allBrands }: BrandOrderStatsProps) {
       const isCompleted = ["COMPLETED", "REFUNDED", "PAST"].includes(order.status);
       const isCancelled = ["REJECTED", "CANCELLED", "REFUND_REJECTED"].includes(order.status);
       
-      if (isCompleted) {
+      if (!isCancelled) {
         stats[brand].completed++;
-      } else if (!isCancelled) {
+      }
+      
+      if (!isCompleted && !isCancelled) {
         stats[brand].ongoing++;
       }
 
@@ -177,7 +179,7 @@ export function BrandOrderStats({ orders, allBrands }: BrandOrderStatsProps) {
             <thead>
               <tr className="bg-slate-50/50">
                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-slate-100">Brand Name</th>
-                <th className="px-8 py-5 text-[10px] font-black text-emerald-600/50 uppercase tracking-[0.25em] border-b border-slate-100 text-center">Completed</th>
+                <th className="px-8 py-5 text-[10px] font-black text-emerald-600/50 uppercase tracking-[0.25em] border-b border-slate-100 text-center">Done</th>
                 <th className="px-8 py-5 text-[10px] font-black text-orange-500/50 uppercase tracking-[0.25em] border-b border-slate-100 text-center">Ongoing</th>
                 <th className="px-8 py-5 text-[10px] font-black text-indigo-600/50 uppercase tracking-[0.25em] border-b border-slate-100 text-center">Live Stock</th>
                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] border-b border-slate-100 text-right">Status Count</th>

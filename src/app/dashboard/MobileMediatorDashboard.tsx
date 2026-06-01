@@ -5,9 +5,11 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BannerConfig } from "@/components/admin/BannerManager";
+import { usePusher } from "@/hooks/usePusher";
+import toast from "react-hot-toast";
 import { 
   TrendingUp, Package, RefreshCw, Clock, CheckCircle2, ChevronRight,
-  ShieldCheck, AlertCircle, Sparkles, Megaphone, User as UserIcon, Activity, Zap, Info, Cpu, Database
+  ShieldCheck, AlertCircle, Sparkles, Megaphone, User as UserIcon, Activity, Zap, Info, Cpu, Database, Gift
 } from "lucide-react";
 
 interface MediatorDashboardProps {
@@ -47,6 +49,19 @@ export default function MobileMediatorDashboard({
   const router = useRouter();
   const [bannerConfig, setBannerConfig] = useState<BannerConfig | null>(null);
   const [isLoadingBanner, setIsLoadingBanner] = useState(true);
+  const [activeDeals, setActiveDeals] = useState<any[]>([]);
+
+  const fetchActiveDeals = async () => {
+    try {
+      const res = await fetch("/api/deals/active");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setActiveDeals(json.data);
+      }
+    } catch (err) {
+      console.warn("Failed to fetch active deals:", err);
+    }
+  };
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -64,7 +79,35 @@ export default function MobileMediatorDashboard({
       })
       .catch(() => {})
       .finally(() => setIsLoadingBanner(false));
+
+    fetchActiveDeals();
   }, []);
+
+  usePusher(
+    "public-deals",
+    "deal-created",
+    (newDeal: any) => {
+      console.log("[Pusher Live Deal Event] New deal added:", newDeal);
+      fetchActiveDeals();
+      toast.success(`🔥 New Sponsor Campaign: ${newDeal.brandName}! Claim commissions!`, {
+        duration: 6000,
+        style: {
+          background: "#0f172a",
+          color: "#fff",
+          borderRadius: "16px",
+          border: "1px solid rgba(236, 72, 153, 0.3)"
+        }
+      });
+    }
+  );
+
+  usePusher(
+    "public-deals",
+    "inventory-updated",
+    () => {
+      fetchActiveDeals();
+    }
+  );
 
   const isBannerValid = bannerConfig?.isActive && 
                         bannerConfig.template !== "DEFAULT" && 
@@ -90,7 +133,11 @@ export default function MobileMediatorDashboard({
           className="relative overflow-hidden p-6 rounded-[32px] shadow-lg text-white active:opacity-90 transition-opacity flex flex-col gap-4"
           style={{ background: bannerConfig.bgGradient }}
           onClick={() => {
-            if (bannerConfig.actionLink) router.push(bannerConfig.actionLink);
+            if (bannerConfig.actionLink) {
+              router.push(bannerConfig.actionLink);
+            } else if (bannerConfig.template === "NEW_DEALS") {
+              router.push("/dashboard/deals");
+            }
           }}
         >
           {bannerConfig.animationType === "SHIMMER" && (
@@ -102,23 +149,38 @@ export default function MobileMediatorDashboard({
           )}
           <div className="relative z-10 flex items-start gap-4">
             <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 mt-1">
-              {bannerConfig.icon === "sparkles" ? <Sparkles className="w-6 h-6" /> : 
-               bannerConfig.icon === "alert" ? <AlertCircle className="w-6 h-6" /> : 
-               bannerConfig.icon === "megaphone" ? <Megaphone className="w-6 h-6" /> : 
-               <UserIcon className="w-6 h-6" />}
+               {bannerConfig.icon === "sparkles" ? <Sparkles className="w-6 h-6" /> : 
+                bannerConfig.icon === "alert" ? <AlertCircle className="w-6 h-6" /> : 
+                bannerConfig.icon === "megaphone" ? <Megaphone className="w-6 h-6" /> : 
+                bannerConfig.icon === "shield" ? <ShieldCheck className="w-6 h-6" /> : 
+                bannerConfig.icon === "zap" ? <Zap className="w-6 h-6" /> : 
+                bannerConfig.icon === "gift" ? <Gift className="w-6 h-6" /> : 
+                <UserIcon className="w-6 h-6" />}
             </div>
             <div className="flex-1 min-w-0">
               <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-white/20 rounded-full text-[8px] font-black uppercase tracking-widest mb-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                {bannerConfig.template === "SALE" ? "OFFER" : "NOTICE"}
+                {bannerConfig.template === "SALE" ? "OFFER" : 
+                 bannerConfig.template === "NEW_DEALS" ? `🔥 LIVE: ${activeDeals.length}` : 
+                 "NOTICE"}
               </div>
-              <h1 className="text-xl font-black tracking-tight leading-tight mb-1">{bannerConfig.title}</h1>
-              <p className="text-white/90 text-xs font-bold leading-relaxed">{bannerConfig.subtitle}</p>
+              <h1 className="text-xl font-black tracking-tight leading-tight mb-1">
+                {bannerConfig.template === "NEW_DEALS" && activeDeals.length > 0 
+                   ? `🔥 ${activeDeals.length} NEW DEALS LIVE` 
+                   : bannerConfig.title}
+              </h1>
+              <p className="text-white/90 text-xs font-bold leading-relaxed">
+                {bannerConfig.template === "NEW_DEALS" && activeDeals.length > 0 
+                   ? `Earn yields from ${activeDeals.slice(0, 2).map(d => d.brandName).join(", ")}${activeDeals.length > 2 ? ' & others' : ''} now!` 
+                   : bannerConfig.subtitle}
+              </p>
             </div>
           </div>
-          {bannerConfig.actionLink && (
+          {(bannerConfig.actionLink || bannerConfig.template === "NEW_DEALS") && (
              <div className="relative z-10 mt-1 flex items-center justify-between bg-black/20 rounded-xl p-3 backdrop-blur-sm">
-                <span className="text-[10px] font-black uppercase tracking-widest">View Details</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  {bannerConfig.template === "NEW_DEALS" ? "Claim Commission" : "View Details"}
+                </span>
                 <ChevronRight className="w-4 h-4" />
              </div>
           )}
