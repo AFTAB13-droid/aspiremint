@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 import { BulkPaymentModal } from "@/components/admin/BulkPaymentModal";
 import { PayoutSelectionModal } from "@/components/admin/PayoutSelectionModal";
 import { RefundPayersModal } from "@/components/mediator/RefundPayersModal";
+import { CsvBulkPaymentModal } from "@/components/mediator/CsvBulkPaymentModal";
+import { FileSpreadsheet } from "lucide-react";
 
 export default function MediationsPage() {
   const { data: session, status: authStatus } = useSession();
@@ -23,6 +25,7 @@ export default function MediationsPage() {
   const [isSelectionModalOpen, setSelectionModalOpen] = useState(false);
   const [isBulkModalOpen, setBulkModalOpen] = useState(false);
   const [isPayersModalOpen, setPayersModalOpen] = useState(false);
+  const [isCsvModalOpen, setCsvModalOpen] = useState(false);
   const [isFabOpen, setIsFabOpen] = useState(false);
   const [payers, setPayers] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -149,6 +152,30 @@ export default function MediationsPage() {
     }
   };
 
+  const handleCsvBulkPay = async (payments: any[]) => {
+    setIsProcessing(true);
+    const loadingId = toast.loading(`Processing bulk CSV payments for ${payments.length} orders...`);
+    try {
+      const res = await fetch("/api/orders/bulk-pay-csv", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payments }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success(json.message, { id: loadingId });
+        setCsvModalOpen(false);
+        fetchMediations();
+      } else {
+        toast.error(json.message, { id: loadingId });
+      }
+    } catch (err) {
+      toast.error("Network error during bulk CSV processing", { id: loadingId });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handlePay = (id: string) => {
     setSelectedIds([id]);
     setBulkModalOpen(true);
@@ -209,18 +236,18 @@ export default function MediationsPage() {
               <div className="relative w-full xl:w-auto">
                   <div className="flex items-center w-full p-1.5 bg-slate-100/50 rounded-[20px] md:rounded-full border border-slate-100 shadow-inner">
                     {["ONGOING", "COMPLETED"].map((f) => (
-                        <button 
-                          key={f} 
-                          onClick={() => setFilter(f)} 
-                          className={`flex-1 xl:flex-none xl:px-12 xl:whitespace-nowrap flex items-center justify-center gap-2 py-3.5 rounded-[16px] md:rounded-full text-[10px] font-black uppercase tracking-[0.1em] transition-all duration-300 ${filter === f ? "bg-white text-slate-900 shadow-sm border border-slate-100/50 xl:shadow-xl xl:shadow-slate-200/50" : "text-slate-400 hover:text-slate-600"}`}
-                        >
-                            {f} DEALS
-                        </button>
+                         <button 
+                           key={f} 
+                           onClick={() => setFilter(f)} 
+                           className={`flex-1 xl:flex-none xl:px-12 xl:whitespace-nowrap flex items-center justify-center gap-2 py-3.5 rounded-[16px] md:rounded-full text-[10px] font-black uppercase tracking-[0.1em] transition-all duration-300 ${filter === f ? "bg-white text-slate-900 shadow-sm border border-slate-100/50 xl:shadow-xl xl:shadow-slate-200/50" : "text-slate-400 hover:text-slate-600"}`}
+                         >
+                             {f} DEALS
+                         </button>
                     ))}
                   </div>
               </div>
           </div>
-
+ 
          {/* Action buttons on the right (Desktop only) */}
          <div className="hidden md:flex flex-row gap-4 items-center w-full xl:w-auto mt-2 xl:mt-0">
            <motion.button 
@@ -231,6 +258,16 @@ export default function MediationsPage() {
            >
               <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
               Refund Payers
+           </motion.button>
+
+           <motion.button 
+             initial={{ scale: 0.9, opacity: 0 }}
+             animate={{ scale: 1, opacity: 1 }}
+             onClick={() => setCsvModalOpen(true)}
+             className="h-14 md:h-16 px-8 bg-white text-slate-900 rounded-[22px] md:rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-200/50 hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center gap-3 border border-slate-100"
+           >
+              <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+              CSV Bulk Payout
            </motion.button>
 
            <motion.button 
@@ -290,6 +327,15 @@ export default function MediationsPage() {
         onRemove={handleRemovePayer}
       />
 
+      <CsvBulkPaymentModal
+        isOpen={isCsvModalOpen}
+        onClose={() => setCsvModalOpen(false)}
+        orders={ordersReadyForPayout}
+        payers={payers}
+        onConfirm={handleCsvBulkPay}
+        loading={isProcessing}
+      />
+
       {/* Floating Action Button (Mobile Only) */}
       <div className="md:hidden fixed bottom-[38px] right-6 z-[60] flex flex-col items-end gap-3 pointer-events-none">
          <AnimatePresence>
@@ -306,6 +352,13 @@ export default function MediationsPage() {
                   >
                      <span className="mt-[2px]">Refund Payers</span>
                      <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                  </button>
+                  <button 
+                    onClick={() => { setCsvModalOpen(true); setIsFabOpen(false); }} 
+                    className="h-14 px-6 bg-white rounded-full flex items-center gap-3 text-[10px] font-black text-slate-900 uppercase tracking-widest shadow-xl shadow-slate-200/50 border border-slate-100 active:scale-95 transition-all"
+                  >
+                     <span className="mt-[2px]">CSV Bulk Payout</span>
+                     <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
                   </button>
                   <button 
                     onClick={() => { setSelectionModalOpen(true); setIsFabOpen(false); }} 

@@ -9,6 +9,8 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { BulkPaymentModal } from "@/components/admin/BulkPaymentModal";
 import { RefundPayersModal } from "@/components/mediator/RefundPayersModal";
+import { CsvBulkPaymentModal } from "@/components/mediator/CsvBulkPaymentModal";
+import { FileSpreadsheet } from "lucide-react";
 
 export default function RefundsPage() {
   const { data: session } = useSession();
@@ -30,6 +32,7 @@ export default function RefundsPage() {
   // Settlement & Payer States
   const [isBulkModalOpen, setBulkModalOpen] = useState(false);
   const [isPayersModalOpen, setPayersModalOpen] = useState(false);
+  const [isCsvModalOpen, setCsvModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [payers, setPayers] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -142,6 +145,30 @@ export default function RefundsPage() {
       } else { toast.error(json.message, { id: loadingId }); }
     } catch (err) { toast.error("Network error during processing", { id: loadingId }); }
     finally { setIsProcessing(false); }
+  };
+
+  const handleCsvBulkPay = async (payments: any[]) => {
+    setIsProcessing(true);
+    const loadingId = toast.loading(`Processing bulk CSV payments for ${payments.length} orders...`);
+    try {
+      const res = await fetch("/api/orders/bulk-pay-csv", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payments }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success(json.message, { id: loadingId });
+        setCsvModalOpen(false);
+        fetchRefunds();
+      } else {
+        toast.error(json.message, { id: loadingId });
+      }
+    } catch (err) {
+      toast.error("Network error during bulk CSV processing", { id: loadingId });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handlePay = (id: string) => {
@@ -307,19 +334,28 @@ export default function RefundsPage() {
         </div>
       )}
 
-      {role === "MEDIATOR" && (
-         <div className="w-full flex justify-between items-center bg-white border border-slate-100 p-2 rounded-2xl shadow-sm mb-8">
-            <div className="flex items-center gap-3 pl-4">
+       {role === "MEDIATOR" && (
+         <div className="w-full flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-100 p-4 md:p-2 rounded-2xl shadow-sm mb-8">
+            <div className="flex items-center gap-3 pl-2 md:pl-4">
                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Settlement Registry</span>
             </div>
-            <button 
-              onClick={() => setPayersModalOpen(true)}
-              className="h-10 px-6 bg-slate-900 border border-slate-900 shadow-sm rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-slate-800 transition-all flex items-center gap-3"
-            >
-               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-               Manage Payers
-            </button>
+            <div className="flex items-center gap-2 w-full md:w-auto">
+               <button 
+                 onClick={() => setPayersModalOpen(true)}
+                 className="flex-1 md:flex-initial h-10 px-4 md:px-6 bg-white border border-slate-200 text-slate-700 shadow-sm rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+               >
+                  <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                  Manage Payers
+               </button>
+               <button 
+                 onClick={() => setCsvModalOpen(true)}
+                 className="flex-1 md:flex-initial h-10 px-4 md:px-6 bg-slate-900 border border-slate-900 shadow-sm rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+               >
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                  CSV Bulk Payout
+               </button>
+            </div>
          </div>
       )}
 
@@ -377,64 +413,60 @@ export default function RefundsPage() {
                    initial={{ opacity: 0, y: 20 }}
                    animate={{ opacity: 1, y: 0 }}
                    transition={{ delay: idx * 0.05 }}
-                   className="group bg-white rounded-[40px] p-6 border border-slate-100 shadow-sm relative overflow-hidden active:scale-[0.98] transition-all"
+                   className="group bg-white rounded-3xl p-5 border border-slate-100 shadow-sm relative overflow-hidden active:scale-[0.98] transition-all"
                 >
-                   {/* Background Shimmer */}
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50/50 rounded-bl-[80px] -mr-8 -mt-8" />
-
-                   <div className="flex items-start justify-between gap-4 mb-6 relative z-10">
-                      <div className="flex items-start gap-3 min-w-0">
-                         <div className={`h-12 w-12 rounded-2xl flex-shrink-0 flex items-center justify-center text-sm font-black shadow-inner ${role === 'ADMIN' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}>
+                   {/* Top Info Header */}
+                   <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                         <div className={`h-10 w-10 rounded-2xl flex-shrink-0 flex items-center justify-center text-xs font-black shadow-inner ${role === 'ADMIN' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}>
                             {order.brandName?.charAt(0) || 'R'}
                          </div>
                          <div className="flex flex-col min-w-0">
-                            <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest truncate">{order.brandName}</span>
-                            <h3 className="text-lg font-black text-slate-900 tracking-tighter uppercase break-all leading-tight mt-0.5">{order.userOrderId}</h3>
+                            <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest truncate">{order.brandName}</span>
+                            <h3 className="text-sm font-black text-slate-900 tracking-tight uppercase truncate">{order.userOrderId}</h3>
                          </div>
                       </div>
-                      <div className="flex flex-col items-end shrink-0 pt-0.5">
-                         <span className={`px-3 py-1 border rounded-full text-[8px] font-black uppercase tracking-widest whitespace-nowrap ${getStatusColor(order.status)}`}>
+                      <div className="flex flex-col items-end shrink-0">
+                         <span className={`px-2.5 py-0.5 border rounded-full text-[8px] font-black uppercase tracking-widest whitespace-nowrap ${getStatusColor(order.status)}`}>
                            {getStatusLabel(order.status)}
                          </span>
-                         <span className="text-[9px] font-bold text-slate-300 mt-1.5 uppercase tracking-tight">{new Date(order.createdAt).toLocaleDateString()}</span>
+                         <span className="text-[8px] font-bold text-slate-300 mt-1 uppercase tracking-tight">{new Date(order.createdAt).toLocaleDateString()}</span>
                       </div>
                    </div>
 
                    {/* Proofs Row for Admin */}
                    {role === 'ADMIN' && activeTab === 'VERIFYING' && (
-                    <div className="flex items-center gap-3 mb-4 p-3 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-auto pl-1">Compliance Proofs</p>
+                    <div className="flex items-center gap-3 mb-3 p-2 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mr-auto pl-1">Compliance Proofs</p>
                       {order.refundProof?.reviewScreenshot && (
-                        <a href={order.refundProof.reviewScreenshot} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-2.5 bg-white rounded-xl border border-slate-100 hover:bg-slate-100 transition-all shadow-sm">
-                          <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        <a href={order.refundProof.reviewScreenshot} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-2 bg-white rounded-xl border border-slate-100 hover:bg-slate-100 transition-all shadow-sm">
+                          <svg className="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                         </a>
                       )}
                       {order.refundProof?.reviewLink && (
-                        <a href={order.refundProof.reviewLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-2.5 bg-white rounded-xl border border-slate-100 hover:bg-slate-100 transition-all shadow-sm">
-                          <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        <a href={order.refundProof.reviewLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-2 bg-white rounded-xl border border-slate-100 hover:bg-slate-100 transition-all shadow-sm">
+                          <svg className="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                         </a>
                       )}
                     </div>
                   )}
 
-                   <div className="grid grid-cols-2 gap-3 pb-6 border-b border-slate-50">
-                      <div className="bg-slate-50 p-4 rounded-3xl border border-white">
-                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Net Refund</p>
-                         <div className="flex items-end gap-1">
-                            <span className="text-xl font-black text-slate-900 leading-none">₹{amount.toLocaleString()}</span>
-                            <span className="text-[10px] font-bold text-emerald-500 mb-0.5 leading-none">INR</span>
+                   {/* Grid Data */}
+                   <div className="grid grid-cols-2 gap-2.5 py-3 border-t border-b border-slate-100">
+                      <div>
+                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 leading-none">Net Refund</p>
+                         <div className="flex items-baseline gap-0.5">
+                            <span className="text-base font-black text-slate-900 leading-none">₹{amount.toLocaleString()}</span>
+                            <span className="text-[8px] font-bold text-emerald-500 uppercase leading-none">INR</span>
                          </div>
                       </div>
-                      <div className="bg-slate-50 p-4 rounded-3xl border border-white">
-                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 leading-none">
-                            {role === 'MEDIATOR' ? 'Brand & Type' : 'Mediator'}
+                      <div>
+                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 leading-none">
+                            {role === 'MEDIATOR' ? 'Deal / Config' : 'Mediator'}
                          </p>
-                         <p className="text-sm font-black text-slate-800 leading-tight mt-0.5 uppercase tracking-tighter break-words">
+                         <p className="text-xs font-black text-slate-800 uppercase tracking-tight truncate leading-none">
                             {role === 'MEDIATOR' ? (
-                               <span className="flex flex-col">
-                                  <span>{order.brandName}</span>
-                                  <span className="text-[9px] text-indigo-500">{order.dealType} • {order.reviewType || 'Standard'}</span>
-                               </span>
+                               <span>{order.dealType} • {order.reviewType || 'Standard'}</span>
                             ) : (
                                order.mediator?.name || "Unassigned"
                             )}
@@ -442,31 +474,32 @@ export default function RefundsPage() {
                       </div>
                    </div>
 
-                   <div className="pt-5 flex items-center justify-between gap-4">
-                      <div className="flex flex-col">
-                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Buyer ID</span>
-                         <span className="text-[10px] font-black text-blue-600 lowercase tracking-tighter line-clamp-1">@{order.reviewName || "N/A"}</span>
+                   {/* Footer Metadata & Action */}
+                   <div className="pt-3 flex items-center justify-between gap-3">
+                      <div className="flex flex-col min-w-0">
+                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Buyer ID</span>
+                         <span className="text-xs font-black text-blue-600 lowercase tracking-tight truncate">@{order.reviewName || "N/A"}</span>
                       </div>
                       
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         {role === 'ADMIN' && activeTab === 'VERIFYING' ? (
-                          <div className="flex items-center gap-2">
-                             <button onClick={(e) => { e.stopPropagation(); handleBulkStatus("APPROVE", undefined, [order._id]); }} className="h-11 px-5 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 active:scale-95 transition-all">APPROVE</button>
-                             <button onClick={(e) => { e.stopPropagation(); handleBulkStatus("REJECT", undefined, [order._id]); }} className="h-11 w-11 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg></button>
+                          <div className="flex items-center gap-1.5">
+                             <button onClick={(e) => { e.stopPropagation(); handleBulkStatus("APPROVE", undefined, [order._id]); }} className="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest shadow-md shadow-emerald-600/10 active:scale-95 transition-all">APPROVE</button>
+                             <button onClick={(e) => { e.stopPropagation(); handleBulkStatus("REJECT", undefined, [order._id]); }} className="h-9 w-9 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all"><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg></button>
                           </div>
                         ) : order.status === 'REFUND_SETTLED' ? (
                            <div className="flex flex-col items-end">
-                              <span className="text-[9px] font-black text-emerald-600 uppercase">Paid By</span>
-                              <span className="text-[10px] font-black text-slate-900 uppercase">{order.paymentDetails?.paidByName || "Admin"}</span>
+                              <span className="text-[8px] font-black text-emerald-600 uppercase leading-none">Paid By</span>
+                              <span className="text-[9px] font-black text-slate-900 uppercase truncate max-w-[80px] mt-0.5 leading-none">{order.paymentDetails?.paidByName || "Admin"}</span>
                            </div>
                         ) : role === 'MEDIATOR' && order.status === 'REFUND_APPROVED' ? (
-                           <button onClick={(e) => { e.stopPropagation(); handlePay(order._id); }} className="h-11 px-6 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 active:scale-95 transition-all flex items-center gap-2">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                           <button onClick={(e) => { e.stopPropagation(); handlePay(order._id); }} className="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest shadow-md shadow-emerald-600/10 active:scale-95 transition-all flex items-center gap-1.5">
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                               Pay
                            </button>
                         ) : (
-                           <button onClick={() => router.push(`/dashboard/deals/${order._id}`)} className="h-11 px-6 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-slate-900/20 active:scale-95 transition-all">
-                              View Ledger
+                           <button onClick={() => router.push(`/dashboard/deals/${order._id}`)} className="h-9 px-4 rounded-xl bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all">
+                              Details
                            </button>
                         )}
                       </div>
@@ -929,6 +962,15 @@ export default function RefundsPage() {
         payers={payers}
         onAdd={handleAddPayer}
         onRemove={handleRemovePayer}
+      />
+
+      <CsvBulkPaymentModal
+        isOpen={isCsvModalOpen}
+        onClose={() => setCsvModalOpen(false)}
+        orders={orders.filter(o => o.status === "REFUND_APPROVED")}
+        payers={payers}
+        onConfirm={handleCsvBulkPay}
+        loading={isProcessing}
       />
     </div>
   );

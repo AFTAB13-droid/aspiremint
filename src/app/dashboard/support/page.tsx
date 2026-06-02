@@ -461,7 +461,7 @@ export default function SupportPage() {
                               ) : (
                                 <div className="relative rounded-[32px] overflow-hidden h-48 group shadow-xl">
                                   <img src={formData.screenshot} className="w-full h-full object-cover" alt="Proof" />
-                                  <div className="absolute inset-0 bg-slate-900/80 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center">
+                                  <div className="absolute inset-0 bg-slate-900/80 flex flex-col items-center justify-center transition-all duration-500 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:pointer-events-none md:group-hover:pointer-events-auto">
                                     <button type="button" onClick={() => setFormData({ ...formData, screenshot: "" })} className="h-14 w-14 bg-white rounded-2xl text-rose-500 shadow-2xl flex items-center justify-center hover:scale-110 transition-all">
                                       <X className="w-6 h-6" />
                                     </button>

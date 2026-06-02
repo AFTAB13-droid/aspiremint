@@ -724,7 +724,7 @@ export default function NewOrderPage() {
                         ) : (
                            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative h-64 md:h-80 rounded-[40px] overflow-hidden border-2 border-white shadow-2xl group ring-8 ring-slate-50">
                               <img src={uploadPreview} className="w-full h-full object-cover" alt="Artifact Preview" />
-                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-4 transition-all backdrop-blur-sm">
+                              <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-4 transition-all backdrop-blur-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 md:pointer-events-none md:group-hover:pointer-events-auto">
                                  {isUploading ? (
                                     <div className="flex flex-col items-center gap-4">
                                        <div className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />

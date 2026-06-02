@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { BrandManager } from "@/components/admin/BrandManager";
-import { FormEngine } from "@/components/admin/FormEngine";
+import { AdminReports } from "@/components/admin/AdminReports";
 import { BrandOrderStats } from "@/components/admin/BrandOrderStats";
 import { UserTableView } from "@/components/user/UserTableView";
 import { AdminTableView } from "@/components/admin/AdminTableView";
@@ -173,7 +173,7 @@ export default function DealsPage() {
           <div className="relative flex items-center justify-center min-h-[56px] md:min-h-[64px]">
               <div className="flex items-center gap-1.5 p-1.5 bg-slate-100/50 rounded-[28px] border border-slate-100 shadow-sm max-w-full overflow-x-auto no-scrollbar">
                 {isAdm || isSubAdmin ? (
-                    (isSubAdmin ? ["ORDERED", "TO_BE_REVIEWED"] : ["DEALS", "KANBAN", "BRANDS", "CONFIG", "BANNER"]).map((tab) => (
+                    (isSubAdmin ? ["ORDERED", "TO_BE_REVIEWED"] : ["DEALS", "KANBAN", "BRANDS", "REPORTS", "BANNER"]).map((tab) => (
                       <button key={tab} onClick={() => setActiveTab(tab as any)} className={`whitespace-nowrap flex items-center justify-center gap-3 px-6 py-3 rounded-[22px] text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? "bg-white text-blue-600 shadow-md border border-blue-50" : "text-slate-400 hover:text-slate-600"}`}>
                          {tab === "DEALS" ? "Ledger" : 
                           tab === "KANBAN" ? "ANALYTICS" : 
@@ -347,8 +347,8 @@ export default function DealsPage() {
           <motion.div key="brands" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}>
             <BrandManager onRefresh={fetchOrders} />
           </motion.div>
-        ) : activeTab === "CONFIG" ? (
-          <motion.div key="config" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}><FormEngine /></motion.div>
+        ) : activeTab === "REPORTS" ? (
+          <motion.div key="reports" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}><AdminReports orders={orders} allBrands={allBrands} /></motion.div>
         ) : (
           <motion.div key="banner" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}><BannerManager /></motion.div>
         )}

@@ -52,6 +52,14 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: true, data: { ...defaultGlobal, ...(config?.value || {}) } });
     }
 
+    if (key === 'google_sheets_settings') {
+      const defaultSheets = { webAppUrl: "" };
+      if (!config) {
+        config = await SystemConfig.create({ key, value: defaultSheets });
+      }
+      return NextResponse.json({ success: true, data: { ...defaultSheets, ...(config?.value || {}) } });
+    }
+
     return NextResponse.json({ success: false, message: 'Invalid config key' }, { status: 400 });
   } catch (error) {
     return NextResponse.json({ success: false, message: 'Failed to fetch config' }, { status: 500 });

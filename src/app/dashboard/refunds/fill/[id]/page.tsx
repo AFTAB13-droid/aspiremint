@@ -51,8 +51,9 @@ export default function FillRefundPage() {
 
           const storageKey = `refund_form_${id}`;
           const saved = localStorage.getItem(storageKey);
+          const isEditMode = o.status !== "REFUND_FORM_PENDING";
           
-          if (saved) {
+          if (saved && !isEditMode) {
              try {
                 const parsed = JSON.parse(saved);
                  setFormData((prev: any) => {
@@ -63,25 +64,32 @@ export default function FillRefundPage() {
                     newState.upiId = o.refundDetails?.upiId || profileUpi || newState.upiId || "";
                     newState.accountHolderName = o.refundDetails?.accountHolderName || profileHolder || newState.accountHolderName || "";
 
-                    if (newState.expectedPayout === undefined || newState.expectedPayout === null) {
-                       newState.expectedPayout = calculatedPayout;
+                    if (!newState.expectedPayout) {
+                       newState.expectedPayout = o.refundDetails?.expectedPayout || calculatedPayout;
                     }
-                    if (!newState.dealType) newState.dealType = o.dealType || "Standard";
-                    if (!newState.productCode) newState.productCode = o.productCode || "";
+                    if (!newState.dealType) newState.dealType = o.refundDetails?.dealType || o.dealType || "Standard";
+                    if (!newState.productCode) newState.productCode = o.refundDetails?.productCode || o.productCode || "";
+
+                    // Sync proofs as fallback if not in draft
+                    if (!newState.reviewLink) newState.reviewLink = o.refundProof?.reviewLink || "";
+                    if (!newState.reviewScreenshot) newState.reviewScreenshot = o.refundProof?.reviewScreenshot || "";
+                    if (!newState.returnPeriodScreenshot) newState.returnPeriodScreenshot = o.refundProof?.returnPeriodScreenshot || "";
+                    if (!newState.deliveryScreenshot) newState.deliveryScreenshot = o.refundProof?.deliveryScreenshot || "";
+
                     return newState;
                  });
              } catch(e) { localStorage.removeItem(storageKey); }
           } else {
              setFormData({
-                reviewLink: "",
-                reviewScreenshot: "",
-                returnPeriodScreenshot: "",
-                deliveryScreenshot: "",
+                reviewLink: o.refundProof?.reviewLink || "",
+                reviewScreenshot: o.refundProof?.reviewScreenshot || "",
+                returnPeriodScreenshot: o.refundProof?.returnPeriodScreenshot || "",
+                deliveryScreenshot: o.refundProof?.deliveryScreenshot || "",
                 upiId: o.refundDetails?.upiId || profileUpi || "",
                 accountHolderName: o.refundDetails?.accountHolderName || profileHolder || "",
-                expectedPayout: calculatedPayout,
-                dealType: o.dealType || "Standard",
-                productCode: o.productCode || "",
+                expectedPayout: o.refundDetails?.expectedPayout || calculatedPayout,
+                dealType: o.refundDetails?.dealType || o.dealType || "Standard",
+                productCode: o.refundDetails?.productCode || o.productCode || "",
              });
           }
         } else { toast.error("Identity Handshake Failure"); }
@@ -283,7 +291,7 @@ export default function FillRefundPage() {
           ) : (
              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative h-48 rounded-[32px] overflow-hidden border-2 border-slate-100 group">
                 <img src={formData[field]} className="w-full h-full object-cover p-1 rounded-[30px]" alt="Proof" />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-all">
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 md:pointer-events-none md:group-hover:pointer-events-auto">
                    <button type="button" onClick={() => window.open(formData[field], '_blank')} className="px-4 py-2 bg-white text-slate-900 rounded-xl text-[9px] font-black uppercase tracking-widest active:scale-90 transition-all">Verify</button>
                    <button type="button" onClick={() => setFormData((p: any) => ({...p, [field]: ""}))} className="px-4 py-2 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest active:scale-90 transition-all">Clear</button>
                 </div>
