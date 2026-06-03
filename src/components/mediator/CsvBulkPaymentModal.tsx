@@ -27,7 +27,7 @@ interface ParsedPaymentRow {
   paidAmount: number;
   paidAt: string;
   transactionId: string;
-  status: "VALID" | "WARNING" | "ERROR";
+  status: "VALID" | "WARNING" | "ERROR" | "SKIPPED";
   statusText: string;
 }
 
@@ -214,11 +214,25 @@ export function CsvBulkPaymentModal({
           const expectedAmount = matchedOrder ? (matchedOrder.refundDetails?.expectedPayout || matchedOrder.amount || 0) : 0;
           const paidAmount = rawPaidAmt ? parseFloat(rawPaidAmt) : expectedAmount;
           const paidAt = rawDate || defaultDate || ""; // Leave empty if not in CSV and not in date picker
+
+          // Check if row is explicitly skipped by the user (skip/no in name or amount, or amount is 0)
+          const lowerPayerName = rawPayerName.trim().toLowerCase();
+          const lowerPaidAmt = rawPaidAmt.trim().toLowerCase();
+          const isSkipped = 
+            lowerPayerName === "skip" || 
+            lowerPayerName === "no" || 
+            lowerPaidAmt === "skip" || 
+            lowerPaidAmt === "no" || 
+            lowerPaidAmt === "0" ||
+            (rawPaidAmt.trim() !== "" && parseFloat(rawPaidAmt) === 0);
           
-          let status: "VALID" | "WARNING" | "ERROR" = "VALID";
+          let status: "VALID" | "WARNING" | "ERROR" | "SKIPPED" = "VALID";
           let statusText = "Ready to pay";
 
-          if (!matchedOrder) {
+          if (isSkipped) {
+            status = "SKIPPED";
+            statusText = "Skipped by user";
+          } else if (!matchedOrder) {
             status = "ERROR";
             statusText = "Order not found in pending list";
           } else if (matchedOrder.status !== "REFUND_APPROVED") {
@@ -277,7 +291,7 @@ export function CsvBulkPaymentModal({
   };
 
   const handleConfirmSubmit = async () => {
-    const validPayments = parsedRows.filter(r => r.status !== "ERROR");
+    const validPayments = parsedRows.filter(r => r.status !== "ERROR" && r.status !== "SKIPPED");
     if (validPayments.length === 0) {
       toast.error("No valid orders are available to pay in this preview.");
       return;
@@ -298,6 +312,7 @@ export function CsvBulkPaymentModal({
   const errorsCount = parsedRows.filter(r => r.status === "ERROR").length;
   const warningsCount = parsedRows.filter(r => r.status === "WARNING").length;
   const validCount = parsedRows.filter(r => r.status === "VALID").length;
+  const skippedCount = parsedRows.filter(r => r.status === "SKIPPED").length;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
@@ -354,6 +369,9 @@ export function CsvBulkPaymentModal({
                   </li>
                   <li>
                     <span className="text-slate-700 font-black">System ID</span>: DO NOT modify the ID value; it identifies the order in the database.
+                  </li>
+                  <li>
+                    <span className="text-slate-700 font-black">How to Skip Payouts</span>: If you have e.g. 300 entries in the sheet but want to pay only 200, you can either **delete the 100 rows** you don't want to pay, or write <code className="bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded font-black text-[10px]">skip</code> or <code className="bg-slate-200 text-slate-800 px-1.5 py-0.5 rounded font-black text-[10px]">no</code> in the <span className="text-slate-700 font-black">Refund Payer Name</span> or <span className="text-slate-700 font-black">Paid Amount</span> columns, or set <span className="text-slate-700 font-black">Paid Amount</span> to 0. Those rows will be safely ignored.
                   </li>
                 </ul>
               </div>
@@ -436,6 +454,11 @@ export function CsvBulkPaymentModal({
                     <span className="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-700 text-[9px] font-black border border-emerald-200">
                       {validCount} READY
                     </span>
+                    {skippedCount > 0 && (
+                      <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-[9px] font-black border border-slate-200">
+                        {skippedCount} SKIPPED
+                      </span>
+                    )}
                     {warningsCount > 0 && (
                       <span className="px-2.5 py-1 rounded-md bg-orange-100 text-orange-700 text-[9px] font-black border border-orange-200">
                         {warningsCount} WARNINGS
@@ -501,9 +524,11 @@ export function CsvBulkPaymentModal({
                               {row.status === "VALID" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
                               {row.status === "WARNING" && <AlertTriangle className="w-3.5 h-3.5 text-orange-500" />}
                               {row.status === "ERROR" && <X className="w-3.5 h-3.5 text-red-500" />}
+                              {row.status === "SKIPPED" && <X className="w-3.5 h-3.5 text-slate-400" />}
                               <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${
                                 row.status === "VALID" ? "bg-emerald-50 text-emerald-600" :
                                 row.status === "WARNING" ? "bg-orange-50 text-orange-600" :
+                                row.status === "SKIPPED" ? "bg-slate-100 text-slate-500" :
                                 "bg-red-50 text-red-600"
                               }`}>
                                 {row.statusText}
@@ -529,9 +554,11 @@ export function CsvBulkPaymentModal({
                                {row.status === "VALID" && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
                                {row.status === "WARNING" && <AlertTriangle className="w-3 h-3 text-orange-500" />}
                                {row.status === "ERROR" && <X className="w-3.5 h-3.5 text-red-500" />}
+                               {row.status === "SKIPPED" && <X className="w-3 h-3 text-slate-400" />}
                                <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${
                                  row.status === "VALID" ? "bg-emerald-50 text-emerald-600" :
                                  row.status === "WARNING" ? "bg-orange-50 text-orange-600" :
+                                 row.status === "SKIPPED" ? "bg-slate-100 text-slate-500" :
                                  "bg-red-50 text-red-600"
                                }`}>
                                  {row.statusText}

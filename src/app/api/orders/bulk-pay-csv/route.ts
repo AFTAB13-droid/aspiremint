@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import { Order, OrderStatus } from '@/modules/order/order.model';
-import { User } from '@/modules/user/user.model';
 
 export async function POST(req: Request) {
   try {
@@ -90,6 +89,7 @@ export async function POST(req: Request) {
     // Update buyers completed orders stats
     if (completedBuyers.size > 0) {
       try {
+        const { User } = await import('@/modules/user/user.model');
         await User.updateMany(
           { _id: { $in: Array.from(completedBuyers) } },
           { $inc: { totalCompletedOrders: 1 } }
