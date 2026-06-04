@@ -11,29 +11,29 @@ export default withAuth(
     }
 
     if (!token?.mfaPending && path === "/admin/mfa") {
-      return Response.redirect(new URL("/dashboard", req.url));
+      return Response.redirect(new URL("/app", req.url));
     }
 
-    if (path.startsWith("/dashboard/admin") && token?.role !== "ADMIN" && token?.role !== "SUBADMIN") {
-      return Response.redirect(new URL("/dashboard", req.url));
+    if (path.startsWith("/app/admin") && token?.role !== "ADMIN" && token?.role !== "SUBADMIN") {
+      return Response.redirect(new URL("/app", req.url));
     }
 
-    if (path.startsWith("/dashboard/users") && token?.role !== "ADMIN" && token?.role !== "SUBADMIN") {
-      return Response.redirect(new URL("/dashboard", req.url));
+    if (path.startsWith("/app/users") && token?.role !== "ADMIN" && token?.role !== "SUBADMIN") {
+      return Response.redirect(new URL("/app", req.url));
     }
 
     // Main Mediators Hub is Admin only
-    if (path === "/dashboard/mediators" && token?.role !== "ADMIN") {
-      return Response.redirect(new URL("/dashboard", req.url));
+    if (path === "/app/mediators" && token?.role !== "ADMIN") {
+      return Response.redirect(new URL("/app", req.url));
     }
 
     // Sub-pages in mediators like analytics/support are for Mediators
-    if (path.startsWith("/dashboard/mediators/") && token?.role !== "MEDIATOR" && token?.role !== "ADMIN") {
-      return Response.redirect(new URL("/dashboard", req.url));
+    if (path.startsWith("/app/mediators/") && token?.role !== "MEDIATOR" && token?.role !== "ADMIN") {
+      return Response.redirect(new URL("/app", req.url));
     }
 
-    if (path.startsWith("/dashboard/mediations") && token?.role !== "MEDIATOR") {
-      return Response.redirect(new URL("/dashboard", req.url));
+    if (path.startsWith("/app/mediations") && token?.role !== "MEDIATOR") {
+      return Response.redirect(new URL("/app", req.url));
     }
   },
   {
@@ -48,5 +48,5 @@ export default withAuth(
 
 // Protect the dashboard and any other private routes
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/mfa"],
+  matcher: ["/app/:path*", "/admin/mfa"],
 };

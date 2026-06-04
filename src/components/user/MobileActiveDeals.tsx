@@ -282,7 +282,7 @@ export function MobileActiveDeals({
                     {role === 'USER' ? (
                       deal.remainingSlots > 0 ? (
                         <Link 
-                          href={`/dashboard/deals/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
+                          href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
                           className="h-11 px-6 bg-blue-600 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 active:scale-95 transition-all w-full"
                         >
                           Fill Form

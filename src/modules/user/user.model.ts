@@ -53,6 +53,7 @@ export interface IUser extends Document {
     }[];
     lastPasswordChange?: Date;
   };
+  fcmTokens?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -112,6 +113,7 @@ const UserSchema = new Schema<IUser>(
       ],
       lastPasswordChange: { type: Date },
     },
+    fcmTokens: { type: [String], default: [] },
   },
   { timestamps: true }
 );

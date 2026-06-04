@@ -116,6 +116,26 @@ export async function PUT(req: Request) {
       // We don't fail the whole profile update if sync fails, but log it
     }
 
+    // Notify user about security credential changes
+    try {
+      const { NotificationService } = await import("@/services/notification.service");
+      const { NotificationType } = await import("@/modules/notification/notification.model");
+      
+      const changeMsg = hasPaymentChanges 
+        ? "Your primary payment details (UPI ID/Bank Details) have been updated successfully."
+        : "Your profile information was updated successfully.";
+
+      await NotificationService.create({
+        recipient: user._id.toString(),
+        type: NotificationType.SYSTEM,
+        title: hasPaymentChanges ? "Security Update: Payment Details Changed" : "Security Update: Profile Updated",
+        message: `${changeMsg} If this wasn't you, contact support immediately.`,
+        actionUrl: "/app/settings",
+      });
+    } catch (notifErr) {
+      console.error("Failed to generate profile update notification:", notifErr);
+    }
+
     return NextResponse.json({ 
       success: true, 
       message: 'Profile updated completely' 

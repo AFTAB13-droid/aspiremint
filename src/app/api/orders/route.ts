@@ -235,7 +235,7 @@ export async function POST(req: Request) {
           title: "New Order Assigned",
           message: `${user.name} has submitted a new order (${brandName}) and assigned it to you.`,
           metadata: { orderId: newOrder._id },
-          actionUrl: `/dashboard/deals/${newOrder._id}`,
+          actionUrl: `/app/orders/${newOrder._id}`,
           mediaUrl: dealDoc.productImage || undefined
         });
       } catch (e) {

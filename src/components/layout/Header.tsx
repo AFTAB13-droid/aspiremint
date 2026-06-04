@@ -26,19 +26,19 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user }) => {
 
   // Map route to title for native-app feel on mobile
   const getPageTitle = () => {
-    if (pathname.includes("/dashboard/deals/active")) return "Active Deals";
-    if (pathname.includes("/dashboard/deals/new")) return "New Order";
-    if (pathname.split("/").length > 4 && pathname.includes("/dashboard/deals/")) return "Order Details";
-    if (pathname.includes("/dashboard/deals")) return "My Orders";
-    if (pathname.includes("/dashboard/refunds/fill")) return "Apply Refund";
-    if (pathname.includes("/dashboard/refunds")) return "My Refunds";
-    if (pathname.includes("/dashboard/settings")) return "Settings";
-    if (pathname.includes("/dashboard/support")) return "Support Hub";
-    if (pathname.includes("/dashboard/wallet")) return "Passbook";
-    if (pathname.includes("/dashboard/users")) return "User Directory";
-    if (pathname.includes("/dashboard/mediators")) return "Mediators Hub";
-    if (pathname.includes("/dashboard/reports")) return "Analytics";
-    if (pathname === "/dashboard") return "Dashboard";
+    if (pathname.includes("/app/activedeals")) return "Active Deals";
+    if (pathname.includes("/app/orders/new")) return "New Order";
+    if (pathname.split("/").length > 4 && pathname.includes("/app/orders/")) return "Order Details";
+    if (pathname.includes("/app/orders")) return "My Orders";
+    if (pathname.includes("/app/refunds/fill")) return "Apply Refund";
+    if (pathname.includes("/app/refunds")) return "My Refunds";
+    if (pathname.includes("/app/settings")) return "Settings";
+    if (pathname.includes("/app/support")) return "Support Hub";
+    if (pathname.includes("/app/wallet")) return "Passbook";
+    if (pathname.includes("/app/users")) return "User Directory";
+    if (pathname.includes("/app/mediators")) return "Mediators Hub";
+    if (pathname.includes("/app/reports")) return "Analytics";
+    if (pathname === "/app") return "Dashboard";
     return "AspireMint";
   };
 
@@ -177,7 +177,7 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user }) => {
         <div className="h-8 w-[1px] bg-slate-200/50 mx-2 hidden lg:block"></div>
 
         {/* User Profile Summary - Refined */}
-        <Link href="/dashboard/settings" className="hidden lg:flex">
+        <Link href="/app/settings" className="hidden lg:flex">
           <motion.div 
             whileHover={{ scale: 1.02, x: 2 }}
             className={`flex items-center gap-3 cursor-pointer group bg-white/80 hover:bg-white p-1.5 pr-5 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all ${isAdm ? "hover:border-indigo-200" : "hover:border-blue-200"}`}

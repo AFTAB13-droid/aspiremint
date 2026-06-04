@@ -401,7 +401,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             title: "Refund Approved",
             message: `Your refund request has been authorized by ${actorName}. It will be processed soon.`,
             metadata: { orderId: updatedOrder._id },
-            actionUrl: `/dashboard/deals/${updatedOrder._id}`,
+            actionUrl: `/app/orders/${updatedOrder._id}`,
             mediaUrl
           });
           
@@ -412,7 +412,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
               title: "Order Approved",
               message: `An order assigned to you (${updatedOrder.brandName}) was approved by ${actorName}.`,
               metadata: { orderId: updatedOrder._id },
-              actionUrl: `/dashboard/deals/${updatedOrder._id}`,
+              actionUrl: `/app/orders/${updatedOrder._id}`,
               mediaUrl
             });
           }
@@ -425,7 +425,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             title: "Refund Rejected",
             message: `Your refund request for ${updatedOrder.brandName} was rejected. Reason: ${body["refundDetails.rejectionNote"] || "Not specified"}`,
             metadata: { orderId: updatedOrder._id },
-            actionUrl: `/dashboard/deals/${updatedOrder._id}`,
+            actionUrl: `/app/orders/${updatedOrder._id}`,
             mediaUrl
           });
         }
@@ -437,7 +437,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             title: "Refund Paid",
             message: `Your refund of ₹${updatedOrder.amount} has been successfully paid by ${session.user.name}.`,
             metadata: { orderId: updatedOrder._id },
-            actionUrl: `/dashboard/deals/${updatedOrder._id}`,
+            actionUrl: `/app/orders/${updatedOrder._id}`,
             mediaUrl
           });
         }

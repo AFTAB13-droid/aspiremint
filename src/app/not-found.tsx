@@ -33,7 +33,7 @@ export default function NotFound() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-4">
-           <Link href="/dashboard">
+           <Link href="/app">
               <button className="rounded-2xl bg-slate-900 px-10 py-4 text-sm font-black uppercase tracking-widest text-white shadow-2xl shadow-slate-900/20 transition-all hover:bg-black active:scale-95">
                  Return to Base
               </button>

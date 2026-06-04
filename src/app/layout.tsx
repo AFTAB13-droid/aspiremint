@@ -7,6 +7,7 @@ import { NotificationToaster } from "@/components/ui/NotificationToaster";
 import OfflineGuard from "@/components/layout/OfflineGuard";
 import SplashController from "@/components/common/SplashController";
 import { GlobalNotificationPoller } from "@/components/layout/GlobalNotificationPoller";
+import FcmInitializer from "@/components/common/FcmInitializer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -36,6 +37,7 @@ export default function RootLayout({
           <OfflineGuard>
             <SplashController>
               {children}
+              <FcmInitializer />
               <NotificationToaster />
               <GlobalNotificationPoller />
             </SplashController>

@@ -47,7 +47,7 @@ export default function Error({
            >
               Try to Re-Sync
            </button>
-           <Link href="/dashboard">
+           <Link href="/app">
               <button className="rounded-2xl border border-slate-200 bg-white px-10 py-4 text-sm font-black uppercase tracking-widest text-slate-500 transition-all hover:bg-slate-50 active:scale-95">
                  Emergency Home
               </button>

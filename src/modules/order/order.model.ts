@@ -179,7 +179,6 @@ const OrderSchema = new Schema<IOrder>(
 OrderSchema.index({ buyer: 1, status: 1 });
 OrderSchema.index({ mediator: 1, status: 1 });
 OrderSchema.index({ status: 1, createdAt: -1 });
-OrderSchema.index({ aspireOrderId: 1 }, { unique: true });
 OrderSchema.index({ userOrderId: 1 });
 OrderSchema.index({ productCode: 1 });
 

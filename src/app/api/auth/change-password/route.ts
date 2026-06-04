@@ -39,6 +39,21 @@ export async function POST(req: Request) {
 
     await user.save();
 
+    // Notify user about security credential changes
+    try {
+      const { NotificationService } = await import("@/services/notification.service");
+      const { NotificationType } = await import("@/modules/notification/notification.model");
+      await NotificationService.create({
+        recipient: user._id.toString(),
+        type: NotificationType.SYSTEM,
+        title: "Security Update: Password Changed",
+        message: "Your account password was updated successfully. If this wasn't you, contact support immediately.",
+        actionUrl: "/app/settings",
+      });
+    } catch (notifErr) {
+      console.error("Failed to generate change-password notification:", notifErr);
+    }
+
     return NextResponse.json({ 
       success: true, 
       message: "Password updated successfully" 

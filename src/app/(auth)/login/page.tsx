@@ -54,7 +54,7 @@ export default function LoginPage() {
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("onboarding_dismissed");
         }
-        router.push("/dashboard"); 
+        router.push("/app"); 
         router.refresh();
       }
     } catch (error) {

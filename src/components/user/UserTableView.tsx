@@ -873,7 +873,7 @@ export function UserTableView({ orders, onRefund, onViewDetails, onNewOrder, ref
 
                      <div className="flex flex-col gap-3">
                         <Link 
-                           href={`/dashboard/refunds/fill/${selectedNote.id}`}
+                           href={`/app/refunds/fill/${selectedNote.id}`}
                            className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black text-center text-[11px] uppercase tracking-widest shadow-2xl shadow-indigo-200 active:scale-95 transition-all flex items-center justify-center gap-2"
                         >
                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>

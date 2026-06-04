@@ -286,7 +286,7 @@ export const BannerManager = () => {
                         type="text" 
                         value={config.actionLink || ""}
                         onChange={(e) => setConfig({...config, actionLink: e.target.value})}
-                        placeholder="/dashboard/deals"
+                        placeholder="/app/orders"
                         className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm font-bold focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                       />
                     </div>

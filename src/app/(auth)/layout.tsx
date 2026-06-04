@@ -28,7 +28,7 @@ export default function AuthLayout({
 
   useEffect(() => {
     if (status === "authenticated") {
-      router.replace("/dashboard");
+      router.replace("/app");
     }
   }, [status, router]);
 

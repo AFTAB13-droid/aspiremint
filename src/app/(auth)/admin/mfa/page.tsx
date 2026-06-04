@@ -20,7 +20,7 @@ export default function AdminMfaPage() {
     if (status === "unauthenticated") {
       router.replace("/login");
     } else if (status === "authenticated" && !session?.user?.mfaPending) {
-      router.replace("/dashboard");
+      router.replace("/app");
     }
   }, [session, status, router]);
 
@@ -72,7 +72,7 @@ export default function AdminMfaPage() {
       // Update the NextAuth session dynamically to clear the mfaPending flag
       await update({ mfaPending: false });
       
-      router.push("/dashboard");
+      router.push("/app");
       router.refresh();
     } catch (err) {
       toast.error("Security authorization failed");

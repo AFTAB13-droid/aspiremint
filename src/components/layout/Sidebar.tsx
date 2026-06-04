@@ -19,7 +19,7 @@ interface NavLink {
 const navLinks: NavLink[] = [
   {
     name: "Dashboard",
-    href: "/dashboard",
+    href: "/app",
     roles: ["USER", "MEDIATOR", "ADMIN", "SUBADMIN"],
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -29,7 +29,7 @@ const navLinks: NavLink[] = [
   },
   {
     name: "My Orders",
-    href: "/dashboard/deals",
+    href: "/app/orders",
     roles: ["USER"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -39,7 +39,7 @@ const navLinks: NavLink[] = [
   },
   {
     name: "Active Deals",
-    href: "/dashboard/deals/active",
+    href: "/app/activedeals",
     roles: ["USER", "MEDIATOR", "ADMIN"],
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -49,7 +49,7 @@ const navLinks: NavLink[] = [
   },
   {
     name: "Orders",
-    href: "/dashboard/deals",
+    href: "/app/orders",
     roles: ["ADMIN", "SUBADMIN"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -59,7 +59,7 @@ const navLinks: NavLink[] = [
   },
   {
     name: "My Refunds",
-    href: "/dashboard/refunds",
+    href: "/app/refunds",
     roles: ["USER"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -69,7 +69,7 @@ const navLinks: NavLink[] = [
   },
   {
     name: "Passbook",
-    href: "/dashboard/wallet",
+    href: "/app/wallet",
     roles: ["MEDIATOR", "ADMIN"],
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -79,7 +79,7 @@ const navLinks: NavLink[] = [
   },
   {
     name: "Refer and Earn",
-    href: "/dashboard/referral",
+    href: "/app/referral",
     roles: ["USER"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -89,7 +89,7 @@ const navLinks: NavLink[] = [
   },
   {
     name: "Support",
-    href: "/dashboard/support",
+    href: "/app/support",
     roles: ["USER"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -99,7 +99,7 @@ const navLinks: NavLink[] = [
   },
   {
     name: "Support Hub",
-    href: "/dashboard/mediators/support",
+    href: "/app/mediators/support",
     roles: ["MEDIATOR"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -109,7 +109,7 @@ const navLinks: NavLink[] = [
   },
   {
     name: "My Activity",
-    href: "/dashboard/mediations",
+    href: "/app/mediations",
     roles: ["MEDIATOR"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -119,7 +119,7 @@ const navLinks: NavLink[] = [
   },
   {
     name: "Refunds",
-    href: "/dashboard/refunds",
+    href: "/app/refunds",
     roles: ["MEDIATOR", "ADMIN"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -129,7 +129,7 @@ const navLinks: NavLink[] = [
   },
   {
     name: "User Directory",
-    href: "/dashboard/users",
+    href: "/app/users",
     roles: ["ADMIN", "SUBADMIN"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -139,7 +139,7 @@ const navLinks: NavLink[] = [
   },
   {
     name: "Mediators Hub",
-    href: "/dashboard/mediators",
+    href: "/app/mediators",
     roles: ["ADMIN"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -149,7 +149,7 @@ const navLinks: NavLink[] = [
   },
   {
     name: "Live Analytics",
-    href: "/dashboard/admin/analytics",
+    href: "/app/admin/analytics",
     roles: ["ADMIN"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -159,7 +159,7 @@ const navLinks: NavLink[] = [
   },
   {
     name: "Live Analytics",
-    href: "/dashboard/mediators/analytics",
+    href: "/app/mediators/analytics",
     roles: ["MEDIATOR"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -169,7 +169,7 @@ const navLinks: NavLink[] = [
   },
   {
     name: "SOP Guidelines",
-    href: "/dashboard/admin/guidelines",
+    href: "/app/admin/guidelines",
     roles: ["SUBADMIN"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -179,7 +179,7 @@ const navLinks: NavLink[] = [
   },
   {
     name: "Support Hub",
-    href: "/dashboard/admin/support",
+    href: "/app/admin/support",
     roles: ["ADMIN", "SUBADMIN"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -206,7 +206,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const isActiveSettings = pathname === "/dashboard/settings";
+  const isActiveSettings = pathname === "/app/settings";
  
   // Lock scroll on mobile when sidebar is open
   React.useEffect(() => {
@@ -258,7 +258,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {session?.user?.name?.split(' ')[0] || "User"}
                 </span>
                 <Link 
-                  href="/dashboard/settings" 
+                  href="/app/settings" 
                   onClick={() => setMobileOpen(false)}
                   className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mt-2.5 hover:text-indigo-600 transition-colors bg-blue-50/50 px-2 py-1 rounded-md self-start"
                 >
@@ -314,7 +314,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Footer actions for mobile */}
         <div className="p-6 border-t border-blue-50/50 flex flex-col gap-3 relative z-10">
            <InstallPWA variant="mobile" />
-           <Link href="/dashboard/settings" onClick={() => setMobileOpen(false)} className="w-full">
+           <Link href="/app/settings" onClick={() => setMobileOpen(false)} className="w-full">
               <button className="w-full h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all text-[11px] font-black uppercase tracking-[0.2em] border border-blue-100/50 shadow-sm">
                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                  My Profile
@@ -422,7 +422,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                  </div>
               </div>
               <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-end relative z-10">
-                 <Link href="/dashboard/settings" onClick={() => setMobileOpen(false)} className="h-10 px-4 rounded-xl bg-white/10 flex items-center gap-2 hover:bg-white/20 transition-all text-[11px] font-black uppercase tracking-widest border border-white/10">
+                 <Link href="/app/settings" onClick={() => setMobileOpen(false)} className="h-10 px-4 rounded-xl bg-white/10 flex items-center gap-2 hover:bg-white/20 transition-all text-[11px] font-black uppercase tracking-widest border border-white/10">
                     <span>Manage Account</span>
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                  </Link>
@@ -508,7 +508,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <InstallPWA variant={collapsed ? "desktop_collapsed" : "sidebar"} />
 
         {/* Profile Link */}
-        <Link href="/dashboard/settings" title={collapsed ? "Profile Settings" : ""}>
+        <Link href="/app/settings" title={collapsed ? "Profile Settings" : ""}>
           <motion.div
             whileHover={{ x: collapsed ? 0 : 6 }}
             whileTap={{ scale: 0.97 }}

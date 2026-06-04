@@ -47,7 +47,7 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
 
         {/* Info Icon near Badge - Hide if disabled */}
         {showInfoIcon && (
-          <Link href="/dashboard/samples">
+          <Link href="/app/samples">
             <button className="h-4 w-4 rounded-full bg-slate-100/80 text-slate-400 flex items-center justify-center text-[8px] font-black hover:bg-white hover:text-indigo-600 transition-all border border-slate-200/50 shadow-inner">
               i
             </button>

@@ -45,7 +45,7 @@ export function KanbanView({ orders }: KanbanViewProps) {
            
            <div className="flex flex-col gap-3">
               {brandOrders.map((order) => (
-                <Link key={order._id} href={`/dashboard/deals/${order._id}`}>
+                <Link key={order._id} href={`/app/orders/${order._id}`}>
                    <motion.div 
                      whileHover={{ y: -2 }}
                      className="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all group"

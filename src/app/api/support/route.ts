@@ -55,6 +55,28 @@ export async function POST(req: Request) {
     const newTicket = new SupportTicket(ticketData);
     await newTicket.save();
 
+    // Trigger notification for Mediator if order dispute query is raised
+    if (newTicket.type === 'ORDER_DISPUTE' && newTicket.mediator) {
+      try {
+        const { NotificationService } = await import("@/services/notification.service");
+        const { NotificationType } = await import("@/modules/notification/notification.model");
+        
+        // Find order references for message
+        const order = await Order.findById(newTicket.order).select('userOrderId aspireOrderId');
+        const orderRef = order?.userOrderId || order?.aspireOrderId || "N/A";
+
+        await NotificationService.create({
+          recipient: newTicket.mediator.toString(),
+          type: NotificationType.SYSTEM,
+          title: "New Order Query Raised",
+          message: `Buyer has raised a dispute query for Order ID: ${orderRef}.`,
+          actionUrl: `/app/support`,
+        });
+      } catch (notifErr) {
+        console.error("Failed to generate support ticket mediator notification:", notifErr);
+      }
+    }
+
     return NextResponse.json({ 
       success: true, 
       message: 'Ticket created successfully',
