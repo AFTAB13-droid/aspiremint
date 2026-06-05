@@ -29,11 +29,15 @@ if (apiKey && projectId && messagingSenderId) {
   messaging.onBackgroundMessage((payload) => {
     console.log('[firebase-messaging-sw.js] Background push notification received:', payload);
     
-    if (!payload.notification) return;
+    // Firebase automatically displays notifications if the payload contains a 'notification' object.
+    // If we call showNotification manually here, we will get duplicates.
+    if (payload.notification) {
+      return;
+    }
 
-    const notificationTitle = payload.notification.title || "AspireMint Update";
+    const notificationTitle = payload.data?.title || "AspireMint Update";
     const notificationOptions = {
-      body: payload.notification.body || "",
+      body: payload.data?.body || "",
       icon: payload.data?.icon || '/favicon.svg',
       badge: payload.data?.badge || '/favicon.svg',
       data: {

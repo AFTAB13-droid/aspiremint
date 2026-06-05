@@ -41,7 +41,13 @@ export async function sendPushNotification(userId: string, payload: PushPayload)
             body: payload.body,
           },
           data: payload.data || {},
+          android: {
+            priority: 'high',
+          },
           webpush: {
+            headers: {
+              Urgency: 'high'
+            },
             notification: {
               icon: '/favicon.svg',
               badge: '/favicon.svg',
@@ -118,7 +124,13 @@ export async function sendPushNotificationToMultiple(userIds: string[], payload:
           body: payload.body,
         },
         data: payload.data || {},
+        android: {
+          priority: 'high',
+        },
         webpush: {
+          headers: {
+            Urgency: 'high'
+          },
           notification: {
             icon: '/favicon.svg',
             badge: '/favicon.svg',
