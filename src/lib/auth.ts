@@ -95,8 +95,8 @@ export const authOptions: NextAuthOptions = {
         }
 
         // --- Login success: clear brute-force counters ---
-        await redis.del(attemptsKey);
-        await redis.del(lockKey);
+        redis.del(attemptsKey).catch(() => {});
+        redis.del(lockKey).catch(() => {});
         // -------------------------------------------------
 
         if (!user.isActive) {
@@ -117,18 +117,20 @@ export const authOptions: NextAuthOptions = {
 
           // Save in Redis for 5 minutes
           const mfaRedisKey = `admin_mfa_otp:${user._id.toString()}`;
-          await redis.set(mfaRedisKey, mfaOtp, { ex: 300 });
+          redis.set(mfaRedisKey, mfaOtp, { ex: 300 }).catch(() => {});
 
           // Send Email OTP!
           try {
             const { sendOTPEmail } = await import("@/services/emailService");
-            await sendOTPEmail(user.email, user.name, mfaOtp);
-            console.log(`[MFA] Sent OTP ${mfaOtp} to email ${user.email}`);
+            sendOTPEmail(user.email, user.name, mfaOtp).catch(mailError => {
+              console.error("[MFA] Failed to send OTP email asynchronously:", mailError);
+              console.log(`\n==================================================`);
+              console.log(`[MFA FALLBACK] OTP Code for ${user.email}: ${mfaOtp}`);
+              console.log(`==================================================\n`);
+            });
+            console.log(`[MFA] Sent OTP ${mfaOtp} to email ${user.email} asynchronously`);
           } catch (mailError) {
-            console.error("[MFA] Failed to send OTP email, fallback print:", mailError);
-            console.log(`\n==================================================`);
-            console.log(`[MFA FALLBACK] OTP Code for ${user.email}: ${mfaOtp}`);
-            console.log(`==================================================\n`);
+             console.error("[MFA] Could not dispatch email function:", mailError);
           }
 
           isMfaPending = true;
