@@ -1054,9 +1054,9 @@ export const sendOrderCreationEmail = async (email: string, name: string, orderD
   `;
 
   return transporter.sendMail({
-    from: \`"AspireMint Portal" <\${process.env.GMAIL_USER}>\`,
+    from: `"AspireMint Portal" <${process.env.GMAIL_USER}>`,
     to: email,
-    subject: \`[AspireMint] New Order Initialized: \${orderData.aspireOrderId}\`,
+    subject: `[AspireMint] New Order Initialized: ${orderData.aspireOrderId}`,
     html,
   });
 };
