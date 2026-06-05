@@ -314,11 +314,11 @@ export default function OrderDetailsPage() {
 
                 {order.screenshot && (
                    <div className="mt-8 pt-8 border-t border-slate-50">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Order Artifact (Screenshot)</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Order Media (Screenshot)</p>
                       <div className="relative h-48 w-full md:w-80 rounded-3xl overflow-hidden border border-slate-100 shadow-sm group cursor-pointer" onClick={() => window.open(order.screenshot, '_blank')}>
                          <img src={order.screenshot} className="h-full w-full object-cover transition-transform group-hover:scale-105" alt="Order Proof" />
                          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                            <span className="px-4 py-2 bg-white/90 backdrop-blur-md rounded-xl text-[8px] font-black uppercase tracking-widest text-slate-900">View Full Artifact</span>
+                            <span className="px-4 py-2 bg-white/90 backdrop-blur-md rounded-xl text-[8px] font-black uppercase tracking-widest text-slate-900">View Full Media</span>
                          </div>
                       </div>
                    </div>
@@ -424,7 +424,7 @@ export default function OrderDetailsPage() {
                      </div>
 
                      <div className="space-y-6">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Verification Artifacts</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Verification Media</p>
                         <div className="grid grid-cols-2 gap-4">
                            {[
                              { label: "Review Proof", src: order.refundProof?.reviewScreenshot },
@@ -707,7 +707,7 @@ export default function OrderDetailsPage() {
             <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Registry Snapshot</p>
               <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-slate-100 shadow-inner" onClick={() => window.open(order.screenshot, '_blank')}>
-                <img src={order.screenshot} className="w-full h-full object-cover" alt="Artifact" />
+                <img src={order.screenshot} className="w-full h-full object-cover" alt="Media" />
               </div>
             </div>
           )}

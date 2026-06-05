@@ -15,8 +15,11 @@ export function InstallPWA({ variant = "sidebar" }: { variant?: "sidebar" | "mob
   useEffect(() => {
     // 1. Register Service Worker for PWA compliance
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .catch((err) => console.log('SW registration skipped: ', err));
+      navigator.serviceWorker.getRegistration('/').then((reg) => {
+        if (!reg) {
+            navigator.serviceWorker.register('/sw.js').catch((err) => console.log('SW registration skipped: ', err));
+        }
+      });
     }
 
     // 2. Check if already installed & running in standalone mode

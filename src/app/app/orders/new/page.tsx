@@ -252,7 +252,7 @@ export default function NewOrderPage() {
     reader.readAsDataURL(file);
 
     setIsUploading(true);
-    const loadingId = toast.loading("Securely uploading artifact...");
+    const loadingId = toast.loading("Media is uploading...");
     
     try {
       const compressedBlob = await compressImage(file);
@@ -276,7 +276,7 @@ export default function NewOrderPage() {
 
       if (json.secure_url) {
         setFormData(prev => ({ ...prev, screenshot: json.secure_url }));
-        toast.success("Artifact synchronized", { id: loadingId });
+        toast.success("Media uploaded", { id: loadingId });
       } else {
         throw new Error(json.error?.message || "Upload failed");
       }
@@ -589,7 +589,7 @@ export default function NewOrderPage() {
                                        options={selectedBrandData?.exchangeProducts?.map((ep: any) => ep.name) || []}
                                        value={formData.exchangeProduct}
                                        onChange={(val) => handleInputChange({ target: { name: 'exchangeProduct', value: val } } as any)}
-                                       placeholder="Select Registry Artifact..."
+                                       placeholder="Select Registry Media..."
                                        searchable
                                        mobileModal={true}
                                        className="w-full h-16 [&>button]:rounded-[24px]"
@@ -626,7 +626,7 @@ export default function NewOrderPage() {
                                     />
                                     {(!selectedBrandData?.exchangeProducts || selectedBrandData.exchangeProducts.length === 0) && (
                                        <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mt-2 px-2 blur-none">
-                                          NO VALID EXCHANGE ARTIFACTS REGISTRED FOR {selectedBrandData?.name || "THIS BRAND"}
+                                          NO VALID EXCHANGE ITEMS REGISTERED FOR {selectedBrandData?.name || "THIS BRAND"}
                                        </p>
                                     )}
                                  </div>
@@ -718,17 +718,17 @@ export default function NewOrderPage() {
                                     <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                  </div>
                                  <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-2">Upload SS</h4>
-                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest max-w-[200px] mx-auto leading-relaxed">Mandatory artifact for escrow initialization</p>
+                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest max-w-[200px] mx-auto leading-relaxed">Mandatory media for escrow initialization</p>
                               </div>
                            </label>
                         ) : (
                            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative h-64 md:h-80 rounded-[40px] overflow-hidden border-2 border-white shadow-2xl group ring-8 ring-slate-50">
-                              <img src={uploadPreview} className="w-full h-full object-cover" alt="Artifact Preview" />
+                              <img src={uploadPreview} className="w-full h-full object-cover" alt="Media Preview" />
                               <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-4 transition-all backdrop-blur-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 md:pointer-events-none md:group-hover:pointer-events-auto">
                                  {isUploading ? (
                                     <div className="flex flex-col items-center gap-4">
                                        <div className="h-10 w-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-                                       <span className="text-[10px] font-black text-white uppercase tracking-widest animate-pulse">Synchronizing Node...</span>
+                                       <span className="text-[10px] font-black text-white uppercase tracking-widest animate-pulse">Uploading...</span>
                                     </div>
                                  ) : (
                                     <>

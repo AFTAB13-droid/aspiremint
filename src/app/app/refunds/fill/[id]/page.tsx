@@ -132,7 +132,7 @@ export default function FillRefundPage() {
   const handleFileUpload = async (file: File, field: string) => {
     if (isUploading) return;
     setIsUploading(field);
-    const loadingId = toast.loading(`Securing Artifact...`);
+    const loadingId = toast.loading(`Media is uploading...`);
     try {
       const compressedBlob = await compressImage(file);
       const signRes = await fetch("/api/upload/sign");
@@ -151,7 +151,7 @@ export default function FillRefundPage() {
       
       if (json.secure_url) {
         setFormData((prev: any) => ({ ...prev, [field]: json.secure_url }));
-        toast.success(`Artifact Hardened`, { id: loadingId });
+        toast.success(`Media uploaded`, { id: loadingId });
       } else { throw new Error(json.error?.message || "Upload Failed"); }
     } catch (err: any) {
       toast.error(err.message || "Upload Transmission Interrupted", { id: loadingId });
