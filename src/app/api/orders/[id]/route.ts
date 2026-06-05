@@ -473,7 +473,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
                      transactionId: updatedOrder.paymentDetails?.transactionId,
                      amount: updatedOrder.amount,
                      paidAt: updatedOrder.paymentDetails?.paidAt || new Date(),
-                     paidByName: session.user.name
+                     paidByName: session.user.name,
+                     brandName: updatedOrder.brandName,
+                     productName: updatedOrder.reviewName
                   }
                );
             } catch (mailErr) {

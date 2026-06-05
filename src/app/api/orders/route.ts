@@ -244,7 +244,7 @@ export async function POST(req: Request) {
 
       // SEND ORDER CREATION EMAIL TO BUYER
       try {
-        await sendOrderCreationEmail(user.email, user.name, newOrder);
+        await sendOrderCreationEmail(user.email, user.name, newOrder, dealDoc.productImage);
       } catch (emailErr) {
         console.error("Order Creation Email Error:", emailErr);
       }

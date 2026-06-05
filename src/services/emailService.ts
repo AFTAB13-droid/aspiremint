@@ -483,7 +483,7 @@ export const sendOrderStatusEmail = async (
           </div>
           <div class="detail-row">
             <span class="card-label">Approval Time</span>
-            <span class="card-value">${new Date().toLocaleString()}</span>
+            <span class="card-value">${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}</span>
           </div>
         </div>
 
@@ -745,7 +745,7 @@ export const sendOrderStatusEmail = async (
           </div>
           <div class="detail-row">
             <span class="card-label">Decline Time</span>
-            <span class="card-value">${new Date().toLocaleString()}</span>
+            <span class="card-value">${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}</span>
           </div>
           <div class="detail-row total-row">
             <span class="total-label">Expected Refund Amount</span>
@@ -778,7 +778,7 @@ export const sendOrderStatusEmail = async (
   });
 };
 
-export const sendOrderCreationEmail = async (email: string, name: string, orderData: any) => {
+export const sendOrderCreationEmail = async (email: string, name: string, orderData: any, productImage?: string) => {
   const html = `
 <!DOCTYPE html>
 <html>
@@ -891,6 +891,33 @@ export const sendOrderCreationEmail = async (email: string, name: string, orderD
       text-transform: uppercase;
       letter-spacing: 0.1em;
     }
+    .img-box {
+      width: 100%;
+      height: 180px;
+      border-radius: 24px;
+      overflow: hidden;
+      margin-bottom: 30px;
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      position: relative;
+      animation: pulseShadow 4s infinite ease-in-out;
+    }
+    .product-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .img-placeholder {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1f2937, #111827);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #64748b;
+      font-weight: bold;
+      letter-spacing: 0.05em;
+    }
     .detail-card { 
       background: rgba(255, 255, 255, 0.02); 
       border: 1.5px solid rgba(99, 102, 241, 0.2); 
@@ -978,8 +1005,16 @@ export const sendOrderCreationEmail = async (email: string, name: string, orderD
         <div class="status-badge">
           <span class="status-symbol"></span>
         </div>
-        <h2 class="headline">Refund Form Submitted</h2>
+        <h2 class="headline">Order Form Submitted</h2>
         <p class="subheadline">Verification in progress</p>
+
+        <div class="img-box">
+          ${productImage ? `
+            <img class="product-img" src="${productImage}" alt="${orderData.reviewName || "Product"}" />
+          ` : `
+            <div class="img-placeholder">IMAGE NOT PROVIDED</div>
+          `}
+        </div>
         
         <div class="detail-card">
           <div class="detail-row">
@@ -987,16 +1022,20 @@ export const sendOrderCreationEmail = async (email: string, name: string, orderD
             <span class="card-value">${orderData.brandName || "N/A"}</span>
           </div>
           <div class="detail-row">
-            <span class="card-label">Product Code</span>
-            <span class="card-value">${orderData.productCode || "N/A"}</span>
+            <span class="card-label">Product</span>
+            <span class="card-value">${orderData.reviewName || "N/A"} (${orderData.productCode || "N/A"})</span>
+          </div>
+          <div class="detail-row">
+            <span class="card-label">Review Type</span>
+            <span class="card-value" style="color: #ec4899;">${orderData.reviewType || "Standard Review"}</span>
           </div>
           <div class="detail-row">
             <span class="card-label">Submission Time</span>
-            <span class="card-value">${new Date().toLocaleString()}</span>
+            <span class="card-value">${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}</span>
           </div>
           <div class="detail-row total-row">
             <span class="total-label">Expected Refund Amount</span>
-            <span class="total-value">₹${orderData.amount?.toLocaleString() || "0.00"}</span>
+            <span class="total-value">₹${(Number(orderData.amount) + Number(orderData.lessAmount || 0)).toLocaleString() || "0.00"}</span>
           </div>
         </div>
 
@@ -1015,9 +1054,9 @@ export const sendOrderCreationEmail = async (email: string, name: string, orderD
   `;
 
   return transporter.sendMail({
-    from: `"AspireMint Portal" <${process.env.GMAIL_USER}>`,
+    from: \`"AspireMint Portal" <\${process.env.GMAIL_USER}>\`,
     to: email,
-    subject: `[AspireMint] New Order Initialized: ${orderData.aspireOrderId}`,
+    subject: \`[AspireMint] New Order Initialized: \${orderData.aspireOrderId}\`,
     html,
   });
 };
@@ -1226,6 +1265,14 @@ export const sendOrderPaymentEmail = async (email: string, name: string, orderId
         
         <div class="invoice-card">
           <div class="invoice-row">
+            <span class="invoice-label">Sponsor Brand</span>
+            <span class="invoice-value">${paymentData.brandName || "N/A"}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="invoice-label">Product Name</span>
+            <span class="invoice-value">${paymentData.productName || "N/A"}</span>
+          </div>
+          <div class="invoice-row">
             <span class="invoice-label">Transaction ID</span>
             <span class="invoice-value">${paymentData.transactionId || 'SYSTEM_GEN'}</span>
           </div>
@@ -1235,11 +1282,7 @@ export const sendOrderPaymentEmail = async (email: string, name: string, orderId
           </div>
           <div class="invoice-row">
             <span class="invoice-label">Clearance Time</span>
-            <span class="invoice-value">${new Date(paymentData.paidAt).toLocaleString()}</span>
-          </div>
-          <div class="invoice-row">
-            <span class="invoice-label">Authorized By</span>
-            <span class="invoice-value">${paymentData.paidByName || "Finance Desk"}</span>
+            <span class="invoice-value">${new Date(paymentData.paidAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })}</span>
           </div>
           <div class="invoice-row total-row">
             <span class="total-label">Refund Disbursed</span>
@@ -1249,7 +1292,7 @@ export const sendOrderPaymentEmail = async (email: string, name: string, orderId
 
         <div class="mediator-info">
           <span class="mediator-icon">🛡️</span>
-          <span>Verified & authorized under standard operating guidelines by dispute specialist. Payout has cleared escrow for direct credit.</span>
+          <span>Verified & authorized under standard operating guidelines by dispute specialist <strong>${paymentData.paidByName || "Finance Desk"}</strong>. Payout has cleared escrow for direct credit.</span>
         </div>
       </div>
       <div class="footer">
