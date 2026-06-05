@@ -104,17 +104,17 @@ export class NotificationService {
       console.warn("Pusher bulk notification trigger bypassed gracefully:", err);
     }
 
-    // Dispatch FCM Bulk Push Notification in the background (fail-safe)
+    // Dispatch FCM Bulk Push Notification (awaiting to prevent Vercel termination)
     try {
       const { sendPushNotificationToMultiple } = await import("@/utils/fcm");
-      sendPushNotificationToMultiple(data.recipients, {
+      await sendPushNotificationToMultiple(data.recipients, {
         title: data.title,
         body: data.message,
         data: {
           click_action: data.actionUrl || "/dashboard",
           type: data.type,
         },
-      }).catch((e) => console.error("FCM bulk send error in NotificationService:", e));
+      });
     } catch (fcmErr) {
       console.warn("FCM dynamic load failed in NotificationService:", fcmErr);
     }

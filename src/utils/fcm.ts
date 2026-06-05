@@ -78,14 +78,14 @@ export async function sendPushNotification(userId: string, payload: PushPayload)
 }
 
 /**
- * Send FCM push notification to multiple user IDs
+ * Send FCM push notification to multiple user IDs efficiently
  */
 export async function sendPushNotificationToMultiple(userIds: string[], payload: PushPayload) {
   try {
     await connectToDatabase();
     const users = await User.find({ _id: { $in: userIds } }).select('fcmTokens');
     
-    let activeMessaging;
+    let activeMessaging: any;
     try {
       activeMessaging = messaging();
     } catch (e) {
@@ -94,52 +94,74 @@ export async function sendPushNotificationToMultiple(userIds: string[], payload:
 
     if (!activeMessaging) return;
 
-    const sendPromises = users.map(async (user) => {
-      if (!user.fcmTokens || user.fcmTokens.length === 0) return;
-      const invalidTokens: string[] = [];
-
-      const tokenPromises = user.fcmTokens.map(async (token) => {
-        try {
-          await activeMessaging.send({
-            token,
-            notification: {
-              title: payload.title,
-              body: payload.body,
-            },
-            data: payload.data || {},
-            webpush: {
-              notification: {
-                icon: '/favicon.svg',
-                badge: '/favicon.svg',
-                click_action: payload.data?.click_action || '/dashboard',
-              }
-            }
-          });
-        } catch (err: any) {
-          console.error(`FCM token sending error (${token}) for user ${user._id}:`, err.message);
-          if (
-            err.code === 'messaging/invalid-registration-token' ||
-            err.code === 'messaging/registration-token-not-registered' ||
-            err.message?.includes('unregistered') ||
-            err.message?.includes('invalid')
-          ) {
-            invalidTokens.push(token);
-          }
-        }
-      });
-
-      await Promise.all(tokenPromises);
-
-      // Clean invalid tokens for this user
-      if (invalidTokens.length > 0) {
-        await User.updateOne(
-          { _id: user._id },
-          { $pull: { fcmTokens: { $in: invalidTokens } } }
-        );
+    // Collect all valid tokens
+    const allTokens: string[] = [];
+    users.forEach(user => {
+      if (user.fcmTokens && Array.isArray(user.fcmTokens)) {
+        allTokens.push(...user.fcmTokens);
       }
     });
 
-    await Promise.all(sendPromises);
+    if (allTokens.length === 0) return;
+
+    // Firebase sendMulticast can process 500 tokens at a time
+    const batchSize = 500;
+    const invalidTokens: string[] = [];
+
+    for (let i = 0; i < allTokens.length; i += batchSize) {
+      const tokensBatch = allTokens.slice(i, i + batchSize);
+      
+      const message = {
+        tokens: tokensBatch,
+        notification: {
+          title: payload.title,
+          body: payload.body,
+        },
+        data: payload.data || {},
+        webpush: {
+          notification: {
+            icon: '/favicon.svg',
+            badge: '/favicon.svg',
+            click_action: payload.data?.click_action || '/dashboard',
+          }
+        }
+      };
+
+      try {
+        let response;
+        if (typeof activeMessaging.sendEachForMulticast === 'function') {
+           response = await activeMessaging.sendEachForMulticast(message);
+        } else {
+           response = await activeMessaging.sendMulticast(message);
+        }
+        
+        if (response.failureCount > 0) {
+          response.responses.forEach((resp: any, idx: number) => {
+            if (!resp.success) {
+              const errCode = resp.error?.code;
+              if (
+                errCode === 'messaging/invalid-registration-token' ||
+                errCode === 'messaging/registration-token-not-registered' ||
+                resp.error?.message?.includes('unregistered') ||
+                resp.error?.message?.includes('invalid')
+              ) {
+                invalidTokens.push(tokensBatch[idx]);
+              }
+            }
+          });
+        }
+      } catch (err) {
+        console.error("FCM Multicast sending error:", err);
+      }
+    }
+
+    // Clean invalid tokens across all users efficiently
+    if (invalidTokens.length > 0) {
+      await User.updateMany(
+        { fcmTokens: { $in: invalidTokens } },
+        { $pull: { fcmTokens: { $in: invalidTokens } } as any }
+      );
+    }
   } catch (err) {
     console.error("FCM Send Push Notification to Multiple error:", err);
   }
