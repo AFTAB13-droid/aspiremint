@@ -8,6 +8,8 @@ import { AddMediatorDrawer } from "@/components/admin/AddMediatorDrawer";
 import { MediatorPortfolioDrawer } from "@/components/admin/MediatorPortfolioDrawer";
 import { ConfirmationModal } from "@/components/common/ConfirmationModal";
 
+import { AliasManagerDrawer } from "@/components/admin/AliasManagerDrawer";
+
 export default function AdminMediatorsHub() {
   const [mediators, setMediators] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -15,6 +17,7 @@ export default function AdminMediatorsHub() {
   const [activeTab, setActiveTab] = useState<"REGISTRY" | "PENDING">("REGISTRY");
   const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
   const [isPortfolioDrawerOpen, setIsPortfolioDrawerOpen] = useState(false);
+  const [isAliasDrawerOpen, setIsAliasDrawerOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [mediatorToDelete, setMediatorToDelete] = useState<string | null>(null);
   const [editingMediator, setEditingMediator] = useState<any>(null);
@@ -219,6 +222,16 @@ export default function AdminMediatorsHub() {
            <motion.button 
              whileHover={{ scale: 1.02 }}
              whileTap={{ scale: 0.98 }}
+             onClick={() => setIsAliasDrawerOpen(true)}
+             className="h-14 px-8 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-900/20 flex items-center gap-3"
+           >
+             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+             Manage System Aliases
+           </motion.button>
+
+           <motion.button 
+             whileHover={{ scale: 1.02 }}
+             whileTap={{ scale: 0.98 }}
              onClick={() => { setEditingMediator(null); setIsAddDrawerOpen(true); }}
              className="h-14 px-8 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-600/20 flex items-center gap-3"
            >
@@ -419,6 +432,13 @@ export default function AdminMediatorsHub() {
         message="Are you sure you want to permanently delete this specialist? This action cannot be undone."
         confirmLabel="Delete Identity"
         isDanger={true}
+      />
+
+      <AliasManagerDrawer 
+         isOpen={isAliasDrawerOpen}
+         onClose={() => setIsAliasDrawerOpen(false)}
+         mediators={mediators}
+         onRefresh={fetchMediators}
       />
     </div>
   );
