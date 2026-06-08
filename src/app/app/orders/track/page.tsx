@@ -103,7 +103,7 @@ export default function TrackOrderPage() {
                 placeholder="Ex: OD337066357..." 
                 value={searchId}
                 onChange={(e) => setSearchId(e.target.value)}
-                className="w-full h-14 md:h-20 pl-6 md:pl-8 pr-32 md:pr-40 rounded-[20px] md:rounded-[32px] bg-slate-50 md:bg-white border border-slate-100 md:border-slate-100 shadow-none md:shadow-2xl shadow-slate-200/60 outline-none focus:ring-4 focus:ring-blue-100 transition-all font-black text-sm md:text-lg tracking-tight placeholder:text-slate-300 uppercase"
+                className="w-full h-14 md:h-20 pl-6 md:pl-8 pr-32 md:pr-40 rounded-[20px] md:rounded-[32px] bg-slate-50 md:bg-white border border-slate-100 md:border-slate-100 shadow-none md:shadow-2xl shadow-slate-200/60 outline-none focus:ring-4 focus:ring-blue-100 transition-all font-black text-sm md:text-lg tracking-tight placeholder:text-slate-300"
               />
               <button 
                 type="submit"
@@ -250,7 +250,7 @@ export default function TrackOrderPage() {
                             </div>
                             <div className="flex flex-col">
                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Mediator</span>
-                               <span className="text-sm font-black text-white uppercase tracking-tight">{order.mediator?.name || "Pending Selection"}</span>
+                               <span className="text-sm font-black text-white uppercase tracking-tight">{order.mediator?.systemDisplayName || order.mediator?.name || "Pending Selection"}</span>
                             </div>
                          </div>
                       </div>
@@ -304,7 +304,7 @@ export default function TrackOrderPage() {
                         </div>
                         <div className="text-right">
                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Assigned Mediator</p>
-                           <p className="text-[11px] font-bold uppercase mt-0.5">{order.mediator?.name || "Pending"}</p>
+                           <p className="text-[11px] font-bold uppercase mt-0.5">{order.mediator?.systemDisplayName || order.mediator?.name || "Pending"}</p>
                         </div>
                      </div>
                   </div>

@@ -448,14 +448,19 @@ export default function NewOrderPage() {
                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Mediator Allocation (*)</label>
                             <div className="relative group">
                                <CustomDropdown
-                                  options={mediators.map(m => m.name)}
-                                  value={mediators.find(m => m._id === formData.mediatorId)?.name || ""}
+                                  options={mediators.map(m => m.systemDisplayName || m.name)}
+                                  value={
+                                     (() => {
+                                        const found = mediators.find(m => m._id === formData.mediatorId);
+                                        return found ? (found.systemDisplayName || found.name) : "";
+                                     })()
+                                  }
                                   onChange={(val) => {
                                      if(val === "") {
                                         handleInputChange({ target: { name: 'mediatorId', value: "" } } as any);
                                         return;
                                      }
-                                     const mediator = mediators.find(m => m.name === val);
+                                     const mediator = mediators.find(m => (m.systemDisplayName || m.name) === val);
                                      if (mediator) {
                                         handleInputChange({ target: { name: 'mediatorId', value: mediator._id } } as any);
                                         
@@ -469,7 +474,7 @@ export default function NewOrderPage() {
                                            if (mediator.name.toLowerCase().includes("juhi")) {
                                               toast("Juhi's commission not pre-configured. Enter manually.", { icon: "✍️" });
                                            } else {
-                                              toast(`Add commission manually for ${mediator.name}`, { icon: "✍️" });
+                                              toast(`Add commission manually for ${mediator.systemDisplayName || mediator.name}`, { icon: "✍️" });
                                            }
                                         }
                                      }

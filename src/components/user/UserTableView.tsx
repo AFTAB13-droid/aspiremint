@@ -359,7 +359,14 @@ export function UserTableView({ orders, onRefund, onViewDetails, onNewOrder, ref
                   <span className="bg-blue-600 text-white text-[8px] font-black h-5 w-5 rounded-full flex items-center justify-center border-2 border-white">{activeFiltersCount}</span>
                )}
             </button>
-         )}
+          )}
+          <button 
+             onClick={handleExportCSV} 
+             className="h-12 w-12 shrink-0 bg-emerald-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+             title="Export Excel"
+          >
+             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+          </button>
       </div>
 
       {/* Filter Drawer (Bottom Sheet) - Mobile Only */}

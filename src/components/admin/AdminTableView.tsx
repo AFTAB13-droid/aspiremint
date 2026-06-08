@@ -172,7 +172,7 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
     }
     if (dataToExport.length === 0) return toast.error("No records found for the selected criteria");
     const headers = ["Order ID", "Buyer Name", "Mediator Name", "Brand", "Product Code", "Amount", "Refund Amount", "Review Type", "Deal Type", "Status", "Order Photo", "Review Photo", "Return Period Photo", "Delivery Photo", "Date"];
-    const csvContent = [headers.join(","), ...dataToExport.map(o => [o.aspireOrderId, `"${o.buyer?.name || 'Anonymous'}"`, `"${o.mediatorName || o.mediator?.name || 'Standard'}"`, `"${o.brandName || 'N/A'}"`, o.productCode || "N/A", o.amount || 0, o.refundDetails?.expectedPayout || (o.amount - (o.lessAmount || 0)), o.reviewType || "N/A", o.dealType || "N/A", o.status, o.screenshot || "N/A", o.refundProof?.reviewScreenshot || "N/A", o.refundProof?.returnPeriodScreenshot || "N/A", o.refundProof?.deliveryScreenshot || "N/A", new Date(o.createdAt).toLocaleDateString()].join(","))].join("\n");
+    const csvContent = [headers.join(","), ...dataToExport.map(o => [o.aspireOrderId, `"${o.buyer?.name || 'Anonymous'}"`, `"${o.mediator?.systemDisplayName || o.mediatorName || o.mediator?.name || 'Standard'}"`, `"${o.brandName || 'N/A'}"`, o.productCode || "N/A", o.amount || 0, o.refundDetails?.expectedPayout || (o.amount - (o.lessAmount || 0)), o.reviewType || "N/A", o.dealType || "N/A", o.status, o.screenshot || "N/A", o.refundProof?.reviewScreenshot || "N/A", o.refundProof?.returnPeriodScreenshot || "N/A", o.refundProof?.deliveryScreenshot || "N/A", new Date(o.createdAt).toLocaleDateString()].join(","))].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -588,7 +588,7 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
                           <div className="flex items-center gap-1.5 mt-1">
                              
                               <div className="flex items-center gap-1.5 relative">
-                                 <span className="text-[9px] font-bold text-slate-500 uppercase">{order.mediatorName || order.mediator?.name || "Standard"}</span>
+                                 <span className="text-[9px] font-bold text-slate-500 uppercase">{order.mediator?.systemDisplayName || order.mediatorName || order.mediator?.name || "Standard"}</span>
                                  {order.assignmentType === 'AUTO' && (
                                    <span className="text-[7px] font-black text-emerald-600 uppercase tracking-tighter px-1 py-0.5 bg-emerald-50 rounded border border-emerald-100 leading-none">System</span>
                                  )}
@@ -624,7 +624,7 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
                                                           disabled={isUpdating}
                                                           className="w-full text-left px-3 py-2 rounded-xl hover:bg-indigo-50 group flex flex-col gap-0.5 transition-all active:scale-[0.98] disabled:opacity-50"
                                                        >
-                                                          <span className="text-[9px] font-black text-slate-700 group-hover:text-indigo-600 uppercase tracking-tight">{m.name}</span>
+                                                          <span className="text-[9px] font-black text-slate-700 group-hover:text-indigo-600 uppercase tracking-tight">{m.systemDisplayName || m.name}</span>
                                                           <span className="text-[7px] text-slate-300 font-bold uppercase tracking-widest">{m.aspireMintId || 'ID UNKNOWN'}</span>
                                                        </button>
                                                     ))
@@ -665,7 +665,7 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
                           </div>
                           <div className="flex flex-col text-right">
                              <span className="text-[6px] font-black text-amber-400 uppercase tracking-tighter">
-                                {order.mediatorName || order.mediator?.name || "Mediator"} Less/Comm
+                                {order.mediator?.systemDisplayName || order.mediatorName || order.mediator?.name || "Mediator"} Less/Comm
                              </span>
                              <span className="text-[9px] font-black text-amber-600">
                                 {order.mediatorCommission > 0 ? `+₹${order.mediatorCommission}` : `₹${order.mediatorCommission || 0}`}

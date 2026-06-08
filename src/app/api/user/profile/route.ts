@@ -51,7 +51,7 @@ export async function PUT(req: Request) {
     }
 
     if (hasPaymentChanges) {
-      const isInitialSetup = !dbUser.isProfileComplete;
+      const isInitialSetup = !dbUser.isProfileComplete || (!dbUser.paymentDetails?.upiId && !dbUser.paymentDetails?.accountNumber);
 
       if (!isInitialSetup) {
         if (!otp) {

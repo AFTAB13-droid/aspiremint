@@ -515,7 +515,7 @@ export default function FillRefundPage() {
                 <div className="flex flex-col gap-3">
                    <button 
                      type="button"
-                     onClick={() => { window.location.href = '/app'; }}
+                     onClick={() => router.push('/app')}
                      className="w-full h-16 rounded-2xl bg-indigo-600 text-white text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 transition-all active:scale-95 z-50 relative"
                    >
                       Go to Dashboard

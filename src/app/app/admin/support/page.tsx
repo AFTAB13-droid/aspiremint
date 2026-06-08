@@ -358,7 +358,7 @@ export default function AdminSupportPage() {
                             <div className="flex items-center gap-1.5">
                               <span className="px-2 py-0.5 bg-sky-500 text-white rounded text-[7px] font-black uppercase tracking-widest shadow-sm">ORDER QUERY</span>
                               {q.mediator?.name && (
-                                <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded text-[7px] font-black uppercase tracking-widest">HANDLER: {q.mediator.name}</span>
+                                <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded text-[7px] font-black uppercase tracking-widest">HANDLER: {q.mediator?.systemDisplayName || q.mediator?.name}</span>
                               )}
                             </div>
                           )}

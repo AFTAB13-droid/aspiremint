@@ -10,6 +10,7 @@ interface Mediator {
   _id: string;
   name: string;
   email: string;
+  systemDisplayName?: string;
 }
 
 interface Brand {
@@ -643,7 +644,7 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
                           <div className={`absolute top-0 right-0 p-2 transition-opacity ${selectedMediators.includes(m._id) ? "opacity-100" : "opacity-0"}`}>
                             <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                           </div>
-                          <p className="text-[11px] font-black uppercase truncate">{m.name}</p>
+                          <p className="text-[11px] font-black uppercase truncate">{m.systemDisplayName || m.name}</p>
                           <p className={`text-[9px] truncate transition-all ${selectedMediators.includes(m._id) ? "text-indigo-100" : "text-slate-400"}`}>{m.email}</p>
                        </div>
                      ))}
