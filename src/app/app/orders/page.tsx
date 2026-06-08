@@ -246,7 +246,7 @@ export default function DealsPage() {
                     className="h-10 min-w-[180px] rounded-2xl bg-white border border-slate-100 px-5 flex items-center justify-between gap-3 text-[9px] font-black uppercase tracking-widest outline-none hover:border-blue-200 transition-all shadow-sm group"
                   >
                     <span className="truncate max-w-[120px]">
-                      {selectedMediator === "ALL" ? "ALL SPECIALISTS" : (mediators.find(m => m._id === selectedMediator)?.name || "SELECT SPECIALIST")}
+                      {selectedMediator === "ALL" ? "ALL SPECIALISTS" : (mediators.find(m => m._id === selectedMediator)?.systemDisplayName || mediators.find(m => m._id === selectedMediator)?.name || "SELECT SPECIALIST")}
                     </span>
                     <svg className={`w-3 h-3 transition-transform duration-300 ${isMediatorDropdownOpen ? 'rotate-180 text-blue-600' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                   </button>
@@ -274,7 +274,7 @@ export default function DealsPage() {
                                 onClick={() => { setSelectedMediator(m._id); setIsMediatorDropdownOpen(false); }}
                                 className={`w-full text-left px-4 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all ${selectedMediator === m._id ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50"}`}
                               >
-                                {m.name}
+                                {m.systemDisplayName || m.name}
                               </button>
                             ))}
                           </div>

@@ -238,7 +238,7 @@ export default function FillRefundPage() {
       
       // Auto-redirect after 3 seconds
       setTimeout(() => {
-        router.push(`/app`);
+        window.location.href = '/app';
       }, 3500);
       
     } catch (err: any) { toast.error(`Transmission Failed: ${err.message}`); } finally { setSubmitting(false); }
@@ -514,8 +514,9 @@ export default function FillRefundPage() {
 
                 <div className="flex flex-col gap-3">
                    <button 
-                     onClick={() => router.push('/app')}
-                     className="w-full h-16 rounded-2xl bg-indigo-600 text-white text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 transition-all active:scale-95"
+                     type="button"
+                     onClick={() => { window.location.href = '/app'; }}
+                     className="w-full h-16 rounded-2xl bg-indigo-600 text-white text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 transition-all active:scale-95 z-50 relative"
                    >
                       Go to Dashboard
                    </button>

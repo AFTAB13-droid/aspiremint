@@ -51,18 +51,22 @@ export async function PUT(req: Request) {
     }
 
     if (hasPaymentChanges) {
-      if (!otp) {
-        return NextResponse.json({ success: false, message: 'OTP verification required for payment updates' }, { status: 400 });
-      }
+      const isInitialSetup = !dbUser.isProfileComplete;
 
-      const normalizedEmail = session.user.email.trim().toLowerCase();
-      const storedOtp = await redis.get(`payment_update_otp:${normalizedEmail}`);
-      if (!storedOtp || String(storedOtp) !== String(otp).trim()) {
-        return NextResponse.json({ success: false, message: 'Invalid or expired security code' }, { status: 400 });
+      if (!isInitialSetup) {
+        if (!otp) {
+          return NextResponse.json({ success: false, message: 'OTP verification required for payment updates' }, { status: 400 });
+        }
+
+        const normalizedEmail = session.user.email.trim().toLowerCase();
+        const storedOtp = await redis.get(`payment_update_otp:${normalizedEmail}`);
+        if (!storedOtp || String(storedOtp) !== String(otp).trim()) {
+          return NextResponse.json({ success: false, message: 'Invalid or expired security code' }, { status: 400 });
+        }
+        
+        // Delete OTP after successful verification
+        await redis.del(`payment_update_otp:${normalizedEmail}`);
       }
-      
-      // Delete OTP after successful verification
-      await redis.del(`payment_update_otp:${normalizedEmail}`);
     }
     
     // Build update object dynamically

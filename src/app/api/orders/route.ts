@@ -327,7 +327,7 @@ export async function GET(req: Request) {
 
     const rawOrders = await Order.find(query)
       .populate("buyer", "name email mobile")
-      .populate("mediator", "name email")
+      .populate("mediator", "name systemDisplayName email")
       .populate("paymentDetails.paidBy", "name")
       .select("-activities -internalNotes")
       .sort({ createdAt: -1 })

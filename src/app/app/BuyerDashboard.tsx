@@ -46,13 +46,15 @@ interface BuyerDashboardProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
+  'Form Pending': '#f59e0b',
+  'Under Verification': '#8b5cf6',
   'Approved': '#10b981',
-  'Rejected': '#ef4444',
   'Completed': '#3b82f6',
-  'Pending': '#f59e0b'
+  'Rejected': '#ef4444',
+  'Cancelled': '#64748b'
 };
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1'];
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#8b5cf6', '#64748b'];
 
 export default function BuyerDashboard({ 
   user, 
@@ -377,7 +379,7 @@ export default function BuyerDashboard({
            },
            { 
               label: "Total Refund", 
-              value: stats.completed.toLocaleString(), 
+              value: `₹${stats.totalRefundAmount.toLocaleString()}`, 
               icon: <RefreshCw className="w-7 h-7" />, 
               color: "from-emerald-500 to-teal-500", 
               bg: "bg-emerald-50", 
@@ -556,7 +558,7 @@ export default function BuyerDashboard({
             </div>
             
             <div className="grid grid-cols-2 gap-4 mt-10">
-                {stats.statusDistribution.slice(0, 4).map((entry, idx) => (
+                {stats.statusDistribution.slice(0, 6).map((entry, idx) => (
                    <div key={idx} className="flex items-center gap-3">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: STATUS_COLORS[entry.name] || COLORS[idx % COLORS.length] }} />
                       <div>

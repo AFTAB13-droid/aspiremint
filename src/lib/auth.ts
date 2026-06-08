@@ -202,26 +202,31 @@ export const authOptions: NextAuthOptions = {
             console.warn("Could not read headers during login logging:", headerError);
           }
 
-          await connectToDatabase();
-          await User.findOneAndUpdate(
-            { email: user.email.toLowerCase() },
-            { 
-              $push: { 
-                "securitySettings.loginHistory": {
-                  $each: [{
-                    ip: ip,
-                    device: device,
-                    location: "Unknown",
-                    timestamp: new Date()
-                  }],
-                  $slice: -5
-                } 
-              },
-              $set: { lastLogin: new Date() }
-            }
-          );
+          connectToDatabase().then(() => {
+            User.findOneAndUpdate(
+              { email: user.email?.toLowerCase() },
+              { 
+                $push: { 
+                  "securitySettings.loginHistory": {
+                    $each: [{
+                      ip: ip,
+                      device: device,
+                      location: "Unknown",
+                      timestamp: new Date()
+                    }],
+                    $slice: -5
+                  } 
+                },
+                $set: { lastLogin: new Date() }
+              }
+            ).catch(error => {
+              console.error("Failed to log login history inside DB call:", error);
+            });
+          }).catch(dbError => {
+            console.error("Failed to connect to DB for login history:", dbError);
+          });
         } catch (error) {
-          console.error("Failed to log login history:", error);
+          console.error("Failed to initiate login history logging:", error);
         }
       }
     }

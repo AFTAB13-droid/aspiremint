@@ -279,9 +279,9 @@ export default function AdminMediatorsHub() {
                                <td className="px-8 py-6">
                                   <div className="flex items-center gap-4">
                                      <div className="h-10 w-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500 font-bold text-xs uppercase">
-                                        {med.name.charAt(0)}
+                                        {(med.systemDisplayName || med.name).charAt(0)}
                                      </div>
-                                     <span className="text-sm font-black text-slate-900 uppercase tracking-tight">{med.name}</span>
+                                     <span className="text-sm font-black text-slate-900 uppercase tracking-tight">{med.systemDisplayName || med.name}</span>
                                   </div>
                                </td>
                                <td className="px-8 py-6">
@@ -335,7 +335,7 @@ export default function AdminMediatorsHub() {
                   <div>
                     <div className="relative flex items-center justify-between mb-8">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight leading-none truncate pr-4">{med.name}</h3>
+                        <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight leading-none truncate pr-4">{med.systemDisplayName || med.name}</h3>
                         <div className="flex items-center gap-2 mt-2">
                            <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">{med.aspireMintId || 'MEDIATOR'}</span>
                            <span className="h-1 w-1 rounded-full bg-slate-200" />

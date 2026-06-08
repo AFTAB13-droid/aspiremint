@@ -15,6 +15,7 @@ export function AddMediatorDrawer({ isOpen, onClose, onSuccess, editData }: AddM
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: editData?.name || "",
+    systemDisplayName: editData?.systemDisplayName || "",
     email: editData?.email || "",
     mobile: editData?.mobile || "",
     password: "",
@@ -90,16 +91,28 @@ export function AddMediatorDrawer({ isOpen, onClose, onSuccess, editData }: AddM
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Full Legal Identity</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="E.G. ALEX STEVENS"
-                    className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 text-sm font-bold uppercase tracking-widest outline-none focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">Full Legal Identity</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="E.G. ALEX STEVENS"
+                      className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 text-sm font-bold uppercase tracking-widest outline-none focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-2">System Username (Optional)</label>
+                    <input
+                      type="text"
+                      value={formData.systemDisplayName}
+                      onChange={(e) => setFormData({ ...formData, systemDisplayName: e.target.value })}
+                      placeholder="CUSTOM DISPLAY NAME"
+                      className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 text-sm font-bold uppercase tracking-widest outline-none focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -10,6 +10,7 @@ export enum UserRole {
 
 export interface IUser extends Document {
   name: string;
+  systemDisplayName?: string;
   email: string;
   mobile: string;
   password?: string;
@@ -61,6 +62,7 @@ export interface IUser extends Document {
 const UserSchema = new Schema<IUser>(
   {
     name: { type: String, required: true },
+    systemDisplayName: { type: String },
     email: { type: String, required: true, unique: true, lowercase: true },
     mobile: { type: String, required: true },
     password: { type: String }, // Optional for OAuth if added later

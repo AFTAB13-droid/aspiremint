@@ -197,6 +197,39 @@ export function UserTableView({ orders, onRefund, onViewDetails, onNewOrder, ref
     return count;
   }, [brandFilter, dateFilter, sortBy]);
 
+  const handleExportCSV = () => {
+    if (filteredOrders.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const headers = ["Order ID", "Product Code", "Brand Name", "Review Type", "Order Date", "Status", "Expected Refund (₹)"];
+    const csvContent = [
+      headers.join(","),
+      ...filteredOrders.map(o => {
+        return [
+          o.userOrderId || o.aspireOrderId || "N/A",
+          `"${(o.productCode || "").replace(/"/g, '""')}"`,
+          `"${(o.brandName || "").replace(/"/g, '""')}"`,
+          o.reviewType || "N/A",
+          formatDate(o.createdAt),
+          o.status,
+          (Number(o.amount || 0) + Number(o.lessAmount || 0))
+        ].join(",");
+      })
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `AspireMint_Orders_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Desktop Filter Bar - Hidden on Mobile */}
@@ -218,7 +251,7 @@ export function UserTableView({ orders, onRefund, onViewDetails, onNewOrder, ref
                     Order Form
                  </button>
               )}
-              <button className="flex items-center gap-2 px-6 py-3 bg-emerald-600 rounded-xl text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20">
+              <button onClick={handleExportCSV} className="flex items-center gap-2 px-6 py-3 bg-emerald-600 rounded-xl text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20">
                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                  Export Excel
               </button>
@@ -426,7 +459,7 @@ export function UserTableView({ orders, onRefund, onViewDetails, onNewOrder, ref
                       <div className="flex flex-col">
                         <span className="text-[11px] font-black text-slate-800 uppercase tracking-tight">{order.reviewName || "UNASSIGNED"}</span>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                           <span className="text-[8px] font-bold text-slate-400 uppercase">{order.mediator?.name || "Pending..."}</span>
+                           <span className="text-[8px] font-bold text-slate-400 uppercase">{order.mediator?.systemDisplayName || order.mediator?.name || "Pending..."}</span>
                            {order.assignmentType === 'AUTO' && (
                               <span className="text-[7px] font-black text-emerald-600 uppercase tracking-tighter px-1 py-0.5 bg-emerald-50 rounded border border-emerald-100 leading-none">System</span>
                            )}
@@ -577,7 +610,7 @@ export function UserTableView({ orders, onRefund, onViewDetails, onNewOrder, ref
                <div className="flex flex-col gap-0.5">
                   <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Mediator</span>
                   <div className="flex items-center gap-1.5 overflow-hidden">
-                      <span className="text-[10px] font-black text-slate-800 uppercase truncate">{order.mediator?.name || "Pending..."}</span>
+                      <span className="text-[10px] font-black text-slate-800 uppercase truncate">{order.mediator?.systemDisplayName || order.mediator?.name || "Pending..."}</span>
                       {order.assignmentType === 'AUTO' && (
                          <span className="text-[7px] font-black text-emerald-600 uppercase tracking-tighter px-1 py-0.5 bg-emerald-50 rounded border border-emerald-100 leading-none flex-shrink-0">System</span>
                       )}

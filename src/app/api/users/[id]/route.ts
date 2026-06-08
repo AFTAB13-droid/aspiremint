@@ -108,7 +108,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { isApproved, name, mobile, role, isActive, isTerminated } = body;
+    const { isApproved, name, systemDisplayName, mobile, role, isActive, isTerminated } = body;
 
     await connectToDatabase();
 
@@ -142,6 +142,7 @@ export async function PATCH(
       if (isTerminated) user.terminatedAt = new Date();
     }
     if (name) user.name = name;
+    if (systemDisplayName !== undefined) user.systemDisplayName = systemDisplayName;
     if (mobile) user.mobile = mobile;
     if (role) user.role = role;
 

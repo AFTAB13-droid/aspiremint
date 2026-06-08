@@ -46,18 +46,12 @@ export default async function DashboardPage() {
           category: {
             $switch: {
               branches: [
-                { 
-                  case: { $in: ["$status", [OrderStatus.REFUND_APPROVED, OrderStatus.APPROVED, OrderStatus.REFUND_PROCESSING]] }, 
-                  then: "Approved" 
-                },
-                { 
-                  case: { $in: ["$status", [OrderStatus.REFUND_REJECTED]] }, 
-                  then: "Rejected" 
-                },
-                { 
-                  case: { $in: ["$status", [OrderStatus.COMPLETED, OrderStatus.REFUNDED]] }, 
-                  then: "Completed" 
-                }
+                { case: { $in: ["$status", [OrderStatus.REFUND_FORM_PENDING]] }, then: "Form Pending" },
+                { case: { $in: ["$status", [OrderStatus.UNDER_VERIFICATION, OrderStatus.REFUND_FORM_SUBMITTED, OrderStatus.PENDING_APPROVAL]] }, then: "Under Verification" },
+                { case: { $in: ["$status", [OrderStatus.REFUND_APPROVED, OrderStatus.APPROVED, OrderStatus.ACTIVE_ESCROW, OrderStatus.ESCROW_PAYMENT_PENDING]] }, then: "Approved" },
+                { case: { $in: ["$status", [OrderStatus.COMPLETED, OrderStatus.REFUNDED]] }, then: "Completed" },
+                { case: { $in: ["$status", [OrderStatus.REFUND_REJECTED]] }, then: "Rejected" },
+                { case: { $in: ["$status", [OrderStatus.CANCELLED, OrderStatus.INVALIDATED]] }, then: "Cancelled" }
               ],
               default: "Pending"
             }
@@ -76,7 +70,7 @@ export default async function DashboardPage() {
       {
         $group: {
           _id: null,
-          total: { $sum: "$amount" },
+          total: { $sum: { $ifNull: ["$refundDetails.expectedPayout", { $add: ["$amount", { $ifNull: ["$lessAmount", 0] }] }] } },
           commission: { $sum: "$mediatorCommission" }
         }
       }
@@ -92,11 +86,11 @@ export default async function DashboardPage() {
     SupportTicket.countDocuments({ ...query, status: TicketStatus.OPEN, user: session.user.id }),
     Order.countDocuments({ status: OrderStatus.REFUND_FORM_PENDING }),
     Order.countDocuments({ status: OrderStatus.PENDING_APPROVAL }),
-    Order.countDocuments({ status: OrderStatus.UNDER_VERIFICATION }),
-    Order.countDocuments({ status: OrderStatus.APPROVED }),
+    Order.countDocuments({ status: { $in: [OrderStatus.UNDER_VERIFICATION, OrderStatus.REFUND_FORM_SUBMITTED] } }),
+    Order.countDocuments({ status: { $in: [OrderStatus.APPROVED, OrderStatus.REFUND_APPROVED] } }),
     Order.aggregate([
-      { $match: { status: OrderStatus.APPROVED } },
-      { $group: { _id: null, total: { $sum: "$amount" } } }
+      { $match: { status: { $in: [OrderStatus.APPROVED, OrderStatus.REFUND_APPROVED] } } },
+      { $group: { _id: null, total: { $sum: { $ifNull: ["$refundDetails.expectedPayout", { $add: ["$amount", { $ifNull: ["$lessAmount", 0] }] }] } } } }
     ]),
     Order.aggregate([
       { $group: { _id: "$mediator", count: { $sum: 1 } } },

@@ -24,7 +24,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     // Fetch order with populated user details
     const order = await Order.findById(params.id)
       .populate("buyer", "name email mobile aspireMintId")
-      .populate("mediator", "name email mobile aspireMintId paymentDetails")
+      .populate("mediator", "name systemDisplayName email mobile aspireMintId paymentDetails")
       .populate("paymentDetails.paidBy", "name email aspireMintId");
 
     if (!order) {
