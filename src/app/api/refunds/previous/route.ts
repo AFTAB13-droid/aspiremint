@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: true, eligible: false, message: "Already fetched" });
     }
 
-    const record = previousRefunds.find(r => r.mobile === user.mobile);
+    const record = previousRefunds.find(r => r.mobile.toString() === user.mobile.toString());
     if (record) {
       return NextResponse.json({ success: true, eligible: true, amount: record.amount });
     }
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Already fetched" }, { status: 400 });
     }
 
-    const record = previousRefunds.find(r => r.mobile === user.mobile);
+    const record = previousRefunds.find(r => r.mobile.toString() === user.mobile.toString());
     if (record) {
       user.previousRefundFetched = true;
       user.previousRefundAmount = record.amount;

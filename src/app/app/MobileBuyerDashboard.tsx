@@ -8,6 +8,7 @@ import { UserBadge } from "@/components/ui/UserBadge";
 import { BannerConfig } from "@/components/admin/BannerManager";
 import { usePusher } from "@/hooks/usePusher";
 import toast from "react-hot-toast";
+import { 
   TrendingUp, Package, RefreshCw, Clock, CheckCircle2, ChevronRight, X,
   ShieldCheck, AlertCircle, Sparkles, Megaphone, User as UserIcon, Wallet, Activity, Zap, Gift
 } from "lucide-react";

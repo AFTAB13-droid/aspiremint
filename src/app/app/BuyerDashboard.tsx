@@ -21,6 +21,7 @@ import { useMotionValue, useTransform, useSpring } from "framer-motion";
 
 interface BuyerDashboardProps {
   user: {
+    name?: string | null;
     role: string;
     totalCompletedOrders?: number;
     globalRank?: number;

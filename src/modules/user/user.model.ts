@@ -56,6 +56,7 @@ export interface IUser extends Document {
   };
   previousRefundFetched?: boolean;
   previousRefundAmount?: number;
+  fcmTokens?: string[];
   createdAt: Date;
   updatedAt: Date;
 }

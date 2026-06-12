@@ -32,7 +32,7 @@ export async function sendPushNotification(userId: string, payload: PushPayload)
     const invalidTokens: string[] = [];
     const tokens = user.fcmTokens;
 
-    const sendPromises = tokens.map(async (token) => {
+    const sendPromises = tokens.map(async (token: string) => {
       try {
         await activeMessaging.send({
           token,
