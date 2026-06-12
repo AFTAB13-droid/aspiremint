@@ -54,7 +54,8 @@ export interface IUser extends Document {
     }[];
     lastPasswordChange?: Date;
   };
-  fcmTokens?: string[];
+  previousRefundFetched?: boolean;
+  previousRefundAmount?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -116,6 +117,8 @@ const UserSchema = new Schema<IUser>(
       lastPasswordChange: { type: Date },
     },
     fcmTokens: { type: [String], default: [] },
+    previousRefundFetched: { type: Boolean, default: false },
+    previousRefundAmount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

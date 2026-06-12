@@ -130,6 +130,8 @@ export default function SettingsPage() {
     ifscCode: "",
     branchName: "",
     bankDetails: "",
+    previousRefundFetched: false,
+    previousRefundAmount: 0,
     securitySettings: {
       twoFactorEnabled: false,
       loginHistory: [],
@@ -149,6 +151,8 @@ export default function SettingsPage() {
   const [sendingPaymentOtp, setSendingPaymentOtp] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
   const [originalData, setOriginalData] = useState<any>(null);
+  const [checkingRefund, setCheckingRefund] = useState(false);
+  const [eligibleRefundAmount, setEligibleRefundAmount] = useState<number | null>(null);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -179,6 +183,8 @@ export default function SettingsPage() {
             ifscCode: pd.ifscCode || "",
             branchName: pd.branchName || "",
             bankDetails: pd.bankDetails || "",
+            previousRefundFetched: json.data.previousRefundFetched || false,
+            previousRefundAmount: json.data.previousRefundAmount || 0,
             securitySettings: json.data.securitySettings || { twoFactorEnabled: false, loginHistory: [] },
           };
           setFormData(fetchedData);
@@ -200,6 +206,44 @@ export default function SettingsPage() {
     }
     setActiveTab(tabId);
     setShowPaymentOtp(false);
+  };
+
+  const handleCheckPreviousRefund = async () => {
+    setCheckingRefund(true);
+    try {
+      const res = await fetch("/api/refunds/previous");
+      const json = await res.json();
+      if (json.success && json.eligible) {
+        setEligibleRefundAmount(json.amount);
+      } else if (json.success && !json.eligible && json.message === "Already fetched") {
+        toast.error("You have already fetched your previous refund.");
+      } else {
+        toast.error("No previous refund record found for your mobile number.");
+      }
+    } catch (err) {
+      toast.error("Error checking previous refund");
+    } finally {
+      setCheckingRefund(false);
+    }
+  };
+
+  const handleFetchPreviousRefund = async () => {
+    setCheckingRefund(true);
+    try {
+      const res = await fetch("/api/refunds/previous", { method: "POST" });
+      const json = await res.json();
+      if (json.success) {
+        setFormData(prev => ({ ...prev, previousRefundFetched: true, previousRefundAmount: json.amount }));
+        setEligibleRefundAmount(null);
+        toast.success(`Successfully fetched ₹${json.amount} previous refund!`);
+      } else {
+        toast.error(json.message || "Failed to fetch previous refund");
+      }
+    } catch (err) {
+      toast.error("Error fetching previous refund");
+    } finally {
+      setCheckingRefund(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -549,7 +593,40 @@ export default function SettingsPage() {
                                 </div>
                              </div>
                           </div>
-                       </div>
+
+                           <div className="mt-8 p-6 rounded-[32px] bg-indigo-50/50 border border-indigo-100/50 flex flex-col md:flex-row items-center justify-between gap-6">
+                              <div>
+                                 <h4 className="text-sm font-black text-indigo-900 uppercase tracking-tight">Legacy Refund Data</h4>
+                                 <p className="text-[10px] font-bold text-indigo-600/70 uppercase tracking-widest mt-1">Check if you have any unclaimed old refunds linked to your mobile</p>
+                              </div>
+                              {formData.previousRefundFetched ? (
+                                 <div className="px-6 py-3 bg-emerald-100 text-emerald-700 rounded-[20px] font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    Fetched: ₹{formData.previousRefundAmount.toLocaleString()}
+                                 </div>
+                              ) : eligibleRefundAmount !== null ? (
+                                 <div className="flex items-center gap-3">
+                                    <div className="text-right">
+                                       <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Eligible Amount</p>
+                                       <p className="text-lg font-black text-indigo-700">₹{eligibleRefundAmount.toLocaleString()}</p>
+                                    </div>
+                                    <button 
+                                      type="button" onClick={handleFetchPreviousRefund} disabled={checkingRefund}
+                                      className="px-6 h-12 rounded-[20px] bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50"
+                                    >
+                                       {checkingRefund ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Claim Now"}
+                                    </button>
+                                 </div>
+                              ) : (
+                                 <button 
+                                   type="button" onClick={handleCheckPreviousRefund} disabled={checkingRefund}
+                                   className="px-6 h-12 rounded-[20px] bg-white text-indigo-600 border border-indigo-200 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-sm disabled:opacity-50"
+                                 >
+                                    {checkingRefund ? <RefreshCw className="w-4 h-4 animate-spin mx-auto" /> : "Check Data"}
+                                 </button>
+                              )}
+                           </div>
+                        </div>
                      )}
 
                      {/* TAB: PAYMENTS */}

@@ -21,10 +21,12 @@ import { useMotionValue, useTransform, useSpring } from "framer-motion";
 
 interface BuyerDashboardProps {
   user: {
-    name?: string | null;
     role: string;
     totalCompletedOrders?: number;
     globalRank?: number;
+    previousRefundAmount?: number;
+    previousRefundFetched?: boolean;
+    mobile?: string;
   };
   stats: {
     active: number;
@@ -72,6 +74,11 @@ export default function BuyerDashboard({
   const [bannerConfig, setBannerConfig] = useState<BannerConfig | null>(null);
   const [isLoadingBanner, setIsLoadingBanner] = useState(true);
   const [activeDeals, setActiveDeals] = useState<any[]>([]);
+  const [showRefundPopup, setShowRefundPopup] = useState(false);
+  const [eligibleRefundAmount, setEligibleRefundAmount] = useState(0);
+  const [isFetchingRefund, setIsFetchingRefund] = useState(false);
+  const [localPreviousRefundFetched, setLocalPreviousRefundFetched] = useState(user.previousRefundFetched || false);
+  const [localPreviousRefundAmount, setLocalPreviousRefundAmount] = useState(user.previousRefundAmount || 0);
 
   const fetchActiveDeals = async () => {
     try {
@@ -103,7 +110,39 @@ export default function BuyerDashboard({
       .finally(() => setIsLoadingBanner(false));
 
     fetchActiveDeals();
-  }, []);
+
+    if (!user.previousRefundFetched) {
+      fetch("/api/refunds/previous")
+        .then(res => res.json())
+        .then(json => {
+          if (json.success && json.eligible) {
+            setEligibleRefundAmount(json.amount);
+            setShowRefundPopup(true);
+          }
+        })
+        .catch(err => console.error("Error checking previous refund:", err));
+    }
+  }, [user.previousRefundFetched]);
+
+  const handleFetchRefund = async () => {
+    try {
+      setIsFetchingRefund(true);
+      const res = await fetch("/api/refunds/previous", { method: "POST" });
+      const json = await res.json();
+      if (json.success) {
+        setLocalPreviousRefundAmount(json.amount);
+        setLocalPreviousRefundFetched(true);
+        setShowRefundPopup(false);
+        toast.success("Previous refund amount fetched successfully!");
+      } else {
+        toast.error(json.message || "Failed to fetch previous refund amount");
+      }
+    } catch (err) {
+      toast.error("Network error");
+    } finally {
+      setIsFetchingRefund(false);
+    }
+  };
 
   usePusher(
     "public-deals",
@@ -161,6 +200,67 @@ export default function BuyerDashboard({
 
   return (
     <div className="flex flex-col gap-8 pb-20 max-w-[1600px] mx-auto">
+      
+      {/* PREVIOUS REFUND POPUP */}
+      <AnimatePresence>
+        {showRefundPopup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              onClick={() => setShowRefundPopup(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative z-10 w-full max-w-sm bg-white rounded-[32px] p-6 shadow-2xl overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none" />
+              
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-white mb-4 shadow-lg shadow-indigo-500/30">
+                  <RefreshCw className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Previous Refund</h3>
+                <p className="text-sm font-bold text-slate-500 leading-relaxed mb-6">
+                  We found a previous refund record associated with your account. Fetch it now to add it to your total dashboard!
+                </p>
+                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 w-full mb-6">
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Eligible Amount</p>
+                   <p className="text-3xl font-black text-indigo-600">₹{eligibleRefundAmount.toLocaleString()}</p>
+                </div>
+                <button
+                  onClick={handleFetchRefund}
+                  disabled={isFetchingRefund}
+                  className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-black shadow-lg shadow-indigo-500/20 active:scale-95 transition-all disabled:opacity-70 flex items-center justify-center gap-2"
+                >
+                  {isFetchingRefund ? (
+                    <>
+                      <RefreshCw className="w-5 h-5 animate-spin" />
+                      Fetching...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-5 h-5" />
+                      Fetch Refund
+                    </>
+                  )}
+                </button>
+              </div>
+              <button 
+                onClick={() => setShowRefundPopup(false)}
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-slate-100 text-slate-400 rounded-full hover:bg-slate-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       
       {/* COMMANDER PROFILE STRIP OR GLOBAL BANNER */}
       {isLoadingBanner ? (
@@ -379,12 +479,13 @@ export default function BuyerDashboard({
            },
            { 
               label: "Total Refund", 
-              value: `₹${stats.totalRefundAmount.toLocaleString()}`, 
+              value: `₹${(stats.totalRefundAmount + localPreviousRefundAmount).toLocaleString()}`, 
               icon: <RefreshCw className="w-7 h-7" />, 
               color: "from-emerald-500 to-teal-500", 
               bg: "bg-emerald-50", 
               percentage: "Success",
-              particleColor: "bg-emerald-400"
+              particleColor: "bg-emerald-400",
+              subtext: localPreviousRefundFetched && localPreviousRefundAmount > 0 ? `Previous refund amount paid: ₹${localPreviousRefundAmount.toLocaleString()}` : undefined
            },
            { 
               label: "Open Support", 
@@ -437,6 +538,9 @@ export default function BuyerDashboard({
                  <div>
                     <h3 className="text-3xl sm:text-4xl font-black text-slate-900 leading-none tracking-tighter">{stat.value}</h3>
                     <p className="text-[10px] font-black text-slate-500 mt-4 uppercase tracking-[0.3em] opacity-70">{stat.label}</p>
+                    {stat.subtext && (
+                        <p className="text-xs font-bold text-emerald-600 mt-2">{stat.subtext}</p>
+                     )}
                  </div>
               </div>
               <div className="flex flex-col items-end relative z-10">

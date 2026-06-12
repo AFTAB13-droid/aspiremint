@@ -15,6 +15,7 @@ export default async function DashboardPage() {
 
   await connectToDatabase();
   const role = (session.user as any).role || "USER";
+  const fullUser = await User.findById(session.user.id).lean();
 
   let query: any = {};
   if (role === "USER") query.buyer = new mongoose.Types.ObjectId(session.user.id);
@@ -230,7 +231,15 @@ export default async function DashboardPage() {
 
   return (
     <DashboardClient 
-      user={{ name: session.user.name, role, totalCompletedOrders: completedCount, globalRank }} 
+      user={{ 
+        name: session.user.name, 
+        role, 
+        totalCompletedOrders: completedCount, 
+        globalRank,
+        previousRefundAmount: fullUser?.previousRefundAmount || 0,
+        previousRefundFetched: fullUser?.previousRefundFetched || false,
+        mobile: fullUser?.mobile || ""
+      }} 
       stats={JSON.parse(JSON.stringify(stats))} 
       recentOrders={JSON.parse(JSON.stringify(recentOrders))} 
     />

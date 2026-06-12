@@ -23,6 +23,9 @@ interface DashboardClientProps {
     role: string;
     totalCompletedOrders?: number;
     globalRank?: number;
+    previousRefundAmount?: number;
+    previousRefundFetched?: boolean;
+    mobile?: string;
   };
   stats: {
     active: number;
