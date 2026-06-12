@@ -12,7 +12,18 @@ import {
   TrendingUp, Package, RefreshCw, Clock, CheckCircle2, ChevronRight,
   ShieldCheck, AlertCircle, Sparkles, Megaphone, User as UserIcon, Wallet, Activity, Zap, Gift
 } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+
+const STATUS_COLORS: Record<string, string> = {
+  'Form Pending': '#f59e0b',
+  'Under Verification': '#8b5cf6',
+  'Approved': '#10b981',
+  'Completed': '#3b82f6',
+  'Rejected': '#ef4444',
+  'Cancelled': '#64748b'
+};
+
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1', '#8b5cf6', '#64748b'];
 
 interface BuyerDashboardProps {
   user: {
@@ -245,7 +256,7 @@ export default function MobileBuyerDashboard({
          </div>
          
          <div className="relative z-10">
-            <h2 className="text-4xl font-black tracking-tighter">{stats.completed.toLocaleString()}</h2>
+            <h2 className="text-4xl font-black tracking-tighter">₹{stats.totalRefundAmount.toLocaleString()}</h2>
          </div>
 
          <div className="relative z-10 mt-6 grid grid-cols-2 gap-4 border-t border-white/10 pt-6">
@@ -292,6 +303,44 @@ export default function MobileBuyerDashboard({
             </div>
          </div>
       )}
+
+      {/* PIE CHART (Order Statuses) */}
+      <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100">
+         <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-black text-slate-900">Order Status Distribution</h3>
+         </div>
+         <div className="h-48 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+               <PieChart>
+                  <Pie
+                     data={stats.statusDistribution.length > 0 ? stats.statusDistribution : [
+                        { name: 'Active', value: 400 }, { name: 'Pending', value: 300 }, { name: 'Completed', value: 300 }
+                     ]}
+                     innerRadius={50}
+                     outerRadius={70}
+                     paddingAngle={5}
+                     dataKey="value"
+                  >
+                     {stats.statusDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name] || COLORS[index % COLORS.length]} />
+                     ))}
+                  </Pie>
+                  <Tooltip />
+               </PieChart>
+            </ResponsiveContainer>
+         </div>
+         <div className="grid grid-cols-2 gap-3 mt-4">
+            {stats.statusDistribution.slice(0, 6).map((entry, idx) => (
+               <div key={idx} className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS[entry.name] || COLORS[idx % COLORS.length] }} />
+                  <div>
+                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{entry.name.replace(/_/g, ' ')}</p>
+                     <p className="text-xs font-black text-slate-800">{entry.value}</p>
+                  </div>
+               </div>
+            ))}
+         </div>
+      </div>
 
       {/* RECENT ORDERS LIST */}
       <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm py-4">
