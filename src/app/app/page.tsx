@@ -1,4 +1,5 @@
 import React from "react";
+import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Order, OrderStatus } from "@/modules/order/order.model";
@@ -16,8 +17,8 @@ export default async function DashboardPage() {
   const role = (session.user as any).role || "USER";
 
   let query: any = {};
-  if (role === "USER") query.buyer = session.user.id;
-  else if (role === "MEDIATOR") query.mediator = session.user.id;
+  if (role === "USER") query.buyer = new mongoose.Types.ObjectId(session.user.id);
+  else if (role === "MEDIATOR") query.mediator = new mongoose.Types.ObjectId(session.user.id);
   else if (role === "ADMIN") query = {};
 
   const sevenDaysAgo = new Date();
