@@ -561,7 +561,7 @@ export default function SupportPage() {
                                   </button>
                                   <div className="overflow-hidden">
                                     <h3 className="text-lg font-black text-slate-900 italic leading-tight mb-1 truncate max-w-[250px] lg:max-w-none tracking-tighter">{query.subject}</h3>
-                                    <p className="text-[10px] font-black text-sky-500 uppercase tracking-[0.3em]">{query.type === 'ORDER_DISPUTE' ? `TRANSACTION ID: ${query.order?.aspireOrderId}` : 'DIRECT ADMINISTRATIVE CHANNEL'}</p>
+                                    <p className="text-[10px] font-black text-sky-500 uppercase tracking-[0.3em]">{query.type === 'ORDER_DISPUTE' ? `ORDER ID: ${query.order?.userOrderId || query.order?.aspireOrderId}` : 'DIRECT ADMINISTRATIVE CHANNEL'}</p>
                                   </div>
                                 </div>
                               </div>

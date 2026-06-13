@@ -257,7 +257,7 @@ export default function AdminSupportPage() {
                         <div>
                           <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Related Order</p>
                           <p className="text-[11px] font-black text-slate-200 uppercase truncate">{selectedTicket.order?.brandName}</p>
-                          <p className="text-[9px] font-black text-emerald-400 uppercase font-mono mt-0.5">#{selectedTicket.order?.aspireOrderId}</p>
+                          <p className="text-[9px] font-black text-emerald-400 uppercase font-mono mt-0.5">{selectedTicket.order?.userOrderId ? `#${selectedTicket.order.userOrderId}` : `#${selectedTicket.order?.aspireOrderId}`}</p>
                         </div>
                       ) : (
                         <div>

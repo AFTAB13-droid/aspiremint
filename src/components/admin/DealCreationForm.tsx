@@ -27,6 +27,7 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [mediators, setMediators] = useState<Mediator[]>([]);
   const [marketplaces, setMarketplaces] = useState<IMarketplace[]>([]);
+  const [juhiAmId, setJuhiAmId] = useState<string>("");
 
   // Form State
   const [formData, setFormData] = useState<{
@@ -111,6 +112,8 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
       if (marketplacesJson.success) setMarketplaces(marketplacesJson.data);
       // Filter out Juhi from manual assignment
       if (mediatorsJson.success) {
+        const juhiUser = mediatorsJson.data.find((m: any) => m.name.toLowerCase().includes("juhi"));
+        if (juhiUser) setJuhiAmId(juhiUser.aspireMintId || "");
         setMediators(mediatorsJson.data.filter((m: any) => !m.name.toLowerCase().includes("juhi")));
       }
     } catch (err) {
@@ -535,7 +538,7 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
              <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative z-10">
                 <div className="space-y-3">
                    <label className={`text-[10px] font-black uppercase tracking-widest pl-1 ${Number(formData.originalCommission || 0) >= 0 ? "text-blue-400" : "text-rose-400"}`}>
-                     Original Rate (₹{Number(formData.originalCommission || 0) >= 0 ? "+" : "-"})
+                     Brand Commission (₹{Number(formData.originalCommission || 0) >= 0 ? "+" : "-"})
                    </label>
                    <div className="relative">
                       <span className={`absolute left-6 top-1/2 -translate-y-1/2 font-black text-xl ${Number(formData.originalCommission || 0) >= 0 ? "text-blue-500/50" : "text-rose-500/50"}`}>₹</span>
@@ -553,7 +556,7 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
 
                 <div className="space-y-3">
                    <label className={`text-[10px] font-black uppercase tracking-widest pl-1 ${Number(formData.commission || 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                     Standard Rate (₹{Number(formData.commission || 0) >= 0 ? "+" : "-"})
+                     Mediators Rate (₹{Number(formData.commission || 0) >= 0 ? "+" : "-"})
                    </label>
                    <div className="relative">
                       <span className={`absolute left-6 top-1/2 -translate-y-1/2 font-black text-xl ${Number(formData.commission || 0) >= 0 ? "text-emerald-500/50" : "text-rose-500/50"}`}>₹</span>
@@ -571,7 +574,7 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
 
                 <div className="space-y-3">
                    <label className={`text-[10px] font-black uppercase tracking-widest pl-1 flex items-center gap-2 ${Number(formData.juhiCommission || 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                     Juhi's Rate (₹{Number(formData.juhiCommission || 0) >= 0 ? "+" : "-"}) 
+                     Juhi's Rate {juhiAmId ? `(${juhiAmId})` : ''} (₹{Number(formData.juhiCommission || 0) >= 0 ? "+" : "-"}) 
                      <span className="bg-indigo-500/30 text-white text-[7px] px-2 py-0.5 rounded-full border border-indigo-400/30">ENCRYPTED TIER</span>
                    </label>
                    <div className="relative">

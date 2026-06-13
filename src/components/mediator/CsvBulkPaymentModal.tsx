@@ -22,6 +22,7 @@ interface ParsedPaymentRow {
   orderRef: string;
   buyerOrderId: string;
   buyerEmail: string;
+  buyerUpiId: string;
   expectedAmount: number;
   paidByName: string;
   paidAmount: number;
@@ -59,6 +60,7 @@ export function CsvBulkPaymentModal({
       "Order Reference",
       "Buyer Order ID",
       "Buyer Email",
+      "Buyer UPI ID",
       "Expected Refund Amount",
       "Refund Payer Name (Optional)",
       "Paid Amount (Optional - Defaults to Expected)",
@@ -71,6 +73,7 @@ export function CsvBulkPaymentModal({
       order.aspireOrderId || "",
       order.userOrderId || "",
       order.buyerEmail || "",
+      order.refundDetails?.upiId || "",
       order.refundDetails?.expectedPayout || order.amount || 0,
       "", // Payer Name (optional)
       "", // Paid Amount (optional)
@@ -248,6 +251,7 @@ export function CsvBulkPaymentModal({
             orderRef: matchedOrder?.aspireOrderId || orderRef || "Unknown",
             buyerOrderId: matchedOrder?.userOrderId || "N/A",
             buyerEmail: matchedOrder?.buyerEmail || "N/A",
+            buyerUpiId: matchedOrder?.refundDetails?.upiId || "N/A",
             expectedAmount,
             paidByName: finalPayerName,
             paidAmount,
@@ -488,6 +492,7 @@ export function CsvBulkPaymentModal({
                       <tr className="bg-slate-50/60 sticky top-0 backdrop-blur-md z-10">
                         <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Order ID</th>
                         <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Buyer</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">UPI ID</th>
                         <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Expected Amount</th>
                         <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Paid Amount</th>
                         <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Payer Name</th>
@@ -504,6 +509,7 @@ export function CsvBulkPaymentModal({
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 block">Cust ID: {row.buyerOrderId}</span>
                           </td>
                           <td className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{row.buyerEmail}</td>
+                          <td className="px-6 py-4 text-[10px] font-bold text-indigo-500 tracking-widest">{row.buyerUpiId}</td>
                           <td className="px-6 py-4 text-center text-[11px] font-black text-slate-400">₹{row.expectedAmount}</td>
                           <td className="px-6 py-4 text-center">
                             <span className={`text-[12px] font-black ${row.paidAmount !== row.expectedAmount ? 'text-orange-600' : 'text-slate-900'}`}>
@@ -571,6 +577,10 @@ export function CsvBulkPaymentModal({
                             <div>
                                <span className="text-slate-400 font-bold uppercase tracking-widest block text-[8px] mb-0.5">Buyer</span>
                                <span className="font-bold text-slate-600 truncate block lowercase">{row.buyerEmail}</span>
+                            </div>
+                            <div>
+                               <span className="text-slate-400 font-bold uppercase tracking-widest block text-[8px] mb-0.5">UPI ID</span>
+                               <span className="font-bold text-indigo-600 truncate block">{row.buyerUpiId}</span>
                             </div>
                             <div>
                                <span className="text-slate-400 font-bold uppercase tracking-widest block text-[8px] mb-0.5">Expected / Paid</span>
