@@ -54,8 +54,7 @@ export default function LoginPage() {
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("onboarding_dismissed");
         }
-        router.push("/app"); 
-        router.refresh();
+        window.location.href = "/app";
       }
     } catch (error) {
       toast.error("System connection failure");

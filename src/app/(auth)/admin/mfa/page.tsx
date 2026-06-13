@@ -6,13 +6,15 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Logo } from "@/components/common/Logo";
-import { Shield, Key, ArrowRight, ShieldCheck, HelpCircle } from "lucide-react";
+import { Shield, Key, ArrowRight, ShieldCheck, HelpCircle, RefreshCw } from "lucide-react";
 
 export default function AdminMfaPage() {
   const { data: session, update, status } = useSession();
   const router = useRouter();
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(30);
+  const [isResending, setIsResending] = useState(false);
   const otpInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -30,6 +32,33 @@ export default function AdminMfaPage() {
       otpInputRef.current.focus();
     }
   }, []);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendCountdown > 0) {
+      timer = setTimeout(() => setResendCountdown((c) => c - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCountdown]);
+
+  const handleResendOTP = async () => {
+    if (resendCountdown > 0) return;
+    setIsResending(true);
+    try {
+      const res = await fetch("/api/admin/resend-mfa", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Security code re-dispatched");
+        setResendCountdown(30);
+      } else {
+        toast.error(data.message || "Failed to resend code");
+      }
+    } catch (err) {
+      toast.error("System error during resend");
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const container: Variants = {
     hidden: { opacity: 0 },
@@ -158,6 +187,20 @@ export default function AdminMfaPage() {
                    <span className="relative z-10">{isLoading ? "VERIFYING AUTHORIZATION..." : "CONFIRM SECURE PORTAL"}</span>
                    {!isLoading && <ArrowRight className="w-4 h-4 relative z-10 group-hover/btn:translate-x-2 transition-transform" />}
                 </button>
+              </div>
+
+              <div className="pt-2 flex justify-center">
+                 <button
+                   type="button"
+                   onClick={handleResendOTP}
+                   disabled={resendCountdown > 0 || isResending}
+                   className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors ${
+                     resendCountdown > 0 ? "text-slate-400 cursor-not-allowed" : "text-blue-600 hover:text-blue-700"
+                   }`}
+                 >
+                   <RefreshCw className={`w-3.5 h-3.5 ${isResending ? "animate-spin" : ""}`} />
+                   {resendCountdown > 0 ? `Resend Code in ${resendCountdown}s` : "Resend Security Code"}
+                 </button>
               </div>
             </form>
         </div>
