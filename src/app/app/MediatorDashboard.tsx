@@ -505,7 +505,7 @@ export default function MediatorDashboard({
                               {order.brandName?.[0] || 'B'}
                            </div>
                            <div>
-                              <h5 className="font-black text-slate-900 text-sm">#NS-{order._id.toString().slice(-6).toUpperCase()}</h5>
+                              <h5 className="font-black text-slate-900 text-sm">{order.userOrderId || order.aspireOrderId}</h5>
                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{order.brandName}</p>
                            </div>
                         </div>
@@ -610,16 +610,7 @@ export default function MediatorDashboard({
                )}
             </div>
 
-            {/* QUICK COMM CARD */}
-            <div className="bg-slate-900 rounded-[48px] p-8 text-white relative overflow-hidden group">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500 rounded-full blur-[80px] opacity-20" />
-               <div className="relative z-10">
-                  <Cpu className="w-10 h-10 text-indigo-400 mb-6 group-hover:rotate-90 transition-transform duration-700" />
-                  <h3 className="text-xl font-black tracking-tight mb-2">Neural Support</h3>
-                  <p className="text-xs text-slate-400 leading-relaxed mb-6">Access platform-level resolution AI for complex dispute analysis.</p>
-                  <button className="w-full py-4 bg-white text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-400 hover:text-white transition-all">Launch AI Terminal</button>
-               </div>
-            </div>
+
 
          </div>
       </div>

@@ -244,7 +244,11 @@ export async function POST(req: Request) {
 
       // SEND ORDER CREATION EMAIL TO BUYER
       try {
-        await sendOrderCreationEmail(user.email, user.name, newOrder, dealDoc.productImage);
+        const orderDataForEmail = {
+          ...newOrder.toObject(),
+          mediatorName: assignedMediator?.name || "System Specialist"
+        };
+        await sendOrderCreationEmail(user.email, user.name, orderDataForEmail, dealDoc.productImage);
       } catch (emailErr) {
         console.error("Order Creation Email Error:", emailErr);
       }

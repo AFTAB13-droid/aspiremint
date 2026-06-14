@@ -218,6 +218,8 @@ export function MobileActiveDeals({
                       {deal.dealType}
                     </span>
                     <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">{deal.marketplace}</span>
+                    <span className="text-slate-200 opacity-50">•</span>
+                    <span className="text-[8px] font-black text-indigo-400/70 uppercase tracking-widest">{deal.reviewType === "SUBMITTED" ? "REVIEW SUBMITTED" : deal.reviewType}</span>
                   </div>
                 </div>
               </div>
@@ -237,7 +239,7 @@ export function MobileActiveDeals({
                       className="flex items-center gap-1.5 cursor-pointer" 
                       onClick={() => {
                         const remarks = (role === 'ADMIN' || role === 'MEDIATOR') ? deal.mediatorRemarks : deal.userRemarks;
-                        const fallback = (role === 'ADMIN' || role === 'MEDIATOR') ? "No specialist instructions recorded." : "Live manifest with standard operating procedures.";
+                        const fallback = "No Remark";
                         setSelectedRemark(remarks || fallback);
                       }}
                     >

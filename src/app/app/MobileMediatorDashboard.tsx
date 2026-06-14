@@ -277,7 +277,7 @@ export default function MobileMediatorDashboard({
                         {order.brandName?.[0] || 'B'}
                      </div>
                      <div className="overflow-hidden">
-                        <h5 className="font-black text-slate-900 text-xs truncate">#{order._id.toString().slice(-6).toUpperCase()}</h5>
+                        <h5 className="font-black text-slate-900 text-xs truncate">{order.userOrderId || order.aspireOrderId}</h5>
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate">{order.brandName}</p>
                      </div>
                   </div>
@@ -297,20 +297,7 @@ export default function MobileMediatorDashboard({
          </div>
       </div>
       
-      {/* QUICK COMM CARD */}
-      <div className="bg-slate-900 rounded-[32px] p-6 text-white relative overflow-hidden mt-2 shadow-lg">
-         <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500 rounded-full blur-[50px] opacity-20" />
-         <div className="relative z-10 flex flex-col items-start gap-3">
-            <div className="p-3 bg-white/10 rounded-xl">
-               <Cpu className="w-6 h-6 text-indigo-400" />
-            </div>
-            <div>
-               <h3 className="text-[14px] font-black tracking-tight">Neural Support</h3>
-               <p className="text-[10px] text-slate-400 leading-relaxed mt-1">Access platform-level AI for complex dispute analysis.</p>
-            </div>
-            <button className="w-full mt-2 py-3 bg-white text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-400 hover:text-white transition-all">Launch Terminal</button>
-         </div>
-      </div>
+
 
     </div>
   );

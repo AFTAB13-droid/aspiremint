@@ -198,7 +198,7 @@ export default function MobileBuyerDashboard({
                   We found a previous refund record associated with your account. Fetch it now to add it to your total dashboard!
                 </p>
                 <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 w-full mb-6">
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Eligible Amount</p>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Previous Processed Refund Amount</p>
                    <p className="text-3xl font-black text-indigo-600">₹{eligibleRefundAmount.toLocaleString()}</p>
                 </div>
                 <button
@@ -249,7 +249,7 @@ export default function MobileBuyerDashboard({
             if (bannerConfig.actionLink) {
               router.push(bannerConfig.actionLink);
             } else if (bannerConfig.template === "NEW_DEALS") {
-              router.push("/app/orders");
+              router.push("/app/activedeals");
             }
           }}
         >
@@ -475,7 +475,7 @@ export default function MobileBuyerDashboard({
                            </div>
                            <div>
                               <p className="text-sm font-black text-slate-900 line-clamp-1">{order.brandName}</p>
-                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">#{order.orderId || order._id.toString().slice(-5)}</p>
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{order.userOrderId || order.aspireOrderId}</p>
                            </div>
                         </div>
                         <div className="text-right">

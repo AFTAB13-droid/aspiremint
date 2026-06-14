@@ -302,7 +302,7 @@ export default function FillRefundPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] md:bg-transparent pb-24 md:pb-20">
+    <div className="min-h-screen bg-[#F8FAFC] md:bg-transparent pb-36 md:pb-20">
       
       {/* MOBILE STICKY HEADER */}
       <div className="sticky top-0 z-50 md:hidden bg-white/80 backdrop-blur-xl border-b border-slate-100 px-4 py-4 flex items-center justify-between">
@@ -338,10 +338,10 @@ export default function FillRefundPage() {
               </button>
             </div>
             <h1 className="text-5xl font-black text-slate-900 uppercase tracking-tight leading-none">Apply Refund</h1>
-            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-3 flex items-center gap-2 font-mono">
+            <div className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-3 flex items-center gap-2 font-mono">
                <div className="h-1 w-1 rounded-full bg-blue-500" />
                Order ID: <span className="text-blue-600 select-all">{order.userOrderId}</span>
-            </p>
+            </div>
           </div>
         </motion.div>
 

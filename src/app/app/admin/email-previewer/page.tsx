@@ -20,6 +20,7 @@ interface EmailTemplate {
   getHtml: (vars: Record<string, string>) => string;
 }
 
+
 const renderSimpleEmail = (title: string, headerBg: string, headerColor: string, bodyContent: string) => {
   return `
 <!DOCTYPE html>
@@ -37,7 +38,8 @@ const renderSimpleEmail = (title: string, headerBg: string, headerColor: string,
       ${bodyContent}
       <br><br>
       Thanks,<br>
-      <b>AspireMint Admin</b>
+      <b>AspireMint Admin</b><br><br>
+      <div style="text-align: center; font-size: 12px; color: #888;">Developed by Team AspireMint 😎</div>
     </div>
   </div>
 </body>
@@ -108,7 +110,7 @@ const TEMPLATES: Record<TemplateType, EmailTemplate> = {
       ];
       return renderSimpleEmail("Refund Settlement Verified", "#28a745", "#ffffff", `
         Hi <b>${vars.recipientName}</b>,<br><br>
-        Your refund settlement has been verified and approved. Details are as below:
+        Your refund has been processed. Log in to the portal for detailed information.
         ${renderTable(details)}
         The amount will be processed soon.
       `);
@@ -142,7 +144,7 @@ const TEMPLATES: Record<TemplateType, EmailTemplate> = {
         Hi <b>${vars.recipientName}</b>,<br><br>
         Your refund claim has been approved. Details are as below:
         ${renderTable(details)}
-        Your refund will be processed within 24-48 hours.
+        Payment will be processed soon.
       `);
     }
   },

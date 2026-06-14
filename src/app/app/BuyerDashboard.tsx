@@ -231,7 +231,7 @@ export default function BuyerDashboard({
                   We found a previous refund record associated with your account. Fetch it now to add it to your total dashboard!
                 </p>
                 <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 w-full mb-6">
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Eligible Amount</p>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Previous Processed Refund Amount</p>
                    <p className="text-3xl font-black text-indigo-600">₹{eligibleRefundAmount.toLocaleString()}</p>
                 </div>
                 <button
@@ -355,7 +355,7 @@ export default function BuyerDashboard({
                            if (bannerConfig.actionLink) {
                               router.push(bannerConfig.actionLink);
                            } else if (bannerConfig.template === "NEW_DEALS") {
-                              router.push("/app/orders");
+                              router.push("/app/activedeals");
                            }
                         }}
                         className="px-8 py-4 bg-white text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-colors shadow-2xl flex items-center gap-2"
@@ -423,7 +423,7 @@ export default function BuyerDashboard({
                { title: "Order Form", desc: "Initialize transaction", icon: <Package className="w-7 h-7" />, href: "/app/orders/new", color: "from-blue-600 to-indigo-700", shadow: "shadow-blue-600/30", glow: "bg-blue-600" },
                { title: "Refund Form", desc: "Submit claim data", icon: <RefreshCw className="w-7 h-7" />, href: "/app/refunds/verify", color: "from-emerald-500 to-teal-600", shadow: "shadow-emerald-500/30", glow: "bg-emerald-500" },
                { title: "Track Order", desc: "Check live status", icon: <TrendingUp className="w-7 h-7" />, href: "/app/orders/track", color: "from-violet-600 to-purple-700", shadow: "shadow-violet-600/30", glow: "bg-violet-600" },
-               { title: "Active Deals", desc: "Current operations", icon: <Package className="w-7 h-7" />, href: "/app/orders", color: "from-rose-500 to-pink-600", shadow: "shadow-rose-500/30", glow: "bg-rose-500" },
+               { title: "Active Deals", desc: "Current operations", icon: <Package className="w-7 h-7" />, href: "/app/activedeals", color: "from-rose-500 to-pink-600", shadow: "shadow-rose-500/30", glow: "bg-rose-500" },
                { title: "Support", desc: "Support & Help", icon: <Clock className="w-7 h-7" />, href: "/app/support", color: "from-amber-400 to-orange-600", shadow: "shadow-amber-500/30", glow: "bg-amber-400" }
             ].map((card, idx) => (
                <motion.div
@@ -716,7 +716,7 @@ export default function BuyerDashboard({
                      {recentOrders.map((order, idx) => (
                         <tr key={idx} className="group hover:bg-slate-50/50 transition-colors">
                            <td className="py-5">
-                              <p className="text-sm font-black text-slate-900">#ORD-{order.orderId || order._id.toString().slice(-6)}</p>
+                              <p className="text-sm font-black text-slate-900">{order.userOrderId || order.aspireOrderId}</p>
                               <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{new Date(order.createdAt).toLocaleDateString()}</p>
                            </td>
                            <td className="py-5">

@@ -10,7 +10,7 @@ import { Brand } from '@/modules/brand/brand.model';
 import { ActiveDeal } from '@/modules/brand/deal.model';
 import connectToDatabase from '@/lib/db';
 import { invalidateDealsCache } from '@/lib/redis';
-import { sendOrderStatusEmail, sendOrderPaymentEmail } from '@/services/emailService';
+import { sendOrderStatusEmail, sendOrderPaymentEmail, sendRefundSubmittedEmail } from '@/services/emailService';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -445,6 +445,14 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       // --- EMAIL NOTIFICATIONS ---
       const buyer: any = order.buyer;
       const mediator: any = order.mediator;
+
+      if (status === OrderStatus.UNDER_VERIFICATION || status === OrderStatus.REFUND_FORM_SUBMITTED) {
+         try {
+            await sendRefundSubmittedEmail(buyer.email, buyer.name, updatedOrder);
+         } catch (mailErr) {
+            console.error("Refund Submitted Email Error:", mailErr);
+         }
+      }
       
       if (status === OrderStatus.REFUND_APPROVED || status === OrderStatus.APPROVED || status === OrderStatus.REFUND_REJECTED) {
          try {

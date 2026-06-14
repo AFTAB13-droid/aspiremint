@@ -639,21 +639,60 @@ export default function NewOrderPage() {
                            )}
                         </AnimatePresence>
 
-                        <div className="space-y-2">
-                           <label className={`text-[10px] font-black uppercase tracking-widest ml-1 transition-colors duration-500 ${(Number(formData.lessAmount) || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                              Adjustment (Commission / Less)
+                        <div className="space-y-3">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                              Adjustment Type
                            </label>
+                           
+                           <div className="flex bg-slate-50 p-1.5 rounded-[20px] border border-slate-100">
+                              <button 
+                                 type="button"
+                                 onClick={() => {
+                                    const val = Math.abs(Number(formData.lessAmount) || 0);
+                                    setFormData(p => ({ ...p, lessAmount: val === 0 ? "" : val.toString() }));
+                                 }}
+                                 className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${Number(formData.lessAmount) >= 0 && formData.lessAmount !== "-" ? "bg-white text-emerald-600 shadow-md border border-emerald-50" : "text-slate-400 hover:text-slate-600"}`}
+                              >
+                                 Commission (+)
+                              </button>
+                              <button 
+                                 type="button"
+                                 onClick={() => {
+                                    const val = Math.abs(Number(formData.lessAmount) || 0);
+                                    setFormData(p => ({ ...p, lessAmount: val === 0 ? "-" : `-${val}` }));
+                                 }}
+                                 className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${Number(formData.lessAmount) < 0 || formData.lessAmount === "-" ? "bg-white text-rose-600 shadow-md border border-rose-50" : "text-slate-400 hover:text-slate-600"}`}
+                              >
+                                 Less (-)
+                              </button>
+                           </div>
+
                            <div className="relative">
-                              <span className={`absolute left-6 top-1/2 -translate-y-1/2 font-black transition-colors duration-500 ${(Number(formData.lessAmount) || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>₹</span>
+                              <span className={`absolute left-5 top-1/2 -translate-y-1/2 font-black transition-colors duration-500 ${Number(formData.lessAmount) >= 0 && formData.lessAmount !== "-" ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                 {Number(formData.lessAmount) >= 0 && formData.lessAmount !== "-" ? "₹" : "- ₹"}
+                              </span>
                               <input 
-                                 name="lessAmount" type="number" step="0.01" value={formData.lessAmount} onChange={handleInputChange}
+                                 name="lessAmount" 
+                                 type="number" 
+                                 step="0.01" 
+                                 min="0"
+                                 value={formData.lessAmount === "-" || formData.lessAmount === "" ? "" : Math.abs(Number(formData.lessAmount))} 
+                                 onChange={(e) => {
+                                    const val = e.target.value;
+                                    const isLess = Number(formData.lessAmount) < 0 || formData.lessAmount === "-";
+                                    if (val === "") {
+                                       setFormData(p => ({ ...p, lessAmount: isLess ? "-" : "" }));
+                                    } else {
+                                       setFormData(p => ({ ...p, lessAmount: isLess ? `-${val}` : val }));
+                                    }
+                                 }}
                                  placeholder="0.00"
-                                 className={`w-full h-16 rounded-[24px] bg-slate-50 border px-6 pl-10 font-black text-lg outline-none focus:bg-white focus:ring-4 transition-all duration-500 ${(Number(formData.lessAmount) || 0) >= 0 ? 'text-emerald-600 border-emerald-100 focus:ring-emerald-600/10 focus:border-emerald-600' : 'text-rose-600 border-rose-100 focus:ring-rose-600/10 focus:border-rose-600'}`}
+                                 className={`w-full h-16 rounded-[24px] bg-slate-50 border px-6 pl-12 font-black text-lg outline-none focus:bg-white focus:ring-4 transition-all duration-500 ${Number(formData.lessAmount) >= 0 && formData.lessAmount !== "-" ? 'text-emerald-600 border-emerald-100 focus:ring-emerald-600/10 focus:border-emerald-600' : 'text-rose-600 border-rose-100 focus:ring-rose-600/10 focus:border-rose-600'}`}
                               />
                            </div>
                            <div className="min-h-[16px] flex items-center">
                               <AnimatePresence mode="wait">
-                                 {Number(formData.lessAmount) === 0 && formData.lessAmount !== "" ? (
+                                 {Number(formData.lessAmount) === 0 && formData.lessAmount !== "" && formData.lessAmount !== "-" ? (
                                     <motion.div 
                                        key="full-refund-adj"
                                        initial={{ opacity: 0, y: -5 }} 
@@ -672,7 +711,9 @@ export default function NewOrderPage() {
                                        exit={{ opacity: 0 }}
                                        className="text-[8px] font-black uppercase tracking-wider text-slate-400 ml-1 leading-tight"
                                     >
-                                       Note: Enter <span className="text-emerald-500">Positive</span> for Commission, or start with <span className="text-rose-500">Minus (-)</span> for Less.
+                                       {Number(formData.lessAmount) >= 0 && formData.lessAmount !== "-" 
+                                          ? "Amount will be added to user payout." 
+                                          : "Amount will be deducted from user payout."}
                                     </motion.p>
                                  )}
                               </AnimatePresence>

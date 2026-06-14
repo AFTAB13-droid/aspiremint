@@ -29,7 +29,8 @@ export function renderSimpleEmail(title: string, headerBg: string, headerColor: 
       ${bodyContent}
       <br><br>
       Thanks,<br>
-      <b>AspireMint Admin</b>
+      <b>AspireMint Admin</b><br><br>
+      <div style="text-align: center; font-size: 12px; color: #888;">Developed by Team AspireMint 😎</div>
     </div>
   </div>
 </body>
@@ -116,7 +117,7 @@ export const sendOrderStatusEmail = async (
     Hi <b>${name}</b>,<br><br>
     ${intro}
     ${renderTable(details)}
-    ${!isApproved ? "Please log in to the portal and fill in the details correctly before resubmitting." : "Your refund will be processed within 24-48 hours."}
+    ${!isApproved ? "Please log in to the portal and fill in the details correctly before resubmitting." : "Payment will be processed soon."}
   `;
 
   return transporter.sendMail({
@@ -154,6 +155,29 @@ export const sendOrderCreationEmail = async (email: string, name: string, orderD
   });
 };
 
+export const sendRefundSubmittedEmail = async (email: string, name: string, orderData: any) => {
+  const details = [
+    { label: "Order ID", value: orderData.userOrderId || "N/A" },
+    { label: "Brand", value: orderData.brandName || "N/A" },
+    { label: "Product Code", value: orderData.productCode || "N/A" },
+    { label: "Refund Amount", value: `₹${orderData.amount || 0}` }
+  ];
+
+  const body = `
+    Hi <b>${name}</b>,<br><br>
+    Your refund form has been submitted successfully and is now pending verification.
+    ${renderTable(details)}
+    We will notify you once it has been verified.
+  `;
+
+  return transporter.sendMail({
+    from: `"AspireMint Admin" <${process.env.GMAIL_USER}>`,
+    to: email,
+    subject: `[AspireMint] Refund Form Submitted: ${orderData.userOrderId}`,
+    html: renderSimpleEmail("Refund Form Submitted", "#17a2b8", "#ffffff", body),
+  });
+};
+
 export const sendOrderPaymentEmail = async (email: string, name: string, orderId: string, paymentData: any) => {
   const details = [
     { label: "Order ID", value: orderId },
@@ -165,7 +189,7 @@ export const sendOrderPaymentEmail = async (email: string, name: string, orderId
 
   const body = `
     Hi <b>${name}</b>,<br><br>
-    Your refund payout has been processed successfully.
+    Your refund has been processed. Log in to the portal for detailed information.
     ${renderTable(details)}
   `;
 
