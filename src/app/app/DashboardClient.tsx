@@ -8,6 +8,7 @@ import {
 import { useMotionValue } from "framer-motion";
 import { formatTimeAgo } from "@/utils/formatTimeAgo";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 // Dashboard Components
 import BuyerDashboard from "./BuyerDashboard";
@@ -50,6 +51,7 @@ export default function DashboardClient({ user, stats, recentOrders }: Dashboard
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [filterType, setFilterType] = useState<"all" | "unread">("all");
+  const router = useRouter();
 
   // Shared 3D HUD Mouse Tracking
   const mouseX = useMotionValue(0);
@@ -142,12 +144,19 @@ export default function DashboardClient({ user, stats, recentOrders }: Dashboard
      setIsMobile(window.innerWidth < 768);
      const handleResize = () => setIsMobile(window.innerWidth < 768);
      window.addEventListener("resize", handleResize);
+
+     const handleFcmRefresh = () => {
+        fetchNotifications();
+        router.refresh();
+     };
+     window.addEventListener("FCM_REFRESH_DATA", handleFcmRefresh);
      
      return () => {
         clearInterval(interval);
         window.removeEventListener("resize", handleResize);
+        window.removeEventListener("FCM_REFRESH_DATA", handleFcmRefresh);
      };
-  }, []);
+  }, [router]);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 

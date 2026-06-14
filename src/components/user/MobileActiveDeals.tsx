@@ -209,7 +209,7 @@ export function MobileActiveDeals({
                      </p>
                    )}
                   
-                  <div className="flex items-center gap-2 mt-2.5">
+                  <div className="flex flex-wrap items-center gap-2 mt-2.5">
                     <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tight border ${
                       deal.dealType === 'Original' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : 
                       deal.dealType === 'Exchange' ? "bg-blue-50 text-blue-600 border-blue-100" : 

@@ -78,6 +78,15 @@ export default function DealsPage() {
   useEffect(() => {
     fetchOrders();
     if (isAdm || isSubAdmin) fetchMediators();
+
+    const handleFcmRefresh = () => {
+      fetchOrders();
+    };
+
+    window.addEventListener("FCM_REFRESH_DATA", handleFcmRefresh);
+    return () => {
+      window.removeEventListener("FCM_REFRESH_DATA", handleFcmRefresh);
+    };
   }, [isAdm, isSubAdmin]);
 
   const filteredOrders = useMemo(() => {

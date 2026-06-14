@@ -22,6 +22,15 @@ export default function ActiveDealsPage() {
 
   useEffect(() => {
     fetchDeals();
+
+    const handleFcmRefresh = () => {
+      fetchDeals();
+    };
+
+    window.addEventListener("FCM_REFRESH_DATA", handleFcmRefresh);
+    return () => {
+      window.removeEventListener("FCM_REFRESH_DATA", handleFcmRefresh);
+    };
   }, []);
 
   const fetchDeals = async () => {

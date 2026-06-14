@@ -81,6 +81,11 @@ export default function FcmInitializer() {
               icon: payload.data?.icon || "/favicon.svg",
             });
           }
+          
+          // Trigger global event to auto-refresh all data tables/components silently
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("FCM_REFRESH_DATA"));
+          }
         });
 
       } catch (err) {
