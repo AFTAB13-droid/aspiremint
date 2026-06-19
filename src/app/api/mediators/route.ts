@@ -20,7 +20,7 @@ export async function GET() {
       isActive: true,
       isApproved: { $ne: false } // Backward compatibility: undefined or true = approved
     })
-      .select("_id name")
+      .select("_id name systemDisplayName email")
       .sort({ name: 1 });
 
     return NextResponse.json({ success: true, data: mediators });

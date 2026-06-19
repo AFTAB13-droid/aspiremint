@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 interface Mediator {
   _id: string;
   name: string;
+  systemDisplayName?: string;
   email: string;
 }
 
@@ -273,24 +274,32 @@ export const BulkDealsUpload: React.FC<Props> = ({ onSuccess }) => {
         resolvedMediators = mediators.map(m => ({
           mediatorId: m._id,
           commission: row.commission,
-          name: m.name
+          name: m.systemDisplayName || m.name
         }));
       } else {
         const names = mStr.split(",").map(n => n.trim()).filter(Boolean);
         for (const name of names) {
-          // 1. Exact case-insensitive match (name or email)
-          let match = mediators.find(m => m.name.toLowerCase() === name.toLowerCase() || m.email.toLowerCase() === name.toLowerCase());
+          // 1. Exact case-insensitive match (name, systemDisplayName, or email)
+          let match = mediators.find(m => 
+            m.name.toLowerCase() === name.toLowerCase() || 
+            (m.systemDisplayName && m.systemDisplayName.toLowerCase() === name.toLowerCase()) ||
+            m.email.toLowerCase() === name.toLowerCase()
+          );
           
           // 2. Fuzzy case-insensitive substring match
           if (!match) {
-            match = mediators.find(m => m.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(m.name.toLowerCase()));
+            match = mediators.find(m => 
+              m.name.toLowerCase().includes(name.toLowerCase()) || 
+              name.toLowerCase().includes(m.name.toLowerCase()) ||
+              (m.systemDisplayName && (m.systemDisplayName.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(m.systemDisplayName.toLowerCase())))
+            );
           }
 
           if (match) {
             resolvedMediators.push({
               mediatorId: match._id,
               commission: row.commission,
-              name: match.name
+              name: match.systemDisplayName || match.name
             });
           } else {
             errors.push(`Mediator "${name}" is not registered in the system (no match found).`);
