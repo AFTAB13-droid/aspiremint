@@ -634,8 +634,8 @@ export default function SettingsPage() {
                        <div className="space-y-10">
                           <div className="flex items-center justify-between pb-6 border-b border-slate-50">
                              <div>
-                                <h3 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">Vault & Settlement</h3>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Configure your financial delivery protocols</p>
+                                <h3 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">Payment Details</h3>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Manage your payment and payout information</p>
                              </div>
                              <CreditCard className={`w-8 h-8 opacity-20 ${isAdm ? "text-indigo-600" : "text-blue-600"}`} />
                           </div>

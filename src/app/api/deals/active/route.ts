@@ -204,17 +204,17 @@ export async function POST(req: Request) {
       console.warn("Pusher active deal create trigger bypassed gracefully:", err);
     }
 
-    // Dispatch FCM Broadcast Advertisement push notification (fail-safe)
+    // Dispatch FCM Broadcast Advertisement push notification (awaiting to prevent Vercel termination)
     try {
       const { sendBroadcastPushNotification } = await import("@/utils/fcm");
-      sendBroadcastPushNotification({
+      await sendBroadcastPushNotification({
         title: `🔥 New Deal: ${brandName}`,
         body: `A new deal has been launched for ${productDetails}. Claim your cashback now!`,
         data: {
           click_action: "/app/activedeals",
           brandName: brandName,
         }
-      }).catch(e => console.error("FCM broadcast error in active deals creation:", e));
+      });
     } catch (fcmErr) {
       console.warn("FCM broadcast load error in active deals:", fcmErr);
     }

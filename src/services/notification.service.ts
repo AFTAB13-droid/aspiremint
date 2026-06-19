@@ -30,17 +30,17 @@ export class NotificationService {
       console.warn("Pusher notification trigger bypassed gracefully:", err);
     }
 
-    // Dispatch FCM Push Notification in the background (fail-safe)
+    // Dispatch FCM Push Notification (awaiting to prevent Vercel termination)
     try {
       const { sendPushNotification } = await import("@/utils/fcm");
-      sendPushNotification(data.recipient, {
+      await sendPushNotification(data.recipient, {
         title: data.title,
         body: data.message,
         data: {
           click_action: data.actionUrl || "/dashboard",
           type: data.type,
         },
-      }).catch((e) => console.error("FCM single send error in NotificationService:", e));
+      });
     } catch (fcmErr) {
       console.warn("FCM dynamic load failed in NotificationService:", fcmErr);
     }
