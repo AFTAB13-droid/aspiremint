@@ -45,6 +45,13 @@ export function OrderTimeline({
     });
   };
 
+  const getExpectedDate = () => {
+    if (!refundSubmittedAt) return "TBD";
+    const d = new Date(refundSubmittedAt);
+    d.setDate(d.getDate() + 25);
+    return d.toLocaleDateString("en-GB", { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
   const steps: TimelineStep[] = [
     {
       id: "initialized",
@@ -66,17 +73,17 @@ export function OrderTimeline({
       id: "verification",
       label: "Under Verification",
       subLabel: "Admin checking deal integrity",
-      isCompleted: ["REFUND_APPROVED", "COMPLETED", "REFUNDED", "REFUND_REJECTED"].includes(status),
+      isCompleted: ["REFUND_APPROVED", "APPROVED", "COMPLETED", "REFUNDED", "REFUND_REJECTED"].includes(status),
       isActive: status === "REFUND_FORM_SUBMITTED" || status === "UNDER_VERIFICATION",
-      timestamp: (["REFUND_APPROVED", "COMPLETED", "REFUNDED", "REFUND_REJECTED"].includes(status)) ? formatDate(updatedAt) : undefined,
+      timestamp: (["REFUND_APPROVED", "APPROVED", "COMPLETED", "REFUNDED", "REFUND_REJECTED"].includes(status)) ? formatDate(updatedAt) : undefined,
     },
     {
       id: "approval",
       label: status === "REFUND_REJECTED" ? "Refund Rejected" : "Refund Approved",
       subLabel: status === "REFUND_REJECTED" ? "Your refund has been rejected" : "Decision: Verification Success",
       isCompleted: ["COMPLETED", "REFUNDED"].includes(status),
-      isActive: status === "REFUND_APPROVED" || status === "REFUND_REJECTED",
-      timestamp: (status === "REFUND_APPROVED" || status === "REFUND_REJECTED") ? formatDate(updatedAt) : undefined,
+      isActive: status === "REFUND_APPROVED" || status === "APPROVED" || status === "REFUND_REJECTED",
+      timestamp: (status === "REFUND_APPROVED" || status === "APPROVED" || status === "REFUND_REJECTED") ? formatDate(updatedAt) : undefined,
     },
     {
       id: "payment",
@@ -85,7 +92,7 @@ export function OrderTimeline({
       isCompleted: ["COMPLETED", "REFUNDED"].includes(status),
       isActive: ["COMPLETED", "REFUNDED"].includes(status),
       timestamp: ["COMPLETED", "REFUNDED"].includes(status) ? formatDate(updatedAt) : undefined,
-      meta: (["COMPLETED", "REFUNDED"].includes(status)) && (
+      meta: (["COMPLETED", "REFUNDED"].includes(status)) ? (
         <div className="mt-3 md:mt-4 p-4 md:p-5 bg-slate-900 rounded-2xl md:rounded-[24px] border border-slate-800 shadow-2xl relative overflow-hidden group">
            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-[40px] rounded-full -mr-16 -mt-16 group-hover:bg-emerald-500/20 transition-all" />
            
@@ -122,7 +129,26 @@ export function OrderTimeline({
               )}
            </div>
         </div>
-      )
+      ) : (status === "REFUND_APPROVED" || status === "APPROVED") ? (
+        <div className="mt-3 md:mt-4 p-4 md:p-5 bg-amber-50 rounded-2xl md:rounded-[24px] border border-amber-100 shadow-sm relative overflow-hidden">
+           <div className="flex flex-col justify-between gap-3">
+              <div className="flex items-center gap-3">
+                 <div className="h-8 w-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                 </div>
+                 <div>
+                   <span className="text-[9px] md:text-[10px] font-black text-amber-600 uppercase tracking-widest block">Expected Payout Date</span>
+                   <span className="text-xs md:text-sm font-black text-slate-900 uppercase tracking-tight">{getExpectedDate()}</span>
+                 </div>
+              </div>
+              <div className="pt-3 border-t border-amber-200/50">
+                 <p className="text-[9px] md:text-[10px] font-bold text-amber-700/80 uppercase tracking-widest leading-relaxed">
+                   Notice: Refund is normally paid under 20-25 days. For more queries, please contact admin.
+                 </p>
+              </div>
+           </div>
+        </div>
+      ) : undefined
     }
   ];
 
