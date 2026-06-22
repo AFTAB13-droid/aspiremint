@@ -227,6 +227,22 @@ export async function POST(req: Request) {
       await newOrder.save({ session: mongoSession });
       await mongoSession.commitTransaction();
 
+      // Push to Google Sheets (Order Form)
+      try {
+        const { pushToGoogleSheet } = await import('@/utils/googleSheets');
+        await pushToGoogleSheet("ORDER", {
+          "Brand Name": brandName,
+          "Product Code": productCode,
+          "Order Id": userOrderId || "",
+          "review name": user.name,
+          "order Amount": amount,
+          "order ss": screenshot || "",
+          "Mediator Name": assignedMediator?.name || "Unassigned",
+        });
+      } catch (err) {
+        console.error("Google sheets push error:", err);
+      }
+
       // Trigger Notification to Mediator
       try {
         await NotificationService.create({

@@ -387,6 +387,21 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       
       await mongoSession.commitTransaction();
 
+      // Push to Google Sheets (Refund Sheet)
+      if (status === OrderStatus.UNDER_VERIFICATION || status === OrderStatus.REFUND_FORM_SUBMITTED) {
+        try {
+          const { pushToGoogleSheet } = await import('@/utils/googleSheets');
+          await pushToGoogleSheet("REFUND", {
+            "Order Id": updatedOrder.userOrderId || updatedOrder._id,
+            "Review Ss": updatedOrder.refundProof?.reviewScreenshot || "",
+            "Feedback Ss": updatedOrder.refundProof?.returnPeriodScreenshot || "",
+            "Refund Amount": updatedOrder.amount,
+          });
+        } catch (err) {
+          console.error("Google sheets push error:", err);
+        }
+      }
+
       // Trigger Notifications
       try {
         const dealDoc = await ActiveDeal.findOne({ productCode: updatedOrder.productCode });
