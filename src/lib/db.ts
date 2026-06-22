@@ -24,7 +24,7 @@ if (!cached) {
 }
 
 async function connectToDatabase() {
-  if (cached.conn) {
+  if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
   }
 
@@ -33,6 +33,7 @@ async function connectToDatabase() {
       bufferCommands: false,
       serverSelectionTimeoutMS: 10000, // Wait 10 seconds for server selection
       socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+      maxIdleTimeMS: 10000, // CRITICAL FOR SERVERLESS: Close idle connections after 10s so they don't break on wake
       family: 4, // Force IPv4 to avoid potential IPv6 resolution issues
     };
 
