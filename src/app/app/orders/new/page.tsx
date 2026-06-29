@@ -25,6 +25,7 @@ export default function NewOrderPage() {
   const [config, setConfig] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [mediators, setMediators] = useState<any[]>([]);
+  const [activeDeals, setActiveDeals] = useState<any[]>([]);
   const [selectedDealDetails, setSelectedDealDetails] = useState<any>(null);
 
   const [formData, setFormData] = useState({
@@ -73,22 +74,33 @@ export default function NewOrderPage() {
         setFormData(prev => ({ ...prev, ...initialData }));
         if (initialData.screenshot) setUploadPreview(initialData.screenshot);
 
-        const [configRes, brandsRes, profileRes, mediatorsRes] = await Promise.all([
+        const [configRes, brandsRes, profileRes, mediatorsRes, activeDealsRes] = await Promise.all([
           fetch("/api/admin/config?key=order_form_settings"),
           fetch("/api/brands"),
           fetch("/api/user/profile"),
           fetch("/api/mediators"),
+          fetch("/api/deals/active")
         ]);
 
-        const [configJson, brandsJson, profileJson, mediatorsJson] = await Promise.all([
+        const [configJson, brandsJson, profileJson, mediatorsJson, activeDealsJson] = await Promise.all([
           configRes.json(),
           brandsRes.json(),
           profileRes.json(),
           mediatorsRes.json(),
+          activeDealsRes.json()
         ]);
 
         if (configJson.success) setConfig(configJson.data);
-        if (brandsJson.success) setBrands(brandsJson.data);
+        if (brandsJson.success) {
+          if (activeDealsJson.success) {
+             setActiveDeals(activeDealsJson.data);
+             const activeBrandNames = new Set(activeDealsJson.data.map((deal: any) => deal.brandName));
+             const filteredBrands = brandsJson.data.filter((b: any) => activeBrandNames.has(b.name));
+             setBrands(filteredBrands);
+          } else {
+             setBrands(brandsJson.data);
+          }
+        }
         if (mediatorsJson.success) setMediators(mediatorsJson.data);
         if (profileJson.success) {
           setUserProfile(profileJson.data);
@@ -122,9 +134,15 @@ export default function NewOrderPage() {
 
   const availableProducts = useMemo(() => {
     if (!selectedBrandData?.productCodes) return [];
-    // Hide products where stock is exactly 0
-    return selectedBrandData.productCodes.filter((pc: any) => pc.stock === undefined || pc.stock > 0);
-  }, [selectedBrandData]);
+    // Hide products where stock is exactly 0 AND ensure the product is in the active deals list
+    return selectedBrandData.productCodes.filter((pc: any) => {
+       const hasStock = pc.stock === undefined || pc.stock > 0;
+       const isActiveDeal = activeDeals.some(
+          (deal) => deal.brandName === formData.brandName && deal.productCode === pc.code
+       );
+       return hasStock && (activeDeals.length === 0 || isActiveDeal); // If activeDeals is empty (failed to load), just fallback to stock
+    });
+  }, [selectedBrandData, activeDeals, formData.brandName]);
 
   const selectedProductData = useMemo(() => {
     return availableProducts.find((pc: any) => pc.code === formData.productCode);

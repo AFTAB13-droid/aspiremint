@@ -1,15 +1,16 @@
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: process.env.SMTP_HOST || "smtp.zeptomail.in",
+  port: Number(process.env.SMTP_PORT) || 587,
   auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS,
+    user: process.env.SMTP_USER || "emailapikey",
+    pass: process.env.SMTP_PASS,
   },
 });
 
-if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
-  console.warn("WARNING: GMAIL_USER or GMAIL_PASS is not set in environment variables.");
+if (!process.env.SMTP_PASS) {
+  console.warn("WARNING: SMTP_PASS is not set in environment variables.");
 }
 
 export function renderSimpleEmail(title: string, headerBg: string, headerColor: string, bodyContent: string) {
@@ -59,7 +60,7 @@ export const sendOTPEmail = async (email: string, name: string, otp: string) => 
     If you did not request this, please ignore this email.
   `;
   return transporter.sendMail({
-    from: `"AspireMint Admin" <${process.env.GMAIL_USER}>`,
+    from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
     subject: `[AspireMint] Security OTP: ${otp}`,
     html: renderSimpleEmail("Identity Verification", "#4f46e5", "#ffffff", body),
@@ -121,7 +122,7 @@ export const sendOrderStatusEmail = async (
   `;
 
   return transporter.sendMail({
-    from: `"AspireMint Admin" <${process.env.GMAIL_USER}>`,
+    from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
     subject: isApproved
       ? `[AspireMint] ✓ Refund Approved: Order ${orderId}`
@@ -148,7 +149,7 @@ export const sendOrderCreationEmail = async (email: string, name: string, orderD
   `;
 
   return transporter.sendMail({
-    from: `"AspireMint Admin" <${process.env.GMAIL_USER}>`,
+    from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
     subject: `[AspireMint] Order Logged: ${orderData.userOrderId}`,
     html: renderSimpleEmail("Order Received", "#ffc107", "#000000", body),
@@ -171,7 +172,7 @@ export const sendRefundSubmittedEmail = async (email: string, name: string, orde
   `;
 
   return transporter.sendMail({
-    from: `"AspireMint Admin" <${process.env.GMAIL_USER}>`,
+    from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
     subject: `[AspireMint] Refund Form Submitted: ${orderData.userOrderId}`,
     html: renderSimpleEmail("Refund Form Submitted", "#17a2b8", "#ffffff", body),
@@ -194,7 +195,7 @@ export const sendOrderPaymentEmail = async (email: string, name: string, orderId
   `;
 
   return transporter.sendMail({
-    from: `"AspireMint Admin" <${process.env.GMAIL_USER}>`,
+    from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
     subject: `[AspireMint] ₹ Payout Processed: Order ${orderId}`,
     html: renderSimpleEmail("Payout Completed", "#17a2b8", "#ffffff", body),
@@ -215,7 +216,7 @@ export const sendWelcomeEmail = async (email: string, name: string) => {
   `;
 
   return transporter.sendMail({
-    from: `"AspireMint Admin" <${process.env.GMAIL_USER}>`,
+    from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
     subject: "Welcome to AspireMint!",
     html: renderSimpleEmail("Welcome", "#6f42c1", "#ffffff", body),
