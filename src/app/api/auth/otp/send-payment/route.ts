@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
     // SEND REAL EMAIL
     try {
-      await sendOTPEmail(email, session.user.name || email.split('@')[0], otp);
+      await sendOTPEmail(email, session.user.name || email.split('@')[0], otp, "PAYMENT");
     } catch (mailError) {
       console.error("Payment OTP Mail Transmission Error:", mailError);
       return NextResponse.json({ 

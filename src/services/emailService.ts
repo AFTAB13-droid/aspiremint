@@ -49,21 +49,42 @@ export function renderTable(rows: { label: string; value: string }[]) {
   return `<table style="width: 100%; border-collapse: collapse; border: 1px solid #e0e0e0; margin: 15px 0;">${trs}</table>`;
 }
 
-export const sendOTPEmail = async (email: string, name: string, otp: string) => {
+export const sendOTPEmail = async (
+  email: string, 
+  name: string, 
+  otp: string, 
+  context: "LOGIN" | "PAYMENT" | "PASSWORD_RESET" = "LOGIN"
+) => {
+  let subject = `[AspireMint] Security OTP: ${otp}`;
+  let title = "Identity Verification";
+  let headerBg = "#4f46e5";
+  let intro = "Please use the following single-use code to authenticate.";
+
+  if (context === "PAYMENT") {
+    subject = `[AspireMint] Payment Update Security OTP: ${otp}`;
+    title = "Payment Details Update";
+    headerBg = "#dc3545"; // Red for security alert
+    intro = "You are attempting to update your payment details. Please use the following code to authorize this change.";
+  } else if (context === "PASSWORD_RESET") {
+    subject = `[AspireMint] Password Reset OTP: ${otp}`;
+    title = "Password Reset Request";
+    intro = "You have requested to reset your password. Please use the following code.";
+  }
+
   const body = `
     Hi <b>${name}</b>,<br><br>
-    Please use the following single-use code to authenticate.
+    ${intro}
     ${renderTable([
       { label: "Security Code", value: otp },
       { label: "Valid For", value: "10 Minutes" }
     ])}
-    If you did not request this, please ignore this email.
+    If you did not request this, please ignore this email and secure your account immediately.
   `;
   return transporter.sendMail({
     from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
-    subject: `[AspireMint] Security OTP: ${otp}`,
-    html: renderSimpleEmail("Identity Verification", "#4f46e5", "#ffffff", body),
+    subject,
+    html: renderSimpleEmail(title, headerBg, "#ffffff", body),
   });
 };
 
