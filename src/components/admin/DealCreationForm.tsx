@@ -110,11 +110,15 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
 
       if (brandsJson.success) setBrands(brandsJson.data);
       if (marketplacesJson.success) setMarketplaces(marketplacesJson.data);
-      // Filter out Juhi from manual assignment
       if (mediatorsJson.success) {
         const juhiUser = mediatorsJson.data.find((m: any) => m.name.toLowerCase().includes("juhi"));
         if (juhiUser) setJuhiAmId(juhiUser.aspireMintId || "");
-        setMediators(mediatorsJson.data.filter((m: any) => !m.name.toLowerCase().includes("juhi")));
+        const sorted = mediatorsJson.data.sort((a: any, b: any) => {
+          if (a.name.toLowerCase().includes("juhi")) return -1;
+          if (b.name.toLowerCase().includes("juhi")) return 1;
+          return 0;
+        });
+        setMediators(sorted);
       }
     } catch (err) {
       toast.error("Failed to load dependency data");
@@ -642,15 +646,21 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
                          m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          m.email.toLowerCase().includes(searchTerm.toLowerCase())
                        )
-                       .map(m => (
-                       <div key={m._id} onClick={() => toggleMediator(m._id)} className={`p-5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden group ${selectedMediators.includes(m._id) ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/20" : "bg-slate-50/50 border-slate-100 text-indigo-900 hover:border-indigo-300 hover:bg-white"}`}>
+                       .map(m => {
+                         const isJuhi = m.name.toLowerCase().includes("juhi");
+                         return (
+                       <div key={m._id} onClick={() => toggleMediator(m._id)} className={`p-5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden group ${selectedMediators.includes(m._id) ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/20" : isJuhi ? "bg-gradient-to-r from-fuchsia-50 to-purple-50 border-fuchsia-200 text-fuchsia-900 hover:border-fuchsia-400" : "bg-slate-50/50 border-slate-100 text-indigo-900 hover:border-indigo-300 hover:bg-white"}`}>
                           <div className={`absolute top-0 right-0 p-2 transition-opacity ${selectedMediators.includes(m._id) ? "opacity-100" : "opacity-0"}`}>
                             <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                           </div>
-                          <p className="text-[11px] font-black uppercase truncate">{m.systemDisplayName || m.name}</p>
-                          <p className={`text-[9px] truncate transition-all ${selectedMediators.includes(m._id) ? "text-indigo-100" : "text-slate-400"}`}>{m.email}</p>
+                          <p className={`text-[11px] font-black uppercase truncate flex items-center gap-2 ${isJuhi && !selectedMediators.includes(m._id) ? "text-fuchsia-700" : ""}`}>
+                             {m.systemDisplayName || m.name}
+                             {isJuhi && <span className={`px-2 py-0.5 rounded text-[8px] tracking-widest ${selectedMediators.includes(m._id) ? "bg-white/20 text-white" : "bg-fuchsia-200 text-fuchsia-700 animate-pulse"}`}>SUPER</span>}
+                          </p>
+                          <p className={`text-[9px] truncate transition-all ${selectedMediators.includes(m._id) ? "text-indigo-100" : isJuhi ? "text-fuchsia-600/70" : "text-slate-400"}`}>{m.email}</p>
                        </div>
-                     ))}
+                         );
+                       })}
                      {mediators.filter(m => 
                        m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                        m.email.toLowerCase().includes(searchTerm.toLowerCase())
