@@ -649,15 +649,15 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
                        .map(m => {
                          const isJuhi = m.name.toLowerCase().includes("juhi");
                          return (
-                       <div key={m._id} onClick={() => toggleMediator(m._id)} className={`p-5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden group ${selectedMediators.includes(m._id) ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/20" : isJuhi ? "bg-gradient-to-r from-fuchsia-50 to-purple-50 border-fuchsia-200 text-fuchsia-900 hover:border-fuchsia-400" : "bg-slate-50/50 border-slate-100 text-indigo-900 hover:border-indigo-300 hover:bg-white"}`}>
+                       <div key={m._id} onClick={() => toggleMediator(m._id)} className={`p-5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden group ${selectedMediators.includes(m._id) ? "bg-black border-black text-white shadow-lg shadow-black/20" : isJuhi ? "bg-slate-50 border-slate-200 text-black hover:border-black" : "bg-slate-50/50 border-slate-100 text-indigo-900 hover:border-indigo-300 hover:bg-white"}`}>
                           <div className={`absolute top-0 right-0 p-2 transition-opacity ${selectedMediators.includes(m._id) ? "opacity-100" : "opacity-0"}`}>
                             <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                           </div>
-                          <p className={`text-[11px] font-black uppercase truncate flex items-center gap-2 ${isJuhi && !selectedMediators.includes(m._id) ? "text-fuchsia-700" : ""}`}>
+                          <p className={`text-[11px] font-black uppercase truncate flex items-center gap-2 ${isJuhi && !selectedMediators.includes(m._id) ? "text-black animate-pulse" : ""}`}>
+                             {isJuhi && <span>⭐</span>}
                              {m.systemDisplayName || m.name}
-                             {isJuhi && <span className={`px-2 py-0.5 rounded text-[8px] tracking-widest ${selectedMediators.includes(m._id) ? "bg-white/20 text-white" : "bg-fuchsia-200 text-fuchsia-700 animate-pulse"}`}>SUPER</span>}
                           </p>
-                          <p className={`text-[9px] truncate transition-all ${selectedMediators.includes(m._id) ? "text-indigo-100" : isJuhi ? "text-fuchsia-600/70" : "text-slate-400"}`}>{m.email}</p>
+                          <p className={`text-[9px] truncate transition-all ${selectedMediators.includes(m._id) ? "text-slate-300" : isJuhi ? "text-slate-500" : "text-slate-400"}`}>{m.email}</p>
                        </div>
                          );
                        })}
