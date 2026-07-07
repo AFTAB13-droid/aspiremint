@@ -390,9 +390,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       // Push to Google Sheets (Refund Sheet)
       if (status === OrderStatus.UNDER_VERIFICATION || status === OrderStatus.REFUND_FORM_SUBMITTED) {
         try {
+          const buyer = await (await import('@/modules/user/user.model')).User.findById(updatedOrder.buyer).lean();
           const { pushToGoogleSheet } = await import('@/utils/googleSheets');
           await pushToGoogleSheet("REFUND", {
             "Order Id": updatedOrder.userOrderId || updatedOrder._id,
+            "Mobile Number": buyer?.mobile || "",
             "Review Ss": updatedOrder.refundProof?.reviewScreenshot || "",
             "Feedback Ss": updatedOrder.refundProof?.returnPeriodScreenshot || "",
             "Refund Amount": updatedOrder.amount,
