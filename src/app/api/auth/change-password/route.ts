@@ -17,6 +17,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "All fields are required" }, { status: 400 });
     }
 
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]).{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character" 
+        },
+        { status: 400 }
+      );
+    }
+
     await connectToDatabase();
 
     const user = await User.findById(session.user.id);

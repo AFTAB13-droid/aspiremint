@@ -82,6 +82,12 @@ export default function ForgotPasswordPage() {
     if (password !== confirmPassword) {
       return toast.error("Passwords do not match");
     }
+    
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return toast.error("Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character.");
+    }
+
     setIsLoading(true);
     try {
       const res = await fetch("/api/auth/reset-password", {

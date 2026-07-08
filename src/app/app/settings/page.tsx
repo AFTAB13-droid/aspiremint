@@ -377,8 +377,10 @@ export default function SettingsPage() {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       return toast.error("Passwords do not match");
     }
-    if (passwordData.newPassword.length < 6) {
-      return toast.error("Password must be at least 6 characters");
+    
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]).{8,}$/;
+    if (!passwordRegex.test(passwordData.newPassword)) {
+      return toast.error("Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character.");
     }
 
     setSaving(true);

@@ -11,8 +11,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
     }
 
-    if (password.length < 8) {
-      return NextResponse.json({ success: false, message: "Password must be at least 8 characters." }, { status: 400 });
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character" 
+        },
+        { status: 400 }
+      );
     }
 
     await connectToDatabase();
