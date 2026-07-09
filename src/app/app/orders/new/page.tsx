@@ -156,6 +156,19 @@ export default function NewOrderPage() {
     return availableProducts.find((pc: any) => pc.code === formData.productCode);
   }, [availableProducts, formData.productCode]);
 
+  const filteredMediators = useMemo(() => {
+    if (!selectedDealDetails) return mediators;
+    
+    const assignedIds = selectedDealDetails.assignedMediators?.map((m: any) => m.mediatorId?._id?.toString() || m.mediatorId?.toString()) || [];
+    const juhiObj = mediators.find(m => m.name.toLowerCase().includes("juhi"));
+    
+    if (juhiObj && assignedIds.length === 1 && assignedIds[0] === juhiObj._id?.toString()) {
+       return mediators.filter(m => m._id === juhiObj._id);
+    }
+    
+    return mediators;
+  }, [mediators, selectedDealDetails]);
+
   // Auto-switch protocol if current is out of stock
   useEffect(() => {
     if (selectedProductData) {
@@ -474,10 +487,10 @@ export default function NewOrderPage() {
                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Mediator Allocation (*)</label>
                             <div className="relative group">
                                <CustomDropdown
-                                  options={mediators.map(m => m.systemDisplayName || m.name)}
+                                  options={filteredMediators.map(m => m.systemDisplayName || m.name)}
                                   value={
                                      (() => {
-                                        const found = mediators.find(m => m._id === formData.mediatorId);
+                                        const found = filteredMediators.find(m => m._id === formData.mediatorId);
                                         return found ? (found.systemDisplayName || found.name) : "";
                                      })()
                                   }
@@ -486,7 +499,7 @@ export default function NewOrderPage() {
                                         handleInputChange({ target: { name: 'mediatorId', value: "" } } as any);
                                         return;
                                      }
-                                     const mediator = mediators.find(m => (m.systemDisplayName || m.name) === val);
+                                     const mediator = filteredMediators.find(m => (m.systemDisplayName || m.name) === val);
                                      if (mediator) {
                                         handleInputChange({ target: { name: 'mediatorId', value: mediator._id } } as any);
                                         

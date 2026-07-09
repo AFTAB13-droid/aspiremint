@@ -4,7 +4,7 @@ export interface IActiveDeal extends Document {
   brandName: string;
   productDetails: string;
   productCode: string;
-  productLink: string;
+  productLink?: string;
   marketplace: string;
   totalSlots: number;
   remainingSlots: number;
@@ -46,7 +46,7 @@ const ActiveDealSchema = new Schema<IActiveDeal>(
     brandName: { type: String, required: true },
     productDetails: { type: String, required: true },
     productCode: { type: String, required: true, unique: true },
-    productLink: { type: String, required: true },
+    productLink: { type: String, default: "" },
     marketplace: { type: String, required: true },
     totalSlots: { type: Number, required: true },
     remainingSlots: { type: Number, required: true },
