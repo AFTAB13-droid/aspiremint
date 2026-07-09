@@ -186,6 +186,16 @@ const navLinks: NavLink[] = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
       </svg>
     )
+  },
+  {
+    name: "Help",
+    href: "/app/samples",
+    roles: ["USER", "MEDIATOR"],
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    )
   }
 ];
 
@@ -226,7 +236,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const mobileSections = [
     { 
       title: "Operations", 
-      links: filteredLinks.filter(l => ["Dashboard", "Orders", "My Orders", "Active Deals", "My Refunds", "My Activity", "Refunds", "Passbook", "Refer and Earn", "Support", "Support Hub"].includes(l.name)) 
+      links: filteredLinks.filter(l => ["Dashboard", "Orders", "My Orders", "Active Deals", "My Refunds", "My Activity", "Refunds", "Passbook", "Refer and Earn", "Support", "Support Hub", "Help"].includes(l.name)) 
     },
     { 
       title: "Management", 
