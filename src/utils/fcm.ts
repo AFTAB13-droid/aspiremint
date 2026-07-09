@@ -13,71 +13,9 @@ interface PushPayload {
  */
 export async function sendPushNotification(userId: string, payload: PushPayload) {
   try {
-    await connectToDatabase();
-    const user = await User.findById(userId).select('fcmTokens');
-    if (!user || !user.fcmTokens || user.fcmTokens.length === 0) {
-      return;
-    }
-
-    let activeMessaging;
-    try {
-      activeMessaging = messaging();
-    } catch (e) {
-      // Graceful fallback if Firebase Admin is not initialized
-      return;
-    }
-
-    if (!activeMessaging) return;
-
-    const invalidTokens: string[] = [];
-    const tokens = user.fcmTokens;
-
-    const sendPromises = tokens.map(async (token: string) => {
-      try {
-        await activeMessaging.send({
-          token,
-          notification: {
-            title: payload.title,
-            body: payload.body,
-          },
-          data: payload.data || {},
-          android: {
-            priority: 'high',
-          },
-          webpush: {
-            headers: {
-              Urgency: 'high'
-            },
-            notification: {
-              icon: '/favicon.svg',
-              badge: '/favicon.svg',
-              click_action: payload.data?.click_action || '/dashboard',
-            }
-          }
-        });
-      } catch (err: any) {
-        console.error(`FCM token sending error (${token}):`, err.message);
-        // Identify expired or invalid registration tokens to prune from DB
-        if (
-          err.code === 'messaging/invalid-registration-token' ||
-          err.code === 'messaging/registration-token-not-registered' ||
-          err.message?.includes('unregistered') ||
-          err.message?.includes('invalid')
-        ) {
-          invalidTokens.push(token);
-        }
-      }
-    });
-
-    await Promise.all(sendPromises);
-
-    // Prune invalid tokens to keep database clean
-    if (invalidTokens.length > 0) {
-      await User.updateOne(
-        { _id: userId },
-        { $pull: { fcmTokens: { $in: invalidTokens } } }
-      );
-    }
+    // Delegate to the multiple function to ensure consistent robust behavior
+    // and take advantage of the same error handling and token cleanup.
+    await sendPushNotificationToMultiple([userId], payload);
   } catch (err) {
     console.error("FCM Send Push Notification error:", err);
   }
