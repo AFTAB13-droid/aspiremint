@@ -1,8 +1,8 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  // Replace this with your actual domain when you deploy!
-  const baseUrl = 'https://www.aspiremint.com';
+  // Actual deployed domain
+  const baseUrl = 'https://deals.aspiremint.in';
 
   return [
     {

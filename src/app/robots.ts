@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/', '/app/'], // Disallow internal dashboards & APIs
     },
-    // Replace with your actual deployed domain!
-    sitemap: 'https://www.aspiremint.com/sitemap.xml',
+    // Actual deployed domain
+    sitemap: 'https://deals.aspiremint.in/sitemap.xml',
   };
 }
