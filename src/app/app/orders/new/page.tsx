@@ -18,7 +18,7 @@ export default function NewOrderPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitPhase, setSubmitPhase] = useState<number>(0);
-  const submissionPhases = ["Verifying Configuration...", "Locking Inventory Slots...", "Registering Deal...", "Initializing Settlement..."];
+  const submissionPhases = ["Verifying Details...", "Confirming Slot...", "Registering Deal...", "Finalizing Order..."];
   const [uploadPreview, setUploadPreview] = useState<string | null>(null);
   const [idExists, setIdExists] = useState(false);
   const [checkingId, setCheckingId] = useState(false);
