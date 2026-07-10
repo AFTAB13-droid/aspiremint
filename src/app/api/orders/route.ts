@@ -73,7 +73,7 @@ export async function POST(req: Request) {
       
       let finalMediatorId = mediatorId;
 
-      if (isAutoAssign) {
+      if (!finalMediatorId && isAutoAssign) {
         const availableMediators = await User.find({ role: 'MEDIATOR', isActive: true }).session(mongoSession);
         if (availableMediators.length === 0) {
           throw new Error('No active mediators available');
@@ -227,26 +227,28 @@ export async function POST(req: Request) {
       await newOrder.save({ session: mongoSession });
       await mongoSession.commitTransaction();
 
-      // Push to Google Sheets (Order Form)
-      try {
-        const { pushToGoogleSheet } = await import('@/utils/googleSheets');
-        await pushToGoogleSheet("ORDER", {
-          "Brand Name": brandName,
-          "Product Code": productCode,
-          "Order Id": userOrderId || "",
-          "Reviewer Name": reviewName || "",
-          "Mobile Number": user.mobile || "",
-          "order Amount": amount,
-          "order ss": screenshot || "",
-          "Mediator Name": assignedMediator?.name || "Unassigned",
-        });
-      } catch (err) {
-        console.error("Google sheets push error:", err);
-      }
+      // Run all external post-transaction tasks concurrently to speed up API response
+      const externalTasks = [];
 
-      // Trigger Notification to Mediator
-      try {
-        await NotificationService.create({
+      // 1. Google Sheets Push
+      externalTasks.push(
+        import('@/utils/googleSheets').then(({ pushToGoogleSheet }) => 
+          pushToGoogleSheet("ORDER", {
+            "Brand Name": brandName,
+            "Product Code": productCode,
+            "Order Id": userOrderId || "",
+            "Reviewer Name": reviewName || "",
+            "Mobile Number": user.mobile || "",
+            "order Amount": amount,
+            "order ss": screenshot || "",
+            "Mediator Name": assignedMediator?.name || "Unassigned",
+          })
+        ).catch(err => console.error("Google sheets push error:", err))
+      );
+
+      // 2. Notifications
+      externalTasks.push(
+        NotificationService.create({
           recipient: finalMediatorId,
           type: NotificationType.NEW_ORDER_ASSIGNED,
           title: "New Order Assigned",
@@ -254,40 +256,39 @@ export async function POST(req: Request) {
           metadata: { orderId: newOrder._id },
           actionUrl: `/app/orders/${newOrder._id}`,
           mediaUrl: dealDoc.productImage || undefined
-        });
-      } catch (e) {
-        console.error("Failed to notify mediator:", e);
-      }
+        }).catch(err => console.error("Failed to notify mediator:", err))
+      );
 
-      // SEND ORDER CREATION EMAIL TO BUYER
-      try {
-        const orderDataForEmail = {
-          ...newOrder.toObject(),
-          mediatorName: assignedMediator?.name || "System Specialist"
-        };
-        await sendOrderCreationEmail(user.email, user.name, orderDataForEmail, dealDoc.productImage);
-      } catch (emailErr) {
-        console.error("Order Creation Email Error:", emailErr);
-      }
+      // 3. Email
+      const orderDataForEmail = {
+        ...newOrder.toObject(),
+        mediatorName: assignedMediator?.name || "System Specialist"
+      };
+      externalTasks.push(
+        sendOrderCreationEmail(user.email, user.name, orderDataForEmail, dealDoc.productImage)
+          .catch(err => console.error("Order Creation Email Error:", err))
+      );
 
-      // Cache Invalidation (Blocking/Awaited)
-      await invalidateDealsCache();
+      // 4. Cache Invalidation
+      externalTasks.push(
+        invalidateDealsCache().catch(err => console.error("Cache invalidation error:", err))
+      );
 
-      // Trigger real-time Pusher events (fail-safe)
-      try {
-        const { triggerRealtimeEvent } = await import("@/lib/pusher");
-        
-        // 1. Notify public deals of slot inventory change
-        await triggerRealtimeEvent("public-deals", "inventory-updated", {
-          productCode: newOrder.productCode,
-          remainingSlots: (dealDoc.remainingSlots || 0)
-        });
+      // 5. Pusher Events
+      externalTasks.push(
+        import("@/lib/pusher").then(({ triggerRealtimeEvent }) => {
+          return Promise.all([
+            triggerRealtimeEvent("public-deals", "inventory-updated", {
+              productCode: newOrder.productCode,
+              remainingSlots: (dealDoc.remainingSlots || 0)
+            }),
+            triggerRealtimeEvent("private-admin", "order-created", newOrder)
+          ]);
+        }).catch(err => console.warn("Pusher events bypassed:", err))
+      );
 
-        // 2. Notify admins of new order arrival
-        await triggerRealtimeEvent("private-admin", "order-created", newOrder);
-      } catch (err) {
-        console.warn("Pusher order creation event bypassed gracefully:", err);
-      }
+      // Await all background tasks concurrently
+      await Promise.allSettled(externalTasks);
 
       return NextResponse.json({ 
         success: true, 
