@@ -22,6 +22,7 @@ export function NotificationSidebar({ isOpen, onClose, userRole }: NotificationS
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [filterType, setFilterType] = useState<"all" | "unread">("all");
@@ -71,18 +72,17 @@ export function NotificationSidebar({ isOpen, onClose, userRole }: NotificationS
   }, [isOpen]);
 
   const markAllAsRead = async () => {
+    if (unreadCount === 0) return;
+    const updated = notifications.map(n => ({ ...n, isRead: true }));
+    setNotifications(updated);
+    localStorage.setItem("aspire_notifications_cache", JSON.stringify(updated));
     try {
-      const res = await fetch("/api/notifications", {
+      await fetch("/api/notifications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ all: true })
       });
-      if (res.ok) {
-        const updated = notifications.map(n => ({ ...n, isRead: true }));
-        setNotifications(updated);
-        localStorage.setItem("aspire_notifications_cache", JSON.stringify(updated));
-        toast.success("All notifications marked as read");
-      }
+      toast.success("All notifications marked as read");
     } catch (err) {
       toast.error("Failed to mark as read");
     }
@@ -90,33 +90,33 @@ export function NotificationSidebar({ isOpen, onClose, userRole }: NotificationS
 
   const markAsRead = async (id: string) => {
     try {
+      const updated = notifications.map(n => n._id === id ? { ...n, isRead: true } : n);
+      setNotifications(updated);
+      localStorage.setItem("aspire_notifications_cache", JSON.stringify(updated));
       await fetch("/api/notifications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id })
       });
-      const updated = notifications.map(n => n._id === id ? { ...n, isRead: true } : n);
-      setNotifications(updated);
-      localStorage.setItem("aspire_notifications_cache", JSON.stringify(updated));
     } catch (err) {}
   };
 
   const deleteNotification = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    const updated = notifications.filter(n => n._id !== id);
+    setNotifications(updated);
+    localStorage.setItem("aspire_notifications_cache", JSON.stringify(updated));
     try {
-      const res = await fetch(`/api/notifications?id=${id}`, { method: "DELETE" });
-      if (res.ok) {
-        const updated = notifications.filter(n => n._id !== id);
-        setNotifications(updated);
-        localStorage.setItem("aspire_notifications_cache", JSON.stringify(updated));
-        toast.success("Alert deleted");
-      }
+      await fetch(`/api/notifications?id=${id}`, { method: "DELETE" });
+      toast.success("Alert deleted");
     } catch (err) {
       toast.error("Failed to delete notification");
     }
   };
 
   const deleteAllNotifications = async () => {
+    if (notifications.length === 0 || isDeleting) return;
+    setIsDeleting(true);
     try {
       const res = await fetch("/api/notifications?all=true", { method: "DELETE" });
       if (res.ok) {
@@ -126,6 +126,8 @@ export function NotificationSidebar({ isOpen, onClose, userRole }: NotificationS
       }
     } catch (err) {
       toast.error("Failed to clear notification history");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -185,10 +187,10 @@ export function NotificationSidebar({ isOpen, onClose, userRole }: NotificationS
                     </button>
                     <h2 className="text-xl font-black text-slate-900 tracking-tight">Notifications {unreadCount > 0 && <span className="text-indigo-600">({unreadCount})</span>}</h2>
                     <div className="flex gap-2">
-                      <button onClick={deleteAllNotifications} className="w-10 h-10 rounded-full border border-rose-100 flex items-center justify-center bg-rose-50 text-rose-600 active:scale-95 transition-all">
+                      <button onClick={deleteAllNotifications} disabled={notifications.length === 0 || isDeleting} className="w-10 h-10 rounded-full border border-rose-100 flex items-center justify-center bg-rose-50 text-rose-600 active:scale-95 transition-all disabled:opacity-40">
                         <Trash2 className="w-4 h-4" />
                       </button>
-                      <button onClick={markAllAsRead} className="w-10 h-10 rounded-full border border-indigo-100 flex items-center justify-center bg-indigo-50 text-indigo-600 active:scale-95 transition-all">
+                      <button onClick={markAllAsRead} disabled={unreadCount === 0} className="w-10 h-10 rounded-full border border-indigo-100 flex items-center justify-center bg-indigo-50 text-indigo-600 active:scale-95 transition-all disabled:opacity-40">
                         <CheckCheck className="w-5 h-5" />
                       </button>
                     </div>
@@ -247,48 +249,65 @@ export function NotificationSidebar({ isOpen, onClose, userRole }: NotificationS
                           const isInvalidated = note.type === "ORDER_INVALIDATED" || note.type === "ORDER_REJECTED";
                           const isApproved = note.type === "ORDER_APPROVED" || note.type === "REFUND_COMPLETED";
 
-                          return (
-                            <motion.div 
-                              layout
-                              key={note._id}
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              onClick={() => {
-                                if (!note.isRead) markAsRead(note._id);
-                                if (note.actionUrl) window.location.href = note.actionUrl;
-                              }}
-                              className={`p-4 border-b border-slate-100 flex items-start gap-4 active:bg-slate-50 transition-colors bg-white ${note.isRead ? 'opacity-60' : ''}`}
-                            >
-                              <div className="mt-1 flex-shrink-0 relative">
-                                {note.mediaUrl ? (
-                                  <img src={note.mediaUrl} alt="Thumbnail" className="w-12 h-12 rounded-full object-cover shadow-sm bg-slate-50 border border-slate-100" />
-                                ) : (
-                                  <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-inner
-                                    ${isInvalidated ? "bg-rose-50 text-rose-500" : 
-                                      isApproved ? "bg-emerald-50 text-emerald-500" : 
-                                      "bg-indigo-50 text-indigo-500"
-                                    }
-                                  `}>
-                                    {getIcon(note.type)}
+                              const cardStyles = isInvalidated
+                                ? "bg-gradient-to-br from-rose-50/70 to-red-50/50 border-rose-100/80 border-l-4 border-l-rose-500"
+                                : isApproved
+                                ? "bg-gradient-to-br from-emerald-50/70 to-green-50/50 border-emerald-100/80 border-l-4 border-l-emerald-500"
+                                : "bg-gradient-to-br from-indigo-50/70 to-blue-50/50 border-indigo-100/80 border-l-4 border-l-indigo-500";
+
+                              return (
+                                <motion.div 
+                                  layout
+                                  key={note._id}
+                                  initial={{ opacity: 0, y: 15 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.95 }}
+                                  transition={{ duration: 0.2 }}
+                                  onClick={() => {
+                                    if (!note.isRead) markAsRead(note._id);
+                                    if (note.actionUrl) window.location.href = note.actionUrl;
+                                  }}
+                                  className={`mx-4 mb-4 p-4 rounded-2xl border shadow-sm active:scale-[0.98] transition-all relative overflow-hidden flex items-start gap-4 ${cardStyles}
+                                    ${note.isRead ? "opacity-75 bg-none bg-white border-slate-100/80" : ""}
+                                  `}
+                                >
+                                  <div className="mt-0.5 flex-shrink-0 relative">
+                                    {note.mediaUrl ? (
+                                      <img src={note.mediaUrl} alt="Thumbnail" className="w-12 h-12 rounded-xl object-cover shadow-sm bg-slate-50 border border-slate-100" />
+                                    ) : (
+                                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm
+                                        ${isInvalidated ? "bg-rose-500 text-white" : 
+                                          isApproved ? "bg-emerald-500 text-white" : 
+                                          "bg-indigo-500 text-white"
+                                        }
+                                      `}>
+                                        {getIcon(note.type)}
+                                      </div>
+                                    )}
+                                    {!note.isRead && (
+                                      <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-blue-600 border-2 border-white rounded-full shadow-sm animate-pulse" />
+                                    )}
                                   </div>
-                                )}
-                                {!note.isRead && (
-                                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-blue-600 border-2 border-white rounded-full shadow-sm" />
-                                )}
-                              </div>
-                              
-                              <div className="flex-1 min-w-0 pr-2">
-                                <div className="flex items-start justify-between gap-2">
-                                  <h5 className={`text-[13px] font-black leading-tight line-clamp-1 ${note.isRead ? 'text-slate-600' : 'text-slate-900'}`}>{note.title}</h5>
-                                  <span className="text-[9px] font-bold text-slate-400 whitespace-nowrap pt-0.5 shrink-0">
-                                    {formatTimeAgo(note.createdAt).replace('about ', '')}
-                                  </span>
-                                </div>
-                                <p className={`text-[11px] mt-1 leading-snug line-clamp-2 ${note.isRead ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>{note.message}</p>
-                              </div>
-                            </motion.div>
-                          );
+                                  
+                                  <div className="flex-1 min-w-0 pr-1">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <h5 className={`text-[13px] font-black leading-tight line-clamp-1 ${note.isRead ? 'text-slate-600' : 'text-slate-900'}`}>{note.title}</h5>
+                                      <span className="text-[9px] font-bold text-slate-400 whitespace-nowrap pt-0.5 shrink-0 flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />
+                                        {formatTimeAgo(note.createdAt).replace('about ', '')}
+                                      </span>
+                                    </div>
+                                    <p className={`text-[11px] mt-1.5 leading-snug break-words ${note.isRead ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>{note.message}</p>
+                                    {note.actionUrl && (
+                                      <div className="mt-3">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500 flex items-center gap-1">
+                                          View Details <ExternalLink className="w-3 h-3" />
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </motion.div>
+                              );
                         })}
                       </AnimatePresence>
                     );
@@ -355,7 +374,8 @@ export function NotificationSidebar({ isOpen, onClose, userRole }: NotificationS
                       </button>
                       <button 
                         onClick={deleteAllNotifications}
-                        className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-rose-500/20 transition-colors group"
+                        disabled={notifications.length === 0 || isDeleting}
+                        className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-rose-500/20 disabled:opacity-40 disabled:hover:bg-white/10 transition-colors group"
                         title="Delete all alerts"
                       >
                         <Trash2 className="w-5 h-5 text-rose-400 group-hover:scale-110 transition-transform" />

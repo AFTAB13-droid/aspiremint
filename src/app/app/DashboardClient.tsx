@@ -59,6 +59,7 @@ export default function DashboardClient({ user, stats, recentOrders }: Dashboard
 
   const [notifications, setNotifications] = useState<any[]>([]);
   const [notifLoading, setNotifLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchNotifications = async () => {
      try {
@@ -74,15 +75,15 @@ export default function DashboardClient({ user, stats, recentOrders }: Dashboard
   };
 
   const markAllAsRead = async () => {
+     if (unreadCount === 0) return;
+     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
      try {
         const res = await fetch("/api/notifications", {
            method: "PATCH",
            headers: { "Content-Type": "application/json" },
            body: JSON.stringify({ all: true })
         });
-        const json = await res.json();
-        if (json.success) {
-           setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        if (res.ok) {
            toast.success("All alerts marked as read");
         }
      } catch (err) {
@@ -91,29 +92,31 @@ export default function DashboardClient({ user, stats, recentOrders }: Dashboard
   };
 
   const deleteAllNotifications = async () => {
+     if (notifications.length === 0 || isDeleting) return;
+     setIsDeleting(true);
      try {
         const res = await fetch("/api/notifications?all=true", {
            method: "DELETE"
         });
-        const json = await res.json();
-        if (json.success) {
+        if (res.ok) {
            setNotifications([]);
            toast.success("Intelligence feed cleared completely");
         }
      } catch (err) {
         toast.error("Failed to clear notification history");
+     } finally {
+        setIsDeleting(false);
      }
   };
 
   const deleteSingleNotification = async (id: string, e: React.MouseEvent) => {
      e.stopPropagation(); // Avoid triggering card click
+     setNotifications(prev => prev.filter(n => n._id !== id));
      try {
         const res = await fetch(`/api/notifications?id=${id}`, {
            method: "DELETE"
         });
-        const json = await res.json();
-        if (json.success) {
-           setNotifications(prev => prev.filter(n => n._id !== id));
+        if (res.ok) {
            toast.success("Alert deleted");
         }
      } catch (err) {
@@ -122,16 +125,13 @@ export default function DashboardClient({ user, stats, recentOrders }: Dashboard
   };
 
   const markSingleAsRead = async (id: string) => {
+     setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
      try {
-        const res = await fetch("/api/notifications", {
+        await fetch("/api/notifications", {
            method: "PATCH",
            headers: { "Content-Type": "application/json" },
            body: JSON.stringify({ id })
         });
-        const json = await res.json();
-        if (json.success) {
-           setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
-        }
      } catch (err) {
         console.error("Failed to mark read:", err);
      }
@@ -344,7 +344,8 @@ export default function DashboardClient({ user, stats, recentOrders }: Dashboard
                                  </button>
                                  <button 
                                     onClick={deleteAllNotifications}
-                                    className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-rose-500/20 transition-colors group"
+                                    disabled={notifications.length === 0 || isDeleting}
+                                    className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-rose-500/20 disabled:opacity-40 disabled:hover:bg-white/10 transition-colors group"
                                     title="Delete all alerts"
                                  >
                                     <Trash2 className="w-5 h-5 text-rose-400 group-hover:scale-110 transition-transform" />
