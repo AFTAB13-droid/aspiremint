@@ -16,7 +16,9 @@ export default function NewOrderPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [submitPhase, setSubmitPhase] = useState<number>(0);
+  const submissionPhases = ["Verifying Configuration...", "Locking Inventory Slots...", "Registering Deal...", "Initializing Settlement..."];
   const [uploadPreview, setUploadPreview] = useState<string | null>(null);
   const [idExists, setIdExists] = useState(false);
   const [checkingId, setCheckingId] = useState(false);
@@ -334,19 +336,27 @@ export default function NewOrderPage() {
     if (checkingId) return toast.error("Verifying Order ID...");
     if (!formData.mediatorId) return toast.error("Please select a Mediator Specialist");
     
-    setSubmitting(true);
+    setShowSubmitModal(true);
+    setSubmitPhase(0);
+    
+    const phaseInterval = setInterval(() => {
+      setSubmitPhase(p => (p < 3 ? p + 1 : p));
+    }, 700);
+
     try {
       // --- FINAL INTEGRITY CHECK (PROACTIVE) ---
       const statusRes = await fetch(`/api/deals/active?productCode=${formData.productCode}`);
       const statusJson = await statusRes.json();
       if (!statusJson.success || statusJson.data.length === 0) {
+          clearInterval(phaseInterval);
+          setShowSubmitModal(false);
           toast.error("Registry Error: This deal has been removed from the platform.");
-          setSubmitting(false);
           return;
       }
       if (!statusJson.data[0].isActive) {
+          clearInterval(phaseInterval);
+          setShowSubmitModal(false);
           toast.error("Operational Notice: This deal was archived just now. Initialization aborted.");
-          setSubmitting(false);
           return;
       }
       // -----------------------------------------
@@ -357,19 +367,22 @@ export default function NewOrderPage() {
       });
 
       const json = await res.json();
+      clearInterval(phaseInterval);
+
       if (json.success) {
+        setSubmitPhase(4); // 4 = Success State
         localStorage.removeItem("new_order_cache");
-        setShowSuccessModal(true);
         setTimeout(() => {
           router.push("/app/orders");
-        }, 3000);
+        }, 2000);
       } else {
+        setShowSubmitModal(false);
         toast.error(json.message || "Initialization failed");
       }
     } catch (err) {
+      clearInterval(phaseInterval);
+      setShowSubmitModal(false);
       toast.error("Network synchronization failed");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -967,63 +980,74 @@ export default function NewOrderPage() {
 
       </div>
 
-      {/* PREMIUM SUCCESS MODAL */}
+      {/* DYNAMIC PROGRESS & SUCCESS MODAL */}
       <AnimatePresence>
-         {showSuccessModal && (
+         {showSubmitModal && (
             <motion.div 
                initial={{ opacity: 0 }} 
                animate={{ opacity: 1 }} 
                exit={{ opacity: 0 }}
-               className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
+               className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md"
             >
                <motion.div 
-                  initial={{ scale: 0.9, y: 20, opacity: 0 }}
+                  initial={{ scale: 0.95, y: 20, opacity: 0 }}
                   animate={{ scale: 1, y: 0, opacity: 1 }}
-                  className="bg-white rounded-[48px] p-10 md:p-16 max-w-lg w-full text-center shadow-2xl relative overflow-hidden border border-white"
+                  className="bg-white rounded-[40px] p-8 md:p-12 max-w-sm w-full text-center shadow-2xl relative overflow-hidden"
                >
-                  <div className="absolute top-0 left-0 w-full h-2 bg-slate-100">
+                  {submitPhase < 4 ? (
+                     <div className="flex flex-col items-center justify-center space-y-8">
+                        <div className="relative">
+                           <div className="h-20 w-20 rounded-full border-4 border-slate-100 flex items-center justify-center">
+                              <div className="h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                           </div>
+                           <div className="absolute inset-0 bg-blue-600/10 blur-xl rounded-full animate-pulse" />
+                        </div>
+                        
+                        <div className="space-y-4 w-full">
+                           {submissionPhases.map((phase, idx) => (
+                              <div key={idx} className={`flex items-center gap-3 transition-all duration-500 ${submitPhase === idx ? 'opacity-100 scale-105' : submitPhase > idx ? 'opacity-40' : 'opacity-20'}`}>
+                                 <div className={`h-4 w-4 rounded-full flex-shrink-0 flex items-center justify-center transition-colors duration-500 ${submitPhase > idx ? 'bg-emerald-500' : submitPhase === idx ? 'bg-blue-600 animate-pulse' : 'bg-slate-200'}`}>
+                                    {submitPhase > idx && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                                 </div>
+                                 <span className={`text-[10px] font-black uppercase tracking-widest text-left ${submitPhase === idx ? 'text-blue-600' : 'text-slate-500'}`}>{phase}</span>
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+                  ) : (
                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: '100%' }}
-                        transition={{ duration: 3, ease: "linear" }}
-                        className="h-full bg-blue-600"
-                     />
-                  </div>
-
-                  <div className="relative mb-10">
-                     <motion.div 
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", damping: 12, stiffness: 200, delay: 0.2 }}
-                        className="h-24 w-24 bg-emerald-500 rounded-[32px] flex items-center justify-center text-white mx-auto shadow-2xl shadow-emerald-500/20"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex flex-col items-center justify-center"
                      >
-                        <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
-                           <motion.path 
-                              initial={{ pathLength: 0 }}
-                              animate={{ pathLength: 1 }}
-                              transition={{ duration: 0.5, delay: 0.5 }}
-                              strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" 
+                        <div className="relative mb-6">
+                           <motion.div 
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ type: "spring", damping: 12, stiffness: 200 }}
+                              className="h-20 w-20 bg-emerald-500 rounded-full flex items-center justify-center text-white mx-auto shadow-2xl shadow-emerald-500/30"
+                           >
+                              <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+                                 <motion.path 
+                                    initial={{ pathLength: 0 }}
+                                    animate={{ pathLength: 1 }}
+                                    transition={{ duration: 0.5, delay: 0.2 }}
+                                    strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" 
+                                 />
+                              </svg>
+                           </motion.div>
+                           <motion.div 
+                              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.1, 0.3] }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                              className="absolute inset-0 bg-emerald-500 rounded-full blur-2xl -z-10"
                            />
-                        </svg>
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter mb-2">Order Confirmed</h2>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-relaxed">
+                           Redirecting to your dashboard...
+                        </p>
                      </motion.div>
-                     
-                     <motion.div 
-                        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.1, 0.3] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="absolute inset-0 bg-emerald-500 rounded-full blur-3xl -z-10"
-                     />
-                  </div>
-
-                  <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter italic mb-4">Submission Success</h2>
-                  <p className="text-sm font-bold text-slate-500 uppercase tracking-widest leading-relaxed mb-10">
-                     Your order has been synchronized with the registry. You are being redirected to your dashboard.
-                  </p>
-
-                  <div className="flex items-center justify-center gap-3">
-                     <div className="h-2 w-2 rounded-full bg-blue-600 animate-bounce" />
-                     <div className="h-2 w-2 rounded-full bg-blue-600 animate-bounce [animation-delay:0.2s]" />
-                     <div className="h-2 w-2 rounded-full bg-blue-600 animate-bounce [animation-delay:0.4s]" />
-                  </div>
+                  )}
                </motion.div>
             </motion.div>
          )}
