@@ -13,7 +13,9 @@ export default function FillRefundPage() {
   const [submitting, setSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState<string | null>(null);
   const [order, setOrder] = useState<any>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [submitPhase, setSubmitPhase] = useState<number>(0);
+  const submissionPhases = ["Verifying Details...", "Requesting for Refund..."];
   
   const [formData, setFormData] = useState<any>({
     reviewLink: "",
@@ -161,7 +163,6 @@ export default function FillRefundPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isUploading) return toast.error("Please wait for uploads to complete");
-    setSubmitting(true);
 
     // Strict Validation for Mandatory Fields based on Order's Review Type
     const rt = (order.reviewType || "").toUpperCase();
@@ -173,7 +174,6 @@ export default function FillRefundPage() {
     if (isReview) {
        if (!formData.reviewLink || formData.reviewLink.trim() === '') {
           toast.error("Please provide the Live Review URL");
-          setSubmitting(false);
           return;
        }
     }
@@ -182,12 +182,10 @@ export default function FillRefundPage() {
        if (!formData.reviewScreenshot) {
           const ssLabel = isSubmitted ? "Review Submitted Screenshot" : isReview ? "Review Snapshot" : "Rating Snapshot";
           toast.error(`Please upload the ${ssLabel}`);
-          setSubmitting(false);
           return;
        }
        if (!formData.returnPeriodScreenshot) {
           toast.error("Please upload the Return Period Over Screenshot");
-          setSubmitting(false);
           return;
        }
     }
@@ -195,16 +193,21 @@ export default function FillRefundPage() {
     if (isOnlyOrder) {
        if (!formData.deliveryScreenshot) {
           toast.error("Please upload the Order Delivered Screenshot");
-          setSubmitting(false);
           return;
        }
     }
 
     if (!formData.upiId) {
        toast.error("UPI ID is missing. Please update in settings.");
-       setSubmitting(false);
        return;
     }
+
+    setShowSubmitModal(true);
+    setSubmitPhase(0);
+
+    const phaseInterval = setInterval(() => {
+      setSubmitPhase(p => p < 1 ? p + 1 : p);
+    }, 700);
 
     try {
       const res = await fetch(`/api/orders/${id}`, {
@@ -231,9 +234,13 @@ export default function FillRefundPage() {
 
       const isOk = res.ok;
       const json = await res.json();
-      if (!isOk) throw new Error(json.message);
+      clearInterval(phaseInterval);
+      if (!isOk) {
+        setShowSubmitModal(false);
+        throw new Error(json.message);
+      }
 
-      setShowSuccess(true);
+      setSubmitPhase(2); // Success state
       localStorage.removeItem(`refund_form_${id}`);
       
       // Auto-redirect after 3 seconds
@@ -241,7 +248,11 @@ export default function FillRefundPage() {
         window.location.href = '/app';
       }, 3500);
       
-    } catch (err: any) { toast.error(`Transmission Failed: ${err.message}`); } finally { setSubmitting(false); }
+    } catch (err: any) { 
+      clearInterval(phaseInterval);
+      setShowSubmitModal(false);
+      toast.error(`Transmission Failed: ${err.message}`); 
+    }
   };
 
   if (loading) {
@@ -476,63 +487,77 @@ export default function FillRefundPage() {
          </div>
       </div>
 
-      {/* SUCCESS OVERLAY POPUP */}
+      {/* DYNAMIC PROGRESS & SUCCESS MODAL */}
       <AnimatePresence>
-        {showSuccess && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 backdrop-blur-md"
-          >
+         {showSubmitModal && (
             <motion.div 
-              initial={{ scale: 0.9, y: 20, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              className="bg-white rounded-[40px] p-8 md:p-12 max-w-lg w-full shadow-2xl relative overflow-hidden text-center"
+               initial={{ opacity: 0 }} 
+               animate={{ opacity: 1 }} 
+               exit={{ opacity: 0 }}
+               className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md"
             >
-              {/* Animated Background Element */}
-              <div className="absolute top-0 right-0 -mr-20 -mt-20 h-64 w-64 rounded-full bg-emerald-500/10 blur-[80px]" />
-              
-              <div className="relative z-10">
-                {/* Success Icon */}
-                <div className="h-24 w-24 rounded-[32px] bg-emerald-50 border-4 border-emerald-100 flex items-center justify-center mx-auto mb-8 shadow-xl shadow-emerald-500/10">
-                   <motion.svg 
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                    className="w-12 h-12 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
-                   >
-                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                   </motion.svg>
-                </div>
-
-                <h3 className="text-2xl md:text-3xl font-black text-slate-900 uppercase tracking-tight mb-4 leading-tight">Submission Finalized</h3>
-                <p className="text-[11px] md:text-sm font-black text-slate-500 uppercase tracking-[0.2em] mb-10 leading-relaxed">
-                   You have successfully filled the refund form.<br />
-                   <span className="text-[9px] opacity-60">Redirecting to Dashboard in 3 seconds...</span>
-                </p>
-
-                <div className="flex flex-col gap-3">
-                   <button 
-                     type="button"
-                     onClick={() => router.push('/app')}
-                     className="w-full h-16 rounded-2xl bg-indigo-600 text-white text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 transition-all active:scale-95 z-50 relative"
-                   >
-                      Go to Dashboard
-                   </button>
-                   <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                      <motion.div 
-                        initial={{ width: "0%" }}
-                        animate={{ width: "100%" }}
-                        transition={{ duration: 3.5, ease: "linear" }}
-                        className="h-full bg-indigo-600"
-                      />
-                   </div>
-                </div>
-              </div>
+               <motion.div 
+                  initial={{ scale: 0.95, y: 20, opacity: 0 }}
+                  animate={{ scale: 1, y: 0, opacity: 1 }}
+                  className="bg-white rounded-[40px] p-8 md:p-12 max-w-sm w-full text-center shadow-2xl relative overflow-hidden"
+               >
+                  {submitPhase < 2 ? (
+                     <div className="flex flex-col items-center justify-center space-y-8">
+                        <div className="relative">
+                           <div className="h-20 w-20 rounded-full border-4 border-slate-100 flex items-center justify-center">
+                              <div className="h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                           </div>
+                           <div className="absolute inset-0 bg-blue-600/10 blur-xl rounded-full animate-pulse" />
+                        </div>
+                        
+                        <div className="space-y-4 w-full">
+                           {submissionPhases.map((phase, idx) => (
+                              <div key={idx} className={`flex items-center gap-3 transition-all duration-500 ${submitPhase === idx ? 'opacity-100 scale-105' : submitPhase > idx ? 'opacity-40' : 'opacity-20'}`}>
+                                 <div className={`h-4 w-4 rounded-full flex-shrink-0 flex items-center justify-center transition-colors duration-500 ${submitPhase > idx ? 'bg-emerald-500' : submitPhase === idx ? 'bg-blue-600 animate-pulse' : 'bg-slate-200'}`}>
+                                    {submitPhase > idx && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                                 </div>
+                                 <span className={`text-[10px] font-black uppercase tracking-widest text-left ${submitPhase === idx ? 'text-blue-600' : 'text-slate-500'}`}>{phase}</span>
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+                  ) : (
+                     <motion.div 
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex flex-col items-center justify-center"
+                     >
+                        <div className="relative mb-6">
+                           <motion.div 
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ type: "spring", damping: 12, stiffness: 200 }}
+                              className="h-20 w-20 bg-emerald-500 rounded-full flex items-center justify-center text-white mx-auto shadow-2xl shadow-emerald-500/30"
+                           >
+                              <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+                                 <motion.path 
+                                    initial={{ pathLength: 0 }}
+                                    animate={{ pathLength: 1 }}
+                                    transition={{ duration: 0.5, delay: 0.2 }}
+                                    strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" 
+                                 />
+                              </svg>
+                           </motion.div>
+                           <motion.div 
+                              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.1, 0.3] }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                              className="absolute inset-0 bg-emerald-500 rounded-full blur-2xl -z-10"
+                           />
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter mb-2">Refund Requested</h2>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-relaxed">
+                           Refund form submitted. Redirecting to your dashboard...
+                        </p>
+                     </motion.div>
+                  )}
+               </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+         )}
       </AnimatePresence>
 
     </div>
