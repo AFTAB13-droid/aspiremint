@@ -49,8 +49,8 @@ export async function POST(
           .header { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); padding: 40px; color: white; text-align: center; }
           .header h1 { margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
           .header p { margin: 10px 0 0 0; font-size: 14px; opacity: 0.9; }
-          .stats-grid { display: flex; gap: 20px; padding: 30px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
-          .stat-card { flex: 1; background: white; padding: 20px; border-radius: 16px; text-align: center; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+          .stats-grid { display: flex; flex-wrap: wrap; gap: 20px; padding: 30px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+          .stat-card { flex: 1; min-width: 120px; background: white; padding: 20px; border-radius: 16px; text-align: center; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
           .stat-card h3 { margin: 0; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
           .stat-card p { margin: 10px 0 0 0; font-size: 28px; font-weight: 900; color: #0f172a; }
           .details { padding: 30px; }
@@ -91,34 +91,36 @@ export async function POST(
 
           <div class="details">
             <h2>Order History</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Brand</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${deals.map(d => {
-                  let statusClass = 'pending';
-                  if (d.status === 'COMPLETED') statusClass = 'completed';
-                  if (d.status === 'CANCELLED' || d.status === 'REFUND_REJECTED') statusClass = 'cancelled';
-                  return `
+            <div style="overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch;">
+              <table style="min-width: 600px;">
+                <thead>
                   <tr>
-                    <td style="font-weight: 600;">${d.userOrderId}</td>
-                    <td>${d.brandName}</td>
-                    <td style="font-weight: bold;">₹${d.amount}</td>
-                    <td><span class="status ${statusClass}">${d.status}</span></td>
-                    <td>${new Date(d.createdAt).toLocaleDateString()}</td>
+                    <th>Order ID</th>
+                    <th>Brand</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
                   </tr>
-                  `
-                }).join('')}
-                ${deals.length === 0 ? '<tr><td colspan="5" style="text-align: center; color: #94a3b8;">No records found</td></tr>' : ''}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  ${deals.map(d => {
+                    let statusClass = 'pending';
+                    if (d.status === 'COMPLETED') statusClass = 'completed';
+                    if (d.status === 'CANCELLED' || d.status === 'REFUND_REJECTED') statusClass = 'cancelled';
+                    return `
+                    <tr>
+                      <td style="font-weight: 600;">${d.userOrderId}</td>
+                      <td>${d.brandName}</td>
+                      <td style="font-weight: bold;">₹${d.amount}</td>
+                      <td><span class="status ${statusClass}">${d.status}</span></td>
+                      <td>${new Date(d.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                    `
+                  }).join('')}
+                  ${deals.length === 0 ? '<tr><td colspan="5" style="text-align: center; color: #94a3b8;">No records found</td></tr>' : ''}
+                </tbody>
+              </table>
+            </div>
           </div>
           <div class="footer">
             Generated on ${new Date().toLocaleString()} by AspireMint System
