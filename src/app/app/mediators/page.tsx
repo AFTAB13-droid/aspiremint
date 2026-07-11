@@ -279,17 +279,19 @@ export default function AdminMediatorsHub() {
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
               {filteredMediators.map((med) => (
-                <motion.div
+                <motion.div 
                   layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  whileHover={{ y: -6 }}
+                  className="bg-white rounded-[32px] p-6 shadow-md border border-slate-100 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-200 transition-all duration-300 relative overflow-hidden group flex flex-col justify-between"
                   key={med._id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="group relative overflow-hidden rounded-[40px] border border-slate-100 bg-white p-6 shadow-sm transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1 flex flex-col justify-between min-h-[320px]"
                 >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/50 rounded-bl-[80px] -mr-8 -mt-8 transition-transform group-hover:scale-110" />
+                  {/* Subtle Gradient Background for cards */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-indigo-50 to-transparent rounded-bl-full opacity-50 transition-transform group-hover:scale-110 -z-0" />
                   
-                  <div>
+                  <div className="relative z-10">
                     <div className="relative flex items-center justify-between mb-8">
                       <div className="flex-1 min-w-0">
                         <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight leading-none truncate pr-4">{med.systemDisplayName || med.name}</h3>
@@ -309,15 +311,15 @@ export default function AdminMediatorsHub() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 mb-6">
-                       <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100/50">
-                          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Escrow Health</p>
+                    <div className="grid grid-cols-2 gap-3 mb-6 relative z-10">
+                       <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 group-hover:bg-indigo-50/30 transition-colors">
+                          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Success Rate</p>
                           <div className="flex items-end gap-1">
                              <span className="text-lg font-black text-slate-900 leading-none">{med.successRate || '100.0'}</span>
                              <span className="text-[10px] font-bold text-emerald-500 mb-0.5 leading-none">%</span>
                           </div>
                        </div>
-                       <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-100/50">
+                       <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 group-hover:bg-indigo-50/30 transition-colors">
                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5 leading-none">Active Deals</p>
                           <div className="flex items-end gap-1">
                              <span className="text-lg font-black text-slate-900 leading-none">{med.activeDealsCount || 0}</span>
