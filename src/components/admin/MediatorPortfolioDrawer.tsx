@@ -41,6 +41,57 @@ export function MediatorPortfolioDrawer({ isOpen, onClose, mediator }: MediatorP
     }
   };
 
+  const [isSendingReport, setIsSendingReport] = useState(false);
+
+  const handleEmailReport = async () => {
+    if (!mediator) return;
+    setIsSendingReport(true);
+    try {
+      const res = await fetch(`/api/users/${mediator._id}/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "email" })
+      });
+      const json = await res.json();
+      if (json.success) {
+        import("react-hot-toast").then(mod => mod.default.success("Email Report Sent Successfully"));
+      } else {
+        throw new Error(json.message);
+      }
+    } catch (err: any) {
+      import("react-hot-toast").then(mod => mod.default.error(err.message || "Failed to send email"));
+    } finally {
+      setIsSendingReport(false);
+    }
+  };
+
+  const handleDownloadReport = async () => {
+    if (!mediator) return;
+    setIsSendingReport(true);
+    try {
+      const res = await fetch(`/api/users/${mediator._id}/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "download" })
+      });
+      const htmlContent = await res.text();
+      
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Mediator_Report_${mediator.systemDisplayName || mediator.name}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      import("react-hot-toast").then(mod => mod.default.success("Report Downloaded Successfully"));
+    } catch (err) {
+      import("react-hot-toast").then(mod => mod.default.error("Failed to download report"));
+    } finally {
+      setIsSendingReport(false);
+    }
+  };
+
   useEffect(() => {
     if (isOpen && mediator) {
       const fetchDeals = async () => {
@@ -224,21 +275,31 @@ export function MediatorPortfolioDrawer({ isOpen, onClose, mediator }: MediatorP
             </div>
 
             {/* Footer Actions */}
-            <div className="p-8 bg-white border-t border-slate-100 flex items-center gap-4">
+            <div className="p-8 bg-white border-t border-slate-100 flex flex-col gap-4">
+               <div className="flex gap-4">
+                 <button 
+                   onClick={handleDownloadReport}
+                   disabled={isSendingReport}
+                   className="flex-1 h-14 bg-slate-100 text-slate-700 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
+                 >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    Download HTML
+                 </button>
+                 <button 
+                   onClick={handleEmailReport}
+                   disabled={isSendingReport}
+                   className="flex-1 h-14 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+                 >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    {isSendingReport ? 'Sending...' : 'Email Report'}
+                 </button>
+               </div>
                <button 
                  onClick={toggleCampaign}
                  disabled={isUpdating}
-                 className={`flex-1 h-14 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${mediator.isCampaignPaused ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
+                 className={`w-full h-14 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${mediator.isCampaignPaused ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
                >
-                  {isUpdating ? 'Updating...' : mediator.isCampaignPaused ? 'Resume Campaign' : 'Pause Campaign'}
-               </button>
-               <button 
-                 onClick={() => {
-                   import("react-hot-toast").then(mod => mod.default.success("Email Report Sent Successfully"));
-                 }}
-                 className="flex-1 h-14 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 transition-all"
-               >
-                  Email Summary Report
+                  {isUpdating ? 'Updating...' : mediator.isCampaignPaused ? 'Resume Campaign Access' : 'Pause Campaign Access'}
                </button>
             </div>
           </motion.div>
