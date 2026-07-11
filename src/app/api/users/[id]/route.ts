@@ -108,7 +108,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { isApproved, name, systemDisplayName, mobile, role, isActive, isTerminated } = body;
+    const { isApproved, name, systemDisplayName, mobile, role, isActive, isTerminated, isCampaignPaused } = body;
 
     await connectToDatabase();
 
@@ -137,6 +137,7 @@ export async function PATCH(
     // Apply updates
     if (typeof isApproved === 'boolean') user.isApproved = isApproved;
     if (typeof isActive === 'boolean') user.isActive = isActive;
+    if (typeof isCampaignPaused === 'boolean') user.isCampaignPaused = isCampaignPaused;
     if (typeof isTerminated === 'boolean') {
       user.isTerminated = isTerminated;
       if (isTerminated) user.terminatedAt = new Date();

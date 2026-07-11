@@ -63,32 +63,13 @@ export async function POST(req: Request) {
     mongoSession.startTransaction();
 
     try {
-      // Fetch Global Settings for Auto-assignment
-      const { SystemConfig } = await import('@/modules/config/config.model');
-      const globalSettings = await SystemConfig.findOne({ key: 'global_admin_settings' }).session(mongoSession);
-      const isAutoAssign = globalSettings?.value?.isAutoAssignEnabled ?? true;
-
       // Fetch user details for pre-filled data
       const { User } = await import('@/modules/user/user.model');
       
       let finalMediatorId = mediatorId;
 
-      if (!finalMediatorId && isAutoAssign) {
-        const availableMediators = await User.find({ role: 'MEDIATOR', isActive: true }).session(mongoSession);
-        if (availableMediators.length === 0) {
-          throw new Error('No active mediators available');
-        }
-
-        const mediatorLoads = await Promise.all(availableMediators.map(async (m) => {
-          const count = await Order.countDocuments({ 
-            mediator: m._id, 
-            status: { $nin: [OrderStatus.COMPLETED, OrderStatus.CANCELLED, OrderStatus.REFUND_REJECTED, OrderStatus.REFUNDED] } 
-          }).session(mongoSession);
-          return { id: m._id, count };
-        }));
-
-        mediatorLoads.sort((a, b) => a.count - b.count);
-        finalMediatorId = mediatorLoads[0].id;
+      if (!finalMediatorId) {
+        throw new Error('Mediator assignment is mandatory. Please select a specialist.');
       }
 
       // Fetch the assigned mediator's details for commission calculation

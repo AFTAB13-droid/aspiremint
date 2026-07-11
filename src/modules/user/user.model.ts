@@ -57,6 +57,7 @@ export interface IUser extends Document {
   previousRefundFetched?: boolean;
   previousRefundAmount?: number;
   fcmTokens?: string[];
+  isCampaignPaused?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -120,6 +121,7 @@ const UserSchema = new Schema<IUser>(
     fcmTokens: { type: [String], default: [] },
     previousRefundFetched: { type: Boolean, default: false },
     previousRefundAmount: { type: Number, default: 0 },
+    isCampaignPaused: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

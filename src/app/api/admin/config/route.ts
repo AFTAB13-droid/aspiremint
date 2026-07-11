@@ -45,7 +45,7 @@ export async function GET(req: Request) {
     }
 
     if (key === 'global_admin_settings') {
-      const defaultGlobal = { isAutoAssignEnabled: true };
+      const defaultGlobal = {};
       if (!config) {
         config = await SystemConfig.create({ key, value: defaultGlobal });
       }

@@ -22,43 +22,6 @@ export default function AdminMediatorsHub() {
   const [mediatorToDelete, setMediatorToDelete] = useState<string | null>(null);
   const [editingMediator, setEditingMediator] = useState<any>(null);
   const [selectedMediator, setSelectedMediator] = useState<any>(null);
-  const [isAutoAssignEnabled, setIsAutoAssignEnabled] = useState(true);
-
-  const fetchGlobalSettings = async () => {
-    try {
-      const res = await fetch("/api/admin/config?key=global_admin_settings");
-      const json = await res.json();
-      if (json.success && json.data) {
-        setIsAutoAssignEnabled(json.data.isAutoAssignEnabled);
-      }
-    } catch (err) {
-      console.error("Settings fetch failed");
-    }
-  };
-
-  useEffect(() => {
-    fetchGlobalSettings();
-  }, []);
-
-  const toggleAutoAssign = async () => {
-    const newVal = !isAutoAssignEnabled;
-    setIsAutoAssignEnabled(newVal);
-    try {
-      await fetch("/api/admin/config", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: "global_admin_settings",
-          value: { isAutoAssignEnabled: newVal }
-        })
-      });
-      toast.success(newVal ? "Auto-assignment optimized" : "Manual assignment mode active");
-    } catch (err) {
-      toast.error("Cloud sync failed");
-      setIsAutoAssignEnabled(!newVal);
-    }
-  };
-
   const fetchMediators = async () => {
     try {
       setLoading(true);
@@ -200,25 +163,6 @@ export default function AdminMediatorsHub() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-           {/* Auto-Assign Toggle */}
-           <div className="h-14 px-6 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-6">
-              <div className="flex flex-col">
-                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Auto-Assign</span>
-                 <span className={`text-[10px] font-black uppercase tracking-tight ${isAutoAssignEnabled ? 'text-emerald-600' : 'text-amber-500'}`}>
-                    {isAutoAssignEnabled ? 'Optimized' : 'Manual Only'}
-                 </span>
-              </div>
-              <button 
-                onClick={toggleAutoAssign}
-                className={`w-12 h-6 rounded-full relative transition-all duration-300 ${isAutoAssignEnabled ? 'bg-emerald-500' : 'bg-slate-200'}`}
-              >
-                 <motion.div 
-                   animate={{ x: isAutoAssignEnabled ? 26 : 4 }}
-                   className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
-                 />
-              </button>
-           </div>
-
            <motion.button 
              whileHover={{ scale: 1.02 }}
              whileTap={{ scale: 0.98 }}
@@ -385,9 +329,11 @@ export default function AdminMediatorsHub() {
                     <div className="space-y-3 mb-5">
                       <div className="flex items-center justify-between py-1 px-1">
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Verification</p>
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100">
-                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                           <p className="text-[9px] font-black text-emerald-600 uppercase tracking-tight">Active Mediator</p>
+                        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border ${med.isCampaignPaused ? 'bg-amber-50 border-amber-100' : 'bg-emerald-50 border-emerald-100'}`}>
+                           <span className={`h-1.5 w-1.5 rounded-full animate-pulse ${med.isCampaignPaused ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                           <p className={`text-[9px] font-black uppercase tracking-tight ${med.isCampaignPaused ? 'text-amber-600' : 'text-emerald-600'}`}>
+                             {med.isCampaignPaused ? 'Campaign Paused' : 'Active Mediator'}
+                           </p>
                         </div>
                       </div>
                       <div className="flex items-center justify-between py-1 px-1">

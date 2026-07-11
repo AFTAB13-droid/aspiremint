@@ -18,7 +18,8 @@ export async function GET() {
     const mediators = await User.find({ 
       role: UserRole.MEDIATOR, 
       isActive: true,
-      isApproved: { $ne: false } // Backward compatibility: undefined or true = approved
+      isApproved: { $ne: false }, // Backward compatibility: undefined or true = approved
+      isCampaignPaused: { $ne: true } // Exclude paused mediators
     })
       .select("_id name systemDisplayName email")
       .sort({ name: 1 });

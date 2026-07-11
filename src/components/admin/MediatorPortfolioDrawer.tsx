@@ -15,6 +15,31 @@ export function MediatorPortfolioDrawer({ isOpen, onClose, mediator }: MediatorP
   const [loading, setLoading] = useState(true);
   const [deals, setDeals] = useState<any[]>([]);
   const [portfolioTab, setPortfolioTab] = useState<"live" | "completed">("live");
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const toggleCampaign = async () => {
+    if (!mediator) return;
+    setIsUpdating(true);
+    const newStatus = !mediator.isCampaignPaused;
+    try {
+      const res = await fetch(`/api/users/${mediator._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isCampaignPaused: newStatus })
+      });
+      const json = await res.json();
+      if (json.success) {
+        import("react-hot-toast").then(mod => mod.default.success(newStatus ? "Mediator Campaign Paused" : "Mediator Campaign Resumed"));
+        mediator.isCampaignPaused = newStatus; 
+      } else {
+        throw new Error(json.message);
+      }
+    } catch (err) {
+      import("react-hot-toast").then(mod => mod.default.error("Failed to update campaign status"));
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen && mediator) {
@@ -90,12 +115,14 @@ export function MediatorPortfolioDrawer({ isOpen, onClose, mediator }: MediatorP
                      <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">{mediator.email}</p>
                      
                      <div className="flex items-center gap-4 mt-4">
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 rounded-lg border border-emerald-100">
+                        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border ${mediator.isCampaignPaused ? 'bg-amber-50 border-amber-100' : 'bg-emerald-50 border-emerald-100'}`}>
                            <span className="relative flex h-2 w-2">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                              {!mediator.isCampaignPaused && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
+                              <span className={`relative inline-flex rounded-full h-2 w-2 ${mediator.isCampaignPaused ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
                            </span>
-                           <span className="text-[9px] font-black text-emerald-700 uppercase tracking-widest">Active Access</span>
+                           <span className={`text-[9px] font-black uppercase tracking-widest ${mediator.isCampaignPaused ? 'text-amber-700' : 'text-emerald-700'}`}>
+                              {mediator.isCampaignPaused ? 'Campaign Paused' : 'Active Access'}
+                           </span>
                         </div>
                         <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-lg border border-slate-100">
                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Sys ID:</span>
@@ -201,8 +228,12 @@ export function MediatorPortfolioDrawer({ isOpen, onClose, mediator }: MediatorP
 
             {/* Footer Actions */}
             <div className="p-8 bg-white border-t border-slate-100 flex items-center gap-4">
-               <button className="flex-1 h-14 bg-red-50 text-red-600 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm hover:bg-red-100 transition-all">
-                  Suspend Access
+               <button 
+                 onClick={toggleCampaign}
+                 disabled={isUpdating}
+                 className={`flex-1 h-14 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm transition-all flex items-center justify-center gap-2 ${mediator.isCampaignPaused ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
+               >
+                  {isUpdating ? 'Updating...' : mediator.isCampaignPaused ? 'Resume Campaign' : 'Pause Campaign'}
                </button>
                <button className="flex-1 h-14 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 transition-all">
                   Email Summary Report
