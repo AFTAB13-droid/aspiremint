@@ -140,7 +140,7 @@ export async function POST(req: Request) {
         exchangeProduct,
         lessAmount: lessAmount !== undefined && lessAmount !== "" ? Number(lessAmount) : 0,
         mediator: finalMediatorId,
-        assignmentType: isAutoAssign ? "AUTO" : "MANUAL",
+        assignmentType: "MANUAL",
         screenshot,
         productLink: dealDoc.productLink || "",
         status: OrderStatus.REFUND_FORM_PENDING,
