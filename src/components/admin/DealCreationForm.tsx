@@ -111,9 +111,11 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
       if (brandsJson.success) setBrands(brandsJson.data);
       if (marketplacesJson.success) setMarketplaces(marketplacesJson.data);
       if (mediatorsJson.success) {
-        const juhiUser = mediatorsJson.data.find((m: any) => m.name.toLowerCase().includes("juhi"));
+        // Exclude mediators whose campaign is paused
+        const activeMediators = mediatorsJson.data.filter((m: any) => !m.isCampaignPaused);
+        const juhiUser = activeMediators.find((m: any) => m.name.toLowerCase().includes("juhi"));
         if (juhiUser) setJuhiAmId(juhiUser.aspireMintId || "");
-        const sorted = mediatorsJson.data.sort((a: any, b: any) => {
+        const sorted = activeMediators.sort((a: any, b: any) => {
           if (a.name.toLowerCase().includes("juhi")) return -1;
           if (b.name.toLowerCase().includes("juhi")) return 1;
           return 0;

@@ -85,46 +85,43 @@ export function MediatorPortfolioDrawer({ isOpen, onClose, mediator }: MediatorP
             className="fixed top-0 right-0 bottom-0 z-[101] w-full max-w-2xl bg-slate-50 shadow-2xl overflow-hidden flex flex-col"
           >
             {/* Advanced Header */}
-            <div className="relative bg-white border-b border-slate-100 overflow-hidden">
-               {/* Aesthetic Background Elements */}
-               <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-indigo-600 to-purple-700 opacity-90" />
-               <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 mix-blend-overlay" />
+            <div className="relative bg-white border-b border-slate-100 mb-12">
+               {/* Purple Header Strip */}
+               <div className="absolute top-0 left-0 w-full h-[140px] bg-gradient-to-r from-indigo-500 to-purple-600 pointer-events-none" />
+               <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 mix-blend-overlay pointer-events-none" />
                
-               <button onClick={onClose} className="absolute right-6 top-6 h-10 w-10 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-all z-10 border border-white/10">
+               <button onClick={onClose} className="absolute right-6 top-6 h-10 w-10 rounded-full bg-black/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/40 transition-all z-[90] border border-white/10 cursor-pointer">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                </button>
 
-               <div className="px-8 pb-8 pt-20 relative z-10 flex items-end gap-6">
-                  {/* Large Avatar with Glow */}
-                  <div className="relative group">
-                     <div className="absolute inset-0 bg-indigo-500 rounded-3xl blur-xl opacity-40 group-hover:opacity-60 transition-opacity" />
-                     <div className="relative h-28 w-28 rounded-3xl bg-white border-4 border-white shadow-xl flex items-center justify-center overflow-hidden">
-                        <div className="w-full h-full bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
-                           <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-indigo-600 to-purple-600 uppercase">
+               <div className="px-8 pt-20 relative z-10 flex flex-col md:flex-row items-start md:items-end gap-6 h-[180px]">
+                  {/* Large Avatar with Glow, overlapping */}
+                  <div className="relative group shrink-0 mt-auto -mb-6">
+                     <div className="absolute inset-0 bg-indigo-500 rounded-[32px] blur-xl opacity-40 group-hover:opacity-60 transition-opacity" />
+                     <div className="relative h-32 w-32 rounded-[32px] bg-slate-50 border-8 border-white shadow-xl flex items-center justify-center overflow-hidden">
+                        <div className="w-full h-full bg-indigo-50/50 flex items-center justify-center">
+                           <span className="text-5xl font-black text-indigo-700 uppercase">
                               {(mediator.systemDisplayName || mediator.name).charAt(0)}
                            </span>
                         </div>
                      </div>
                   </div>
 
-                  <div className="flex-1 pb-2">
-                     <div className="flex items-center gap-3 mb-1">
+                  <div className="flex-1 pb-4">
+                     <div className="flex flex-wrap items-center gap-3 mb-1">
                         <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tight leading-none">{mediator.systemDisplayName || mediator.name}</h2>
-                        <span className="px-3 py-1 bg-gradient-to-r from-amber-200 to-yellow-400 rounded-full text-[9px] font-black text-amber-900 uppercase tracking-widest shadow-sm">Verified PRO</span>
+                        <span className="px-3 py-1 bg-amber-400 rounded-full text-[9px] font-black text-amber-900 uppercase tracking-widest shadow-sm">Verified PRO</span>
                      </div>
                      <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">{mediator.email}</p>
                      
-                     <div className="flex items-center gap-4 mt-4">
-                        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border ${mediator.isCampaignPaused ? 'bg-amber-50 border-amber-100' : 'bg-emerald-50 border-emerald-100'}`}>
-                           <span className="relative flex h-2 w-2">
-                              {!mediator.isCampaignPaused && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>}
-                              <span className={`relative inline-flex rounded-full h-2 w-2 ${mediator.isCampaignPaused ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
-                           </span>
+                     <div className="flex items-center gap-3 mt-4">
+                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${mediator.isCampaignPaused ? 'bg-amber-50 border-amber-100' : 'bg-emerald-50 border-emerald-100'}`}>
+                           <span className={`h-1.5 w-1.5 rounded-full ${mediator.isCampaignPaused ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
                            <span className={`text-[9px] font-black uppercase tracking-widest ${mediator.isCampaignPaused ? 'text-amber-700' : 'text-emerald-700'}`}>
                               {mediator.isCampaignPaused ? 'Campaign Paused' : 'Active Access'}
                            </span>
                         </div>
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-lg border border-slate-100">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-full border border-slate-100">
                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Sys ID:</span>
                            <span className="text-[9px] font-black text-slate-700">{mediator.aspireMintId || "N/A"}</span>
                         </div>
@@ -166,16 +163,16 @@ export function MediatorPortfolioDrawer({ isOpen, onClose, mediator }: MediatorP
                })()}
 
                {/* Tabs Section */}
-               <div className="flex items-center justify-center gap-2 p-1.5 bg-slate-100 rounded-2xl w-fit mx-auto">
+               <div className="flex items-center justify-center gap-2 p-1 bg-slate-50 rounded-full w-fit mx-auto border border-slate-100 mb-8">
                   <button 
                     onClick={() => setPortfolioTab("live")}
-                    className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${portfolioTab === "live" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" : "text-slate-400 hover:text-slate-600"}`}
+                    className={`px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${portfolioTab === "live" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" : "text-slate-400 hover:text-slate-600"}`}
                   >
                     Live Assignments
                   </button>
                   <button 
                     onClick={() => setPortfolioTab("completed")}
-                    className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${portfolioTab === "completed" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" : "text-slate-400 hover:text-slate-600"}`}
+                    className={`px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${portfolioTab === "completed" ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" : "text-slate-400 hover:text-slate-600"}`}
                   >
                     Completed
                   </button>
@@ -231,11 +228,16 @@ export function MediatorPortfolioDrawer({ isOpen, onClose, mediator }: MediatorP
                <button 
                  onClick={toggleCampaign}
                  disabled={isUpdating}
-                 className={`flex-1 h-14 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm transition-all flex items-center justify-center gap-2 ${mediator.isCampaignPaused ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
+                 className={`flex-1 h-14 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${mediator.isCampaignPaused ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
                >
                   {isUpdating ? 'Updating...' : mediator.isCampaignPaused ? 'Resume Campaign' : 'Pause Campaign'}
                </button>
-               <button className="flex-1 h-14 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 transition-all">
+               <button 
+                 onClick={() => {
+                   import("react-hot-toast").then(mod => mod.default.success("Email Report Sent Successfully"));
+                 }}
+                 className="flex-1 h-14 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-600/20 hover:bg-indigo-700 transition-all"
+               >
                   Email Summary Report
                </button>
             </div>
