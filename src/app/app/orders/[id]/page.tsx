@@ -130,7 +130,17 @@ export default function OrderDetailsPage() {
         } else { toast.error("Order not found"); }
       } catch (err) { toast.error("Resource acquisition failed"); } finally { setLoading(false); }
     };
-    if (id) fetchDetails();
+    if (id) {
+       fetchDetails();
+       
+       const handleFcmRefresh = () => {
+         fetchDetails();
+       };
+       window.addEventListener("FCM_REFRESH_DATA", handleFcmRefresh);
+       return () => {
+         window.removeEventListener("FCM_REFRESH_DATA", handleFcmRefresh);
+       };
+    }
   }, [id, router]);
 
   if (loading) {

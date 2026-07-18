@@ -28,13 +28,18 @@ async function connectToDatabase() {
     return cached.conn;
   }
 
+  // CRITICAL FIX: If the connection dropped but the promise is still cached, clear it so we can reconnect
+  if (mongoose.connection.readyState !== 1) {
+    cached.promise = null;
+  }
+
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 10000, // Wait 10 seconds for server selection
-      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-      maxIdleTimeMS: 10000, // CRITICAL FOR SERVERLESS: Close idle connections after 10s so they don't break on wake
-      family: 4, // Force IPv4 to avoid potential IPv6 resolution issues
+      serverSelectionTimeoutMS: 5000, // Reduced to fail fast instead of hanging for 10s
+      socketTimeoutMS: 45000,
+      family: 4, // Force IPv4
+      // Removed maxIdleTimeMS completely. In serverless/Next.js, aggressive idle disconnects cause major latency spikes on "cold" API routes.
     };
 
     cached.promise = mongoose.connect(MONGODB_URI as string, opts).then((mongoose) => {

@@ -25,6 +25,11 @@ export function GlobalNotificationPoller() {
       });
       // Synchronize lastPolledRef so if we do fall back to polling, we don't repeat toasts
       lastPolledRef.current = new Date(notif.createdAt);
+      
+      // Dispatch global event to force UI components (like the Orders table) to re-fetch data instantly
+      if (typeof window !== 'undefined') {
+         window.dispatchEvent(new CustomEvent("FCM_REFRESH_DATA"));
+      }
     }
   );
 
@@ -100,6 +105,10 @@ export function GlobalNotificationPoller() {
           }, json.data[0].createdAt);
           
           lastPolledRef.current = new Date(maxDateStr);
+          
+          if (typeof window !== 'undefined') {
+             window.dispatchEvent(new CustomEvent("FCM_REFRESH_DATA"));
+          }
         }
       } catch (err) {
         console.error("Failed to poll notifications", err);
