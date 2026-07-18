@@ -510,14 +510,14 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
  
                                   <div className="flex flex-col items-center gap-1">
                                      <button 
-                                       onClick={() => { setViewerImage(order.refundProof?.returnPeriodScreenshot); setViewerTitle("Return Period Evidence"); }}
+                                       onClick={() => { setViewerImage(order.refundProof?.returnPeriodScreenshot); setViewerTitle(order.brandName?.toLowerCase().includes("blinkit") ? "Invoice Evidence" : "Return Period Evidence"); }}
                                        disabled={!order.refundProof?.returnPeriodScreenshot}
                                        className={`h-8 w-8 rounded-lg flex items-center justify-center transition-all ${order.refundProof?.returnPeriodScreenshot ? 'bg-sky-50 text-sky-600 hover:bg-sky-100 border border-sky-100 shadow-sm' : 'bg-slate-50 text-slate-200 border border-slate-100 cursor-not-allowed'}`}
-                                       title="Return SS"
+                                       title={order.brandName?.toLowerCase().includes("blinkit") ? "Invoice SS" : "Return SS"}
                                      >
                                         <ShieldCheck className="w-3.5 h-3.5" />
                                      </button>
-                                     <span className="text-[6px] font-black text-slate-400 uppercase tracking-tighter">Return</span>
+                                     <span className="text-[6px] font-black text-slate-400 uppercase tracking-tighter">{order.brandName?.toLowerCase().includes("blinkit") ? "Invoice" : "Return"}</span>
                                   </div>
  
                                   <div className="flex flex-col items-center gap-1">
