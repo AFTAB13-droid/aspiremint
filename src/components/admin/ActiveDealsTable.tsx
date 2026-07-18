@@ -266,9 +266,26 @@ export function ActiveDealsTable({
                   <td className="px-6 py-6"><div className="flex justify-center"><Skeleton className="h-10 w-24 rounded-xl" /></div></td>
                 </tr>
               ))
-            ) : paginatedDeals.map((deal) => (
-              <tr key={deal._id} className="group hover:bg-indigo-50/20 transition-all duration-300">
+            ) : paginatedDeals.map((deal) => {
+              const consumedSlots = (deal.totalSlots || 0) - (deal.remainingSlots || 0);
+              const isHotDeal = deal.createdAt && (Date.now() - new Date(deal.createdAt).getTime() < 24 * 60 * 60 * 1000);
+              const isOut = deal.remainingSlots <= 0;
+              
+              let boughtText = "";
+              if (consumedSlots >= 50) {
+                boughtText = "🔥 50+ users bought this";
+              } else if (consumedSlots >= 10) {
+                boughtText = `🔥 ${consumedSlots} users bought this`;
+              }
+
+              return (
+              <tr key={deal._id} className="group hover:bg-indigo-50/20 transition-all duration-300 relative">
                 <td className="px-6 py-6">
+                  {isHotDeal && !isOut && (
+                    <div className="absolute top-0 left-0 bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded-br-lg shadow-sm z-10">
+                       HOT DEAL
+                    </div>
+                  )}
                   <div className="flex items-center gap-4">
                      <div className="relative">
                         {deal.productImage && typeof deal.productImage === 'string' && deal.productImage.trim() !== "" ? (
@@ -309,6 +326,17 @@ export function ActiveDealsTable({
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 group-hover:text-indigo-400 transition-colors">
                            {deal.brandName} • {deal.productDetails}
                         </p>
+                        {boughtText && !isOut && (
+                           <motion.div 
+                             initial={{ opacity: 0 }}
+                             animate={{ opacity: 1 }}
+                             className="mt-1"
+                           >
+                             <span className="text-[8px] font-black text-rose-600 uppercase tracking-tight animate-pulse bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100 shadow-sm inline-block">
+                               {boughtText}
+                             </span>
+                           </motion.div>
+                        )}
                      </div>
                   </div>
                 </td>
@@ -540,7 +568,8 @@ export function ActiveDealsTable({
                    </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {paginatedDeals.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-8 py-20 text-center">

@@ -159,6 +159,16 @@ export function MobileActiveDeals({
           const isLimited = deal.remainingSlots >= 4 && deal.remainingSlots < 7;
           const isOut = deal.remainingSlots <= 0;
           
+          const consumedSlots = (deal.totalSlots || 0) - (deal.remainingSlots || 0);
+          const isHotDeal = deal.createdAt && (Date.now() - new Date(deal.createdAt).getTime() < 24 * 60 * 60 * 1000);
+          
+          let boughtText = "";
+          if (consumedSlots >= 50) {
+            boughtText = "🔥 50+ users bought this";
+          } else if (consumedSlots >= 10) {
+            boughtText = `🔥 ${consumedSlots} users bought this`;
+          }
+
           const getStockStatus = () => {
             if (isOut) return { text: "Out of Stock", style: "bg-rose-50 text-rose-500 border-rose-100" };
             if (isHurry) return { text: "Hurry up! Few slots left only", style: "bg-rose-50 text-rose-600 border-rose-200 animate-pulse shadow-sm" };
@@ -178,7 +188,14 @@ export function MobileActiveDeals({
               {/* Background Accent */}
               <div className={`absolute top-0 right-0 w-32 h-32 blur-3xl opacity-[0.03] pointer-events-none -mr-10 -mt-10 ${isOut ? 'bg-rose-500' : 'bg-blue-500'}`} />
 
-              <div className="flex gap-4">
+              {/* Hot Deal Badge */}
+              {isHotDeal && !isOut && (
+                <div className="absolute top-0 left-0 bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-br-2xl shadow-md z-10">
+                   HOT DEAL
+                </div>
+              )}
+
+              <div className={`flex gap-4 ${isHotDeal && !isOut ? 'mt-3' : ''}`}>
                 {/* Product Image / Icon */}
                 <div className="relative flex-shrink-0">
                   <div className="h-20 w-20 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden shadow-inner">
@@ -253,6 +270,18 @@ export function MobileActiveDeals({
 
               {/* Stock Bar & Payout */}
               <div className="mt-5 space-y-3">
+                {boughtText && !isOut && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center gap-1.5 -mb-1"
+                  >
+                    <span className="text-[10px] font-black text-rose-600 uppercase tracking-tight animate-pulse bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100">
+                      {boughtText}
+                    </span>
+                  </motion.div>
+                )}
+
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">STOCKS</span>
