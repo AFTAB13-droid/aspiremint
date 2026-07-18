@@ -55,7 +55,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     mongoSession.startTransaction();
 
     try {
-      const order = await Order.findById(params.id).populate("buyer", "name email").populate("mediator", "name").session(mongoSession);
+      const order = await Order.findById(params.id).populate("buyer", "name email").populate("mediator", "name systemDisplayName").session(mongoSession);
       if (!order) throw new Error('Order not found');
 
       // 1. State Guard Verification
@@ -447,21 +447,21 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
           });
         }
  
-        if (status === OrderStatus.COMPLETED && role === "MEDIATOR") {
+      // --- EMAIL NOTIFICATIONS & DEPENDENCIES ---
+      const buyer: any = order.buyer;
+      const mediator: any = order.mediator;
+
+      if (status === OrderStatus.COMPLETED && role === "MEDIATOR") {
           await NotificationService.create({
             recipient: updatedOrder.buyer.toString(),
             type: NotificationType.REFUND_COMPLETED,
             title: "Refund Paid",
-            message: `Your refund of ₹${updatedOrder.amount} has been successfully paid by ${session.user.name}.`,
+            message: `Your refund of ₹${updatedOrder.amount} has been successfully paid by ${mediator?.systemDisplayName || mediator?.name || session.user.name}.`,
             metadata: { orderId: updatedOrder._id },
             actionUrl: `/app/orders/${updatedOrder._id}`,
             mediaUrl
           });
         }
-
-      // --- EMAIL NOTIFICATIONS ---
-      const buyer: any = order.buyer;
-      const mediator: any = order.mediator;
 
       if (status === OrderStatus.UNDER_VERIFICATION || status === OrderStatus.REFUND_FORM_SUBMITTED) {
          try {
@@ -498,7 +498,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
                      transactionId: updatedOrder.paymentDetails?.transactionId,
                      amount: updatedOrder.amount,
                      paidAt: updatedOrder.paymentDetails?.paidAt || new Date(),
-                     paidByName: session.user.name,
+                     paidByName: mediator?.systemDisplayName || mediator?.name || session.user.name,
                      brandName: updatedOrder.brandName,
                      productName: updatedOrder.reviewName
                   }

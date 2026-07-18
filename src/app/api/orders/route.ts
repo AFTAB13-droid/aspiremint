@@ -222,7 +222,7 @@ export async function POST(req: Request) {
             "Mobile Number": user.mobile || "",
             "order Amount": amount,
             "order ss": screenshot || "",
-            "Mediator Name": assignedMediator?.name || "Unassigned",
+            "Mediator Name": assignedMediator?.systemDisplayName || assignedMediator?.name || "Unassigned",
           })
         ).catch(err => console.error("Google sheets push error:", err))
       );
@@ -243,7 +243,7 @@ export async function POST(req: Request) {
       // 3. Email
       const orderDataForEmail = {
         ...newOrder.toObject(),
-        mediatorName: assignedMediator?.name || "System Specialist"
+        mediatorName: assignedMediator?.systemDisplayName || assignedMediator?.name || "System Specialist"
       };
       externalTasks.push(
         sendOrderCreationEmail(user.email, user.name, orderDataForEmail, dealDoc.productImage)
