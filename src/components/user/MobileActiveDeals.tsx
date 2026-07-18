@@ -200,7 +200,15 @@ export function MobileActiveDeals({
                 <div className="relative flex-shrink-0">
                   <div className="h-20 w-20 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden shadow-inner">
                     {deal.productImage ? (
-                      <img src={deal.productImage} alt="" className="w-full h-full object-cover" />
+                      <img 
+                        src={deal.productImage?.includes('cloudinary.com') ? deal.productImage.replace('/image/upload/', '/image/upload/q_auto,f_auto,w_250,c_fill/') : deal.productImage} 
+                        alt="" 
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover transition-opacity duration-500 ease-in-out" 
+                        onLoad={(e) => (e.currentTarget.style.opacity = '1')}
+                        style={{ opacity: 0 }}
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-300">
                         <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>

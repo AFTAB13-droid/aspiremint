@@ -291,7 +291,15 @@ export function ActiveDealsTable({
                         {deal.productImage && typeof deal.productImage === 'string' && deal.productImage.trim() !== "" ? (
                           <div className="h-16 w-16 rounded-2xl bg-white border-2 border-indigo-100 shadow-sm overflow-hidden flex-shrink-0 group-hover:scale-105 transition-all group-hover:border-indigo-300">
                              <a href={deal.productImage} target="_blank" rel="noopener noreferrer" title="View full size" className="w-full h-full block">
-                               <img src={deal.productImage} alt="Product" className="w-full h-full object-cover" />
+                               <img 
+                                 src={deal.productImage?.includes('cloudinary.com') ? deal.productImage.replace('/image/upload/', '/image/upload/q_auto,f_auto,w_150,c_fill/') : deal.productImage} 
+                                 alt="Product" 
+                                 loading="lazy"
+                                 decoding="async"
+                                 className="w-full h-full object-cover transition-opacity duration-300"
+                                 onLoad={(e) => (e.currentTarget.style.opacity = '1')}
+                                 style={{ opacity: 0 }}
+                               />
                              </a>
                           </div>
                         ) : (
