@@ -156,8 +156,8 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.brandName || !formData.productDetails || !formData.productLink) {
-      return toast.error("Please fill required fields (Brand, Product Details, and Product Link)");
+    if (!formData.brandName || !formData.productDetails) {
+      return toast.error("Please fill required fields (Brand and Product Details)");
     }
     if (!selectAllMediators && selectedMediators.length === 0) {
       return toast.error("Please assign at least one mediator");
