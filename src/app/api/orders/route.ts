@@ -131,6 +131,7 @@ export async function POST(req: Request) {
         buyerEmail: user.email,
         aspireMintId: user.aspireMintId,
         brandName,
+        marketplace: dealDoc.marketplace || "",
         productCode,
         userOrderId,
         reviewName,

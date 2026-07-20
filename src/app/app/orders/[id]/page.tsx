@@ -438,7 +438,7 @@ export default function OrderDetailsPage() {
                         <div className="grid grid-cols-2 gap-4">
                            {[
                              { label: "Review Proof", src: order.refundProof?.reviewScreenshot },
-                             { label: order.brandName?.toLowerCase().includes("blinkit") ? "Invoice" : "Return Period", src: order.refundProof?.returnPeriodScreenshot },
+                             { label: (order.marketplace?.toLowerCase().includes("blinkit") || order.brandName?.toLowerCase().includes("blinkit")) ? "Invoice" : "Return Period", src: order.refundProof?.returnPeriodScreenshot },
                              { label: "Delivery Doc", src: order.refundProof?.deliveryScreenshot }
                            ].filter(i => i.src).map((item, idx) => (
                              <div key={idx} className="group cursor-pointer space-y-2" onClick={() => window.open(item.src, '_blank')}>

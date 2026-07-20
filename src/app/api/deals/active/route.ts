@@ -131,8 +131,8 @@ export async function POST(req: Request) {
     const subSlots = parseInt(submittedSlots) || 0;
     const totalSlots = rSlots + rtSlots + oSlots + subSlots;
 
-    if (!brandName || !productDetails) {
-      return NextResponse.json({ success: false, message: 'Brand and Product Details are required' }, { status: 400 });
+    if (!brandName || !productDetails || !productLink) {
+      return NextResponse.json({ success: false, message: 'Brand, Product Details, and Product Link are required' }, { status: 400 });
     }
 
     await connectToDatabase();

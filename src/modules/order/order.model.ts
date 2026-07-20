@@ -25,6 +25,7 @@ export interface IOrder extends Document {
   buyerEmail: string;
   aspireMintId: string;
   brandName: string;
+  marketplace?: string;
   productCode: string;
   reviewName: string;
   amount: number;
@@ -102,6 +103,7 @@ const OrderSchema = new Schema<IOrder>(
     buyerEmail: { type: String, required: true },
     aspireMintId: { type: String, required: true },
     brandName: { type: String },
+    marketplace: { type: String },
     productCode: { type: String },
     reviewName: { type: String },
     amount: { type: Number, required: true },

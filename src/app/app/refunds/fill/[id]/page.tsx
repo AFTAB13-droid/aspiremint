@@ -185,7 +185,7 @@ export default function FillRefundPage() {
           return;
        }
        if (!formData.returnPeriodScreenshot) {
-          const isBlinkit = order.brandName?.toLowerCase().includes("blinkit");
+          const isBlinkit = order.marketplace?.toLowerCase().includes("blinkit") || order.brandName?.toLowerCase().includes("blinkit");
           toast.error(`Please upload the ${isBlinkit ? "Invoice Screenshot" : "Return Period Over Screenshot"}`);
           return;
        }
@@ -390,7 +390,7 @@ export default function FillRefundPage() {
                             <RenderProofInput label={(isSubmittedDeal ? "Review Submitted SS" : isReviewDeal ? "Review Snapshot" : "Rating Snapshot") + " *"} field="reviewScreenshot" sublabel="Select Snapshot" />
                          )}
                          {(isReviewDeal || isRatingDeal || isSubmittedDeal) && (
-                            <RenderProofInput label={(order.brandName?.toLowerCase().includes("blinkit") ? "Invoice SS *" : "Return Period Over SS *")} field="returnPeriodScreenshot" sublabel={(order.brandName?.toLowerCase().includes("blinkit") ? "Invoice Evidence" : "Window Evidence")} />
+                            <RenderProofInput label={((order.marketplace?.toLowerCase().includes("blinkit") || order.brandName?.toLowerCase().includes("blinkit")) ? "Invoice SS *" : "Return Period Over SS *")} field="returnPeriodScreenshot" sublabel={((order.marketplace?.toLowerCase().includes("blinkit") || order.brandName?.toLowerCase().includes("blinkit")) ? "Invoice Evidence" : "Window Evidence")} />
                          )}
                          {isOnlyOrder && (
                             <div className="col-span-full">
