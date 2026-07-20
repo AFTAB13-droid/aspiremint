@@ -47,6 +47,7 @@ export const BrandManager: React.FC<BrandManagerProps> = ({ onRefresh }) => {
   const [newStockOnly, setNewStockOnly] = useState<string | number>("");
   const [newStockSubmitted, setNewStockSubmitted] = useState<string | number>("");
   const [mappingSearch, setMappingSearch] = useState("");
+  const [brandSearch, setBrandSearch] = useState("");
   
   const [newExchangeProduct, setNewExchangeProduct] = useState("");
   const [newExchangeProductImage, setNewExchangeProductImage] = useState("");
@@ -364,10 +365,24 @@ export const BrandManager: React.FC<BrandManagerProps> = ({ onRefresh }) => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
          {/* Left Column: List & Settings */}
          <div className="lg:col-span-4 space-y-8">
-            <div className="space-y-3">
-               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Registry Overview</h3>
+            <div className="space-y-4">
+               <div className="flex flex-col gap-3">
+                 <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Registry Overview</h3>
+                 <div className="relative group">
+                    <input 
+                      type="text"
+                      placeholder="Search brands..."
+                      value={brandSearch}
+                      onChange={(e) => setBrandSearch(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-xs font-bold outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm pl-12 placeholder:text-slate-400 text-slate-900"
+                    />
+                    <svg className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                 </div>
+               </div>
+
                <div className="max-h-[600px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-                  {brands.map(brand => {
+                  <AnimatePresence>
+                  {brands.filter(b => b.name.toLowerCase().includes(brandSearch.toLowerCase())).map((brand, idx) => {
                       const b = brand as any;
                       const totalStock = calculateBrandStock(b);
                       const isLow = totalStock > 0 && totalStock < 10;
@@ -376,24 +391,36 @@ export const BrandManager: React.FC<BrandManagerProps> = ({ onRefresh }) => {
                       return (
                         <motion.div 
                           key={b._id?.toString()}
+                          layout
+                          initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ duration: 0.2, delay: Math.min(idx * 0.05, 0.2) }}
                           onClick={() => setEditingBrand(b)}
-                          className={`p-5 rounded-[28px] border cursor-pointer transition-all ${editingBrand?._id?.toString() === b._id?.toString() ? "bg-indigo-50 border-indigo-200 shadow-lg shadow-indigo-100" : "bg-white border-slate-100/60 hover:border-indigo-200"}`}
+                          className={`p-5 rounded-[28px] border cursor-pointer transition-all ${editingBrand?._id?.toString() === b._id?.toString() ? "bg-gradient-to-br from-indigo-600 to-indigo-800 border-indigo-700 shadow-xl shadow-indigo-600/30 text-white transform scale-[1.02]" : "bg-white border-slate-100/60 hover:border-indigo-300 hover:bg-indigo-50/30 hover:shadow-md text-slate-900"}`}
                         >
                            <div className="flex items-center justify-between">
                               <div>
-                                 <p className={`text-sm font-black uppercase ${b.isActive ? "text-slate-900" : "text-slate-400 line-through"}`}>{b.name}</p>
-                                 <div className="flex items-center gap-2 mt-1">
-                                    <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${isOut ? "bg-red-100 text-red-600" : isLow ? "bg-orange-100 text-orange-600" : "bg-emerald-100 text-emerald-600"}`}>
+                                 <p className={`text-sm font-black uppercase tracking-tight ${editingBrand?._id?.toString() === b._id?.toString() ? "text-white" : b.isActive ? "text-slate-900" : "text-slate-400 line-through"}`}>{b.name}</p>
+                                 <div className="flex items-center gap-2 mt-2.5">
+                                    <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border ${editingBrand?._id?.toString() === b._id?.toString() ? "bg-white/20 border-white/20 text-white" : isOut ? "bg-rose-50 border-rose-100 text-rose-600" : isLow ? "bg-orange-50 border-orange-100 text-orange-600" : "bg-emerald-50 border-emerald-100 text-emerald-600"}`}>
                                       {isOut ? "Sold Out" : isLow ? "Low Stock" : "In Stock"}
                                     </span>
-                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{totalStock} Units Total</span>
+                                    <span className={`text-[9px] font-bold uppercase tracking-wider ${editingBrand?._id?.toString() === b._id?.toString() ? "text-indigo-200" : "text-slate-400"}`}>{totalStock} Units Total</span>
                                  </div>
                               </div>
-                              <div className={`h-2.5 w-2.5 rounded-full ${b.isActive ? "bg-emerald-500 shadow-sm shadow-emerald-500/50" : "bg-slate-300"}`} />
+                              <div className={`h-3 w-3 rounded-full flex-shrink-0 ${b.isActive ? (editingBrand?._id?.toString() === b._id?.toString() ? "bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]" : "bg-emerald-500 shadow-sm shadow-emerald-500/50") : "bg-slate-300"}`} />
                            </div>
                         </motion.div>
                       );
                   })}
+                  </AnimatePresence>
+                  
+                  {brands.filter(b => b.name.toLowerCase().includes(brandSearch.toLowerCase())).length === 0 && (
+                     <div className="text-center py-10 bg-slate-50/50 rounded-[28px] border border-dashed border-slate-200">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">No brands found</p>
+                     </div>
+                  )}
                </div>
             </div>
 
