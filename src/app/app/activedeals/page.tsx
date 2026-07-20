@@ -15,7 +15,7 @@ export default function ActiveDealsPage() {
   const role = (session?.user as any)?.role || "USER";
   const isAdm = role === "ADMIN";
 
-  const [activeTab, setActiveTab] = useState<"DEALS" | "BRANDS" | "NEW_DEAL" | "BULK_UPLOAD">("DEALS");
+  const [activeTab, setActiveTab] = useState<"DEALS" | "ARCHIVED" | "BRANDS" | "NEW_DEAL" | "BULK_UPLOAD">("DEALS");
   const [deals, setDeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -33,9 +33,10 @@ export default function ActiveDealsPage() {
     };
   }, []);
 
-  const fetchDeals = async () => {
+  const fetchDeals = async (status: string = "active") => {
+    setLoading(true);
     try {
-      const res = await fetch(`/api/deals/active?v=${Date.now()}`);
+      const res = await fetch(`/api/deals/active?status=${status}&v=${Date.now()}`);
       const json = await res.json();
       if (json.success) setDeals(json.data);
     } catch (err) {
@@ -44,6 +45,14 @@ export default function ActiveDealsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (activeTab === "DEALS") {
+      fetchDeals("active");
+    } else if (activeTab === "ARCHIVED") {
+      fetchDeals("archived");
+    }
+  }, [activeTab]);
 
   const handleClearCache = async () => {
     const loadingId = toast.loading("Synchronizing system state & yields...");
@@ -110,8 +119,9 @@ export default function ActiveDealsPage() {
           <div className="flex flex-col md:flex-row md:items-center gap-6 flex-1">
              {/* Tab Navigation - Advanced Design */}
              <div className="relative flex items-center p-1.5 bg-slate-100 rounded-2xl border border-slate-200/50 self-start shadow-inner">
-                {[
+                 {[
                   { id: "DEALS", label: "Live Deals" },
+                  { id: "ARCHIVED", label: "Archived", adminOnly: true },
                   { id: "BRANDS", label: "Brands", adminOnly: true },
                   { id: "NEW_DEAL", label: "New Deal", adminOnly: true },
                   { id: "BULK_UPLOAD", label: "Bulk Upload", adminOnly: true }
@@ -136,7 +146,7 @@ export default function ActiveDealsPage() {
              </div>
   
              {/* Reclaimed Space Search - Improved Visibility */}
-             {activeTab === "DEALS" && (
+             {(activeTab === "DEALS" || activeTab === "ARCHIVED") && (
                <motion.div 
                  initial={{ opacity: 0, scale: 0.95 }}
                  animate={{ opacity: 1, scale: 1 }}
@@ -156,21 +166,25 @@ export default function ActiveDealsPage() {
           </div>
   
           {/* Reclaimed Space Stats & Cache Sync */}
-          {activeTab === "DEALS" && (
+          {(activeTab === "DEALS" || activeTab === "ARCHIVED") && (
              <motion.div 
                initial={{ opacity: 0, x: 20 }}
                animate={{ opacity: 1, x: 0 }}
                className="hidden xl:flex items-center gap-6"
              >
                 <div className="text-right">
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Global Coverage</p>
-                   <p className="text-lg font-black text-slate-900 mt-1">{deals.length} <span className="text-[10px] text-slate-400 tracking-normal">Active Manifests</span></p>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{activeTab === "DEALS" ? "Global Coverage" : "Archived Count"}</p>
+                   <p className="text-lg font-black text-slate-900 mt-1">{deals.length} <span className="text-[10px] text-slate-400 tracking-normal">{activeTab === "DEALS" ? "Active Manifests" : "Archived"}</span></p>
                 </div>
-                <div className="h-10 w-px bg-slate-100" />
-                <div className="text-right">
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Total Liquidity</p>
-                   <p className="text-lg font-black text-blue-600 mt-1">{deals.reduce((sum, d) => sum + d.remainingSlots, 0)} <span className="text-[10px] text-blue-400 tracking-normal">Slots Left</span></p>
-                </div>
+                {activeTab === "DEALS" && (
+                  <>
+                    <div className="h-10 w-px bg-slate-100" />
+                    <div className="text-right">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Total Liquidity</p>
+                       <p className="text-lg font-black text-blue-600 mt-1">{deals.reduce((sum, d) => sum + d.remainingSlots, 0)} <span className="text-[10px] text-blue-400 tracking-normal">Slots Left</span></p>
+                    </div>
+                  </>
+                )}
              </motion.div>
           )}
         </div>
@@ -178,17 +192,18 @@ export default function ActiveDealsPage() {
 
       {/* Content Area */}
       <AnimatePresence mode="wait">
-        {activeTab === "DEALS" ? (
+        {(activeTab === "DEALS" || activeTab === "ARCHIVED") ? (
           <motion.div key="deals" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
              <ActiveDealsTable 
                deals={deals} 
                loading={loading}
                searchQuery={searchQuery} 
                setSearchQuery={setSearchQuery}
-               onRefresh={fetchDeals} 
+               onRefresh={() => fetchDeals(activeTab === "ARCHIVED" ? "archived" : "active")} 
                isAdm={isAdm}
                role={role}
                isJuhi={session?.user?.name?.toLowerCase().includes("juhi") || false}
+               isArchived={activeTab === "ARCHIVED"}
              />
           </motion.div>
         ) : activeTab === "BRANDS" ? (

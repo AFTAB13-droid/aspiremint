@@ -15,25 +15,38 @@ export async function GET(req: Request) {
     const user = session.user as any;
     const { searchParams } = new URL(req.url);
     const productCode = searchParams.get('productCode');
+    const statusFilter = searchParams.get('status') || 'active';
     
     await connectToDatabase();
 
     const isJuhi = user.name?.toLowerCase().includes("juhi");
     const isAdmin = user.role === 'ADMIN' || isJuhi;
 
-    // --- Resilient Cache-Aside Pattern ---
-    let deals: any[] | null = await getCache<any[]>(CACHE_KEYS.ACTIVE_DEALS);
+    let deals: any[] | null = null;
     
-    if (!deals) {
-      console.log("Redis Cache Miss - Fetching active deals from MongoDB");
-      deals = await ActiveDeal.find({ isActive: true }).sort({ createdAt: -1 }).lean();
+    if (statusFilter === 'active') {
+      // --- Resilient Cache-Aside Pattern ---
+      deals = await getCache<any[]>(CACHE_KEYS.ACTIVE_DEALS);
       
-      // Populate cache asynchronously for future hits (TTL 1 hour)
-      if (deals && deals.length > 0) {
-        setCache(CACHE_KEYS.ACTIVE_DEALS, deals, 3600);
+      if (!deals) {
+        console.log("Redis Cache Miss - Fetching active deals from MongoDB");
+        deals = await ActiveDeal.find({ isActive: true }).sort({ createdAt: -1 }).lean();
+        
+        // Populate cache asynchronously for future hits (TTL 1 hour)
+        if (deals && deals.length > 0) {
+          setCache(CACHE_KEYS.ACTIVE_DEALS, deals, 3600);
+        }
+      } else {
+        console.log("Redis Cache Hit - Active Deals loaded successfully");
       }
     } else {
-      console.log("Redis Cache Hit - Active Deals loaded successfully");
+      // Bypass cache for specific status requests (admin only)
+      if (!isAdmin) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+      
+      let query: any = {};
+      if (statusFilter === 'archived') query.isActive = false;
+      
+      deals = await ActiveDeal.find(query).sort({ createdAt: -1 }).lean();
     }
 
     // Apply Filters & Search In-Memory for Speed

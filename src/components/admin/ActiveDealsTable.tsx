@@ -19,10 +19,11 @@ interface ActiveDealsTableProps {
   isAdm: boolean;
   role?: string;
   isJuhi?: boolean;
+  isArchived?: boolean;
 }
 
 export function ActiveDealsTable({ 
-  deals, loading, searchQuery, setSearchQuery, onRefresh, isAdm, role, isJuhi 
+  deals, loading, searchQuery, setSearchQuery, onRefresh, isAdm, role, isJuhi, isArchived 
 }: ActiveDealsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5); // Optimized for mobile viewport height
@@ -535,6 +536,7 @@ export function ActiveDealsTable({
                         </>
                       ) : isAdm ? (
                         <>
+                          {isArchived ? (
                             <button 
                               onClick={() => {
                                 setDealToEdit({
@@ -548,21 +550,44 @@ export function ActiveDealsTable({
                                 });
                                 setShowEditModal(true);
                               }}
-                              className="h-10 w-10 rounded-xl bg-white border border-indigo-100 flex items-center justify-center text-indigo-500 hover:bg-indigo-600 hover:text-white transition-all shadow-sm group/edit"
-                              title="Edit Deal Economics & Stock"
+                              className="px-4 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-500 hover:bg-amber-500 hover:text-white transition-all shadow-sm group/restore text-[10px] font-black uppercase tracking-widest gap-2"
+                              title="Make Deal Live Again"
                             >
-                               <svg className="w-4 h-4 group-hover/edit:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                               <svg className="w-4 h-4 group-hover/restore:rotate-180 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                               Restore
                             </button>
-                          <button 
-                            onClick={() => {
-                              setDealToDelete(deal);
-                              setShowDeleteModal(true);
-                            }}
-                            className="h-10 w-10 rounded-xl bg-white border border-rose-100 flex items-center justify-center text-rose-400 hover:bg-rose-500 hover:text-white transition-all shadow-sm group/purge"
-                            title="Delete Deal"
-                          >
-                             <svg className="w-4 h-4 group-hover/purge:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                          </button>
+                          ) : (
+                            <>
+                              <button 
+                                onClick={() => {
+                                  setDealToEdit({
+                                    ...deal,
+                                    commission: deal.commission ?? (deal.dealType === 'Empty Box' ? 0 : deal.displayPayout),
+                                    juhiCommission: deal.juhiCommission ?? 0,
+                                    totalSlots: deal.totalSlots ?? 0,
+                                    productLink: deal.productLink ?? "",
+                                    userRemarks: deal.userRemarks ?? "",
+                                    mediatorRemarks: deal.mediatorRemarks ?? ""
+                                  });
+                                  setShowEditModal(true);
+                                }}
+                                className="h-10 w-10 rounded-xl bg-white border border-indigo-100 flex items-center justify-center text-indigo-500 hover:bg-indigo-600 hover:text-white transition-all shadow-sm group/edit"
+                                title="Edit Deal Economics & Stock"
+                              >
+                                 <svg className="w-4 h-4 group-hover/edit:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setDealToDelete(deal);
+                                  setShowDeleteModal(true);
+                                }}
+                                className="h-10 w-10 rounded-xl bg-white border border-rose-100 flex items-center justify-center text-rose-400 hover:bg-rose-500 hover:text-white transition-all shadow-sm group/purge"
+                                title="Delete Deal"
+                              >
+                                 <svg className="w-4 h-4 group-hover/purge:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                              </button>
+                            </>
+                          )}
                         </>
                       ) : (
                         <button 
@@ -912,11 +937,12 @@ export function ActiveDealsTable({
                       juhiCommission: parseInt(dealToEdit.juhiCommission as any) || 0,
                       productLink: dealToEdit.productLink,
                       userRemarks: dealToEdit.userRemarks,
-                      mediatorRemarks: dealToEdit.mediatorRemarks
+                      mediatorRemarks: dealToEdit.mediatorRemarks,
+                      ...(isArchived ? { isActive: true } : {})
                     })}
                     className="flex-1 h-11 bg-indigo-600 text-white font-black text-[9px] uppercase tracking-widest rounded-xl shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 hover:scale-[1.01] active:scale-95 transition-all"
                   >
-                    Save & Sync Globally
+                    {isArchived ? "Make Deal Live Again" : "Save & Sync Globally"}
                   </button>
                 </div>
               </div>
