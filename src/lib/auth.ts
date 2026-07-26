@@ -55,17 +55,19 @@ export const authOptions: NextAuthOptions = {
 
         const normalizedEmail = credentials.email.toLowerCase().trim();
 
-        // --- BRUTE-FORCE PROTECTION (Fail-Safe against Upstash Quota/Outage) ---
+        // --- PARALLELIZE NETWORK HOPS: Check lockout and connect to MongoDB simultaneously ---
         const lockKey = `login_lock:${normalizedEmail}`;
         const attemptsKey = `login_attempts:${normalizedEmail}`;
 
-        const isLocked = await getOtp(lockKey);
+        const [isLocked] = await Promise.all([
+          getOtp(lockKey),
+          connectToDatabase(),
+        ]);
+
         if (isLocked) {
           throw new Error("Account temporarily locked due to too many failed attempts. Try again in 15 minute(s).");
         }
-        // ------------------------------------------------------------------------
-
-        await connectToDatabase();
+        // -------------------------------------------------------------------------------------
 
         const user = await User.findOne({ email: normalizedEmail });
 
