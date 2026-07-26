@@ -58,18 +58,18 @@ export const sendOTPEmail = async (
   otp: string, 
   context: "LOGIN" | "PAYMENT" | "PASSWORD_RESET" = "LOGIN"
 ) => {
-  let subject = `[AspireMint] Security OTP: ${otp}`;
+  let subject = `Security OTP: ${otp}`;
   let title = "Identity Verification";
   let headerBg = "#4f46e5";
   let intro = "Please use the following single-use code to authenticate.";
 
   if (context === "PAYMENT") {
-    subject = `[AspireMint] Payment Update Security OTP: ${otp}`;
+    subject = `Payment Update Security OTP: ${otp}`;
     title = "Payment Details Update";
     headerBg = "#dc3545"; // Red for security alert
     intro = "You are attempting to update your payment details. Please use the following code to authorize this change.";
   } else if (context === "PASSWORD_RESET") {
-    subject = `[AspireMint] Password Reset OTP: ${otp}`;
+    subject = `Password Reset OTP: ${otp}`;
     title = "Password Reset Request";
     intro = "You have requested to reset your password. Please use the following code.";
   }
@@ -149,8 +149,8 @@ export const sendOrderStatusEmail = async (
     from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
     subject: isApproved
-      ? `[AspireMint] ✓ Refund Approved: Order ${orderId}`
-      : `[AspireMint] Refund Rejected: Order ${orderId}`,
+      ? `✓ Refund Approved: Order ${orderId}`
+      : `Refund Rejected: Order ${orderId}`,
     html: renderSimpleEmail(title, headerBg, headerColor, body),
   });
 };
@@ -175,7 +175,7 @@ export const sendOrderCreationEmail = async (email: string, name: string, orderD
   return transporter.sendMail({
     from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
-    subject: `[AspireMint] Order Logged: ${orderData.userOrderId}`,
+    subject: `Order Logged: ${orderData.userOrderId}`,
     html: renderSimpleEmail("Order Received", "#ffc107", "#000000", body),
   });
 };
@@ -198,7 +198,7 @@ export const sendRefundSubmittedEmail = async (email: string, name: string, orde
   return transporter.sendMail({
     from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
-    subject: `[AspireMint] Refund Form Submitted: ${orderData.userOrderId}`,
+    subject: `Refund Form Submitted: ${orderData.userOrderId}`,
     html: renderSimpleEmail("Refund Form Submitted", "#17a2b8", "#ffffff", body),
   });
 };
@@ -221,7 +221,7 @@ export const sendOrderPaymentEmail = async (email: string, name: string, orderId
   return transporter.sendMail({
     from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
-    subject: `[AspireMint] ₹ Payout Processed: Order ${orderId}`,
+    subject: `₹ Payout Processed: Order ${orderId}`,
     html: renderSimpleEmail("Payout Completed", "#17a2b8", "#ffffff", body),
   });
 };
@@ -242,7 +242,7 @@ export const sendWelcomeEmail = async (email: string, name: string) => {
   return transporter.sendMail({
     from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
-    subject: "Welcome to AspireMint!",
+    subject: "Welcome Onboard! Your Account is Ready",
     html: renderSimpleEmail("Welcome", "#6f42c1", "#ffffff", body),
   });
 };

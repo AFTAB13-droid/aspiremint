@@ -61,7 +61,7 @@ const TEMPLATES: Record<TemplateType, EmailTemplate> = {
   WELCOME: {
     id: "WELCOME",
     name: "User Welcome Onboarding",
-    subject: "Welcome to AspireMint - Your Onboarding Journey Begins!",
+    subject: "Welcome Onboard! Your Account is Ready",
     preheader: "Get ready to unlock premium verified reviews and brand sponsorships.",
     description: "Sent to new buyers, mediators, and operators upon account creation.",
     defaultVariables: {
@@ -270,7 +270,7 @@ const TEMPLATES: Record<TemplateType, EmailTemplate> = {
   OTP_VERIFY: {
     id: "OTP_VERIFY",
     name: "Identity Verification OTP",
-    subject: "[AspireMint] Security OTP: {{otpCode}}",
+    subject: "Security OTP: {{otpCode}}",
     preheader: "Your single-use passcode for identity verification.",
     description: "Sent during MFA scenarios like password reset, important profile changes, or secure logins.",
     defaultVariables: {

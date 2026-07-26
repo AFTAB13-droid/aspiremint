@@ -297,7 +297,7 @@ export default function HelpPage() {
          <button onClick={() => activeSection ? setActiveSection(null) : router.back()} className="h-10 w-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-900 active:scale-90 transition-all">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
          </button>
-         <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900">{activeSection ? currentSection?.title : "Help Hub"}</h2>
+         <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900">{activeSection ? currentSection?.title : "Reference Center"}</h2>
          <div className="w-10" />
       </div>
 
@@ -359,7 +359,7 @@ export default function HelpPage() {
            {/* Sidebar */}
            <div className="space-y-8 sticky top-32">
               <div className="px-2">
-                 <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">Help Hub</h2>
+                 <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">Reference Center</h2>
                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">AspireMint Foundry</p>
               </div>
               <div className="flex flex-col gap-2">

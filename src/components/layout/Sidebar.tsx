@@ -188,7 +188,7 @@ const navLinks: NavLink[] = [
     )
   },
   {
-    name: "Help",
+    name: "Reference Center",
     href: "/app/samples",
     roles: ["USER", "MEDIATOR"],
     icon: (
@@ -236,7 +236,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const mobileSections = [
     { 
       title: "Operations", 
-      links: filteredLinks.filter(l => ["Dashboard", "Orders", "My Orders", "Active Deals", "My Refunds", "My Activity", "Refunds", "Passbook", "Refer and Earn", "Support", "Support Hub", "Help"].includes(l.name)) 
+      links: filteredLinks.filter(l => ["Dashboard", "Orders", "My Orders", "Active Deals", "My Refunds", "My Activity", "Refunds", "Passbook", "Refer and Earn", "Support", "Support Hub", "Reference Center"].includes(l.name)) 
     },
     { 
       title: "Management", 

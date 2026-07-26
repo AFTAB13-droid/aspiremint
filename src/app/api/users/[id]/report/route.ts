@@ -144,7 +144,7 @@ export async function POST(
       await transporter.sendMail({
         from: process.env.EMAIL_FROM || '"AspireMint Admin" <info@aspiremint.in>',
         to: mediator.email, // Send to the mediator
-        subject: `[AspireMint] Your Performance Summary Report`,
+        subject: `Your Performance Summary Report`,
         html: htmlReport,
       });
 
@@ -153,7 +153,7 @@ export async function POST(
         await transporter.sendMail({
           from: process.env.EMAIL_FROM || '"AspireMint Admin" <info@aspiremint.in>',
           to: session.user.email,
-          subject: `[AspireMint] Performance Summary Report for ${mediator.systemDisplayName || mediator.name}`,
+          subject: `Performance Summary Report for ${mediator.systemDisplayName || mediator.name}`,
           html: htmlReport,
         });
       }
