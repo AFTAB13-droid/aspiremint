@@ -71,10 +71,13 @@ export const BrandManager: React.FC<BrandManagerProps> = ({ onRefresh }) => {
   const fetchBrands = async () => {
     try {
       const res = await fetch("/api/brands");
+      if (!res.ok) return;
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) return;
       const json = await res.json();
       if (json.success) setBrands(json.data);
     } catch (err) {
-      toast.error("Failed to load brands");
+      console.error("Failed to load brands", err);
     } finally {
       setLoading(false);
     }
@@ -83,10 +86,13 @@ export const BrandManager: React.FC<BrandManagerProps> = ({ onRefresh }) => {
   const fetchMarketplaces = async () => {
     try {
       const res = await fetch("/api/marketplaces");
+      if (!res.ok) return;
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) return;
       const json = await res.json();
       if (json.success) setMarketplaces(json.data);
     } catch (err) {
-      toast.error("Failed to load Marketplaces");
+      console.error("Failed to load Marketplaces", err);
     }
   };
 

@@ -61,10 +61,13 @@ export default function SupportPage() {
   const fetchQueries = async () => {
     try {
       const res = await fetch("/api/support");
+      if (!res.ok) return;
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) return;
       const json = await res.json();
       if (json.success) setQueries(json.data);
     } catch (err) {
-      toast.error("Failed to load queries");
+      console.error("Failed to load queries", err);
     } finally {
       setLoading(false);
     }

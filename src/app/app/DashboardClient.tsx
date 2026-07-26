@@ -65,10 +65,14 @@ export default function DashboardClient({ user, stats, recentOrders }: Dashboard
      try {
         setNotifLoading(true);
         const res = await fetch("/api/notifications");
+        if (!res.ok) return;
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) return;
+        
         const json = await res.json();
         if (json.success) setNotifications(json.data);
      } catch (err) {
-        console.error("Notif fetch error");
+        console.error("Notif fetch error", err);
      } finally {
         setNotifLoading(false);
      }

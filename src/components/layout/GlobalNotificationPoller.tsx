@@ -89,6 +89,8 @@ export function GlobalNotificationPoller() {
         const sinceStr = lastPolledRef.current?.toISOString();
         const res = await fetch(`/api/notifications?since=${sinceStr}`);
         if (!res.ok) return;
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) return;
 
         const json = await res.json();
         if (json.success && json.data && json.data.length > 0) {

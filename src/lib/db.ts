@@ -28,14 +28,16 @@ async function connectToDatabase() {
     return cached.conn;
   }
 
-  // CRITICAL FIX: If the connection dropped but the promise is still cached, clear it so we can reconnect
-  if (mongoose.connection.readyState !== 1) {
+  // If disconnected (0) or disconnecting (3), clear cached promise to force a clean reconnection.
+  // Do NOT clear if readyState === 2 (currently connecting!), otherwise concurrent requests create a connection storm!
+  if (mongoose.connection.readyState === 0 || mongoose.connection.readyState === 3) {
     cached.promise = null;
+    cached.conn = null;
   }
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: false,
+      bufferCommands: true, // Enable query buffering so requests wait cleanly during wake-up/reconnect instead of throwing fatal errors
       serverSelectionTimeoutMS: 5000, // Reduced to fail fast instead of hanging for 10s
       socketTimeoutMS: 45000,
       family: 4, // Force IPv4

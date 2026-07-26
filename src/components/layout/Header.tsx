@@ -42,14 +42,18 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user }) => {
     return "AspireMint";
   };
 
-  // Fetch unread count
+  // Fetch unread count safely without throwing JSON parse errors on idle/500/HTML responses
   const fetchUnreadCount = async () => {
     try {
       const res = await fetch("/api/notifications/count");
+      if (!res.ok) return;
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) return;
+      
       const json = await res.json();
       if (json.success) setUnreadCount(json.data.count);
     } catch (err) {
-      console.error("Failed to fetch notification count");
+      console.error("Failed to fetch notification count", err);
     }
   };
 
