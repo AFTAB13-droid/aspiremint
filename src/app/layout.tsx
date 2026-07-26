@@ -8,6 +8,7 @@ import OfflineGuard from "@/components/layout/OfflineGuard";
 import SplashController from "@/components/common/SplashController";
 import { GlobalNotificationPoller } from "@/components/layout/GlobalNotificationPoller";
 import FcmInitializer from "@/components/common/FcmInitializer";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -43,6 +44,7 @@ export default function RootLayout({
             </SplashController>
           </OfflineGuard>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
