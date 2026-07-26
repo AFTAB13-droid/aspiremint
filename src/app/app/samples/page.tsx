@@ -140,6 +140,186 @@ export default function HelpPage() {
       )
     },
     {
+      id: "amazon-guidelines",
+      title: "Amazon Guidelines",
+      desc: "Account safety & review best practices.",
+      color: "bg-amber-500",
+      icon: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+      content: (
+        <div className="space-y-8">
+           {/* Hero Card */}
+           <div className="relative overflow-hidden p-6 md:p-8 rounded-[32px] bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 text-white shadow-xl shadow-orange-500/20">
+              <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+              <div className="relative z-10 space-y-3">
+                 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/20 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-amber-100 border border-white/15">
+                    ⭐ TeamToufik Official Guidelines ⭐
+                 </div>
+                 <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight leading-tight">
+                    Amazon Buyer Guidelines: Account Safety & Best Practices
+                 </h3>
+                 <p className="text-xs md:text-sm text-amber-100 font-medium leading-relaxed max-w-2xl">
+                    The following guidelines are designed to protect your Amazon account and ensure that your product reviews and ratings remain visible. Adhere to these best practices to maintain a healthy account status.
+                 </p>
+              </div>
+           </div>
+
+           {/* Section 1: Account Safety & Shopping Habits */}
+           <div className="space-y-4">
+              <div className="flex items-center gap-2 px-1">
+                 <span className="text-lg">🛡️</span>
+                 <h4 className="text-sm font-black uppercase tracking-wider text-slate-900">Account & Shopping Profile</h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 {[
+                   { title: "Account Verification", badge: "Mandatory", badgeColor: "bg-rose-100 text-rose-700", desc: "Ensure your Amazon account is fully verified. This includes adding a valid email address and mobile number, and completing all necessary security verification steps." },
+                   { title: "Preferred Platform", badge: "Recommended", badgeColor: "bg-blue-100 text-blue-700", desc: "For optimal security, we recommend placing orders and submitting reviews through a web browser (such as Chrome, Edge, or Safari) rather than the mobile application." },
+                   { title: "Natural Shopping Habits", badge: "Account Health", badgeColor: "bg-emerald-100 text-emerald-700", desc: "Continue to use your account for regular personal or household purchases. This consistent, varied shopping activity helps maintain a natural customer profile." }
+                 ].map((item, idx) => (
+                   <div key={idx} className="p-5 rounded-[28px] bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3">
+                      <div className="space-y-2">
+                         <div className="flex items-center justify-between gap-2">
+                            <h5 className="text-xs font-black text-slate-900 uppercase tracking-tight">{item.title}</h5>
+                            <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest ${item.badgeColor}`}>{item.badge}</span>
+                         </div>
+                         <p className="text-[11px] text-slate-500 font-medium leading-relaxed">{item.desc}</p>
+                      </div>
+                   </div>
+                 ))}
+              </div>
+           </div>
+
+           {/* Section 2: Reviewing & Rating Best Practices */}
+           <div className="space-y-4">
+              <div className="flex items-center gap-2 px-1">
+                 <span className="text-lg">⭐</span>
+                 <h4 className="text-sm font-black uppercase tracking-wider text-slate-900">Reviewing & Rating Ethics</h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 {[
+                   { title: "Timing Your Submission", badge: "Wait 4 to 5 Days", badgeColor: "bg-amber-100 text-amber-700", desc: "Wait approximately 4 to 5 days after product delivery before posting your rating or review. Do not review immediately upon delivery." },
+                   { title: "Authenticity in Writing", badge: "No AI / ChatGPT", badgeColor: "bg-rose-100 text-rose-700", desc: "Please write your reviews in your own words. Avoid using ChatGPT or other AI tools, as automated content is frequently flagged and removed by Amazon." },
+                   { title: "Enhance Reviews with Media", badge: "Photos Helpful", badgeColor: "bg-indigo-100 text-indigo-700", desc: "Whenever possible, include original photos with your feedback. Reviews accompanied by media are generally viewed as more helpful and authentic." },
+                   { title: "Diversify Rating Scores", badge: "Organic Profile", badgeColor: "bg-emerald-100 text-emerald-700", desc: "On your independent purchases, provide a range of honest ratings (from 1 to 4 stars) where appropriate to keep your reviewer history balanced." },
+                   { title: "Avoid High-Frequency Reviewing", badge: "Pacing", badgeColor: "bg-purple-100 text-purple-700", desc: "Distribute your reviewing activity over time. Posting multiple reviews within a short period can trigger automated spam flags by Amazon." }
+                 ].map((item, idx) => (
+                   <div key={idx} className="p-5 rounded-[28px] bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3">
+                      <div className="space-y-2">
+                         <div className="flex items-center justify-between gap-2">
+                            <h5 className="text-xs font-black text-slate-900 uppercase tracking-tight">{item.title}</h5>
+                            <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest ${item.badgeColor}`}>{item.badge}</span>
+                         </div>
+                         <p className="text-[11px] text-slate-500 font-medium leading-relaxed">{item.desc}</p>
+                      </div>
+                   </div>
+                 ))}
+              </div>
+           </div>
+
+           {/* Section 3: Data Submission & Privacy Protocols */}
+           <div className="space-y-4">
+              <div className="flex items-center gap-2 px-1">
+                 <span className="text-lg">🔒</span>
+                 <h4 className="text-sm font-black uppercase tracking-wider text-slate-900">Submission & Privacy Protocols</h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 {[
+                   { title: "Official Submission Form", badge: "Strict Rule", badgeColor: "bg-rose-100 text-rose-700", desc: "Please upload all order and rating documentation directly through our official submission form. Don’t share on WhatsApp unless we ask." },
+                   { title: "Optimized Documentation", badge: "Pro Tip", badgeColor: "bg-blue-100 text-blue-700", desc: "If possible, use a separate device to take a photograph of your rating screen. This can further enhance the perceived authenticity of the documentation." },
+                   { title: "No Review Link Sharing", badge: "Critical Safety", badgeColor: "bg-red-100 text-red-700", desc: "Don’t share review links with anyone on WhatsApp or any other messaging platform. Sharing direct URLs can cause reviews to be flagged." }
+                 ].map((item, idx) => (
+                   <div key={idx} className="p-5 rounded-[28px] bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3">
+                      <div className="space-y-2">
+                         <div className="flex items-center justify-between gap-2">
+                            <h5 className="text-xs font-black text-slate-900 uppercase tracking-tight">{item.title}</h5>
+                            <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest ${item.badgeColor}`}>{item.badge}</span>
+                         </div>
+                         <p className="text-[11px] text-slate-500 font-medium leading-relaxed">{item.desc}</p>
+                      </div>
+                   </div>
+                 ))}
+              </div>
+           </div>
+
+           {/* Visual Sample Reference Gallery */}
+           <div className="space-y-4">
+              <div className="flex items-center gap-2 px-1">
+                 <span className="text-lg">📸</span>
+                 <h4 className="text-sm font-black uppercase tracking-wider text-slate-900">Sample Verification Documentation (Click to Zoom)</h4>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                 <div className="p-5 rounded-[28px] bg-white border border-slate-100 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-800">✅ Sample Review Proof</span>
+                       <span className="text-[9px] font-black uppercase px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-600">Verified Format</span>
+                    </div>
+                    <div 
+                      onClick={() => setPreviewImage("/samples/rating_review_screenshot.png")}
+                      className="aspect-video bg-slate-50 border border-slate-100 rounded-[20px] overflow-hidden flex items-center justify-center cursor-zoom-in relative group shadow-inner"
+                    >
+                       <img 
+                         src="/samples/rating_review_screenshot.png" 
+                         alt="Sample Review Screenshot" 
+                         className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                         onError={(e: any) => e.target.src = "https://placehold.co/600x400/f8fafc/cbd5e1?text=Review+Sample"}
+                       />
+                       <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                          <div className="bg-white/95 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase text-slate-900 shadow-lg scale-90 group-hover:scale-100 transition-transform">🔍 Zoom Photo</div>
+                       </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed">Ensure your reviewer profile name, star rating, and review text are clearly visible in the snapshot.</p>
+                 </div>
+
+                 <div className="p-5 rounded-[28px] bg-white border border-slate-100 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between">
+                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-800">✅ Return Window Closed Proof</span>
+                       <span className="text-[9px] font-black uppercase px-2.5 py-1 rounded-md bg-blue-50 text-blue-600">Verified Format</span>
+                    </div>
+                    <div 
+                      onClick={() => setPreviewImage("/samples/return_period.png")}
+                      className="aspect-video bg-slate-50 border border-slate-100 rounded-[20px] overflow-hidden flex items-center justify-center cursor-zoom-in relative group shadow-inner"
+                    >
+                       <img 
+                         src="/samples/return_period.png" 
+                         alt="Sample Return Window Screenshot" 
+                         className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
+                         onError={(e: any) => e.target.src = "https://placehold.co/600x400/f8fafc/cbd5e1?text=Return+Window+Sample"}
+                       />
+                       <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                          <div className="bg-white/95 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase text-slate-900 shadow-lg scale-90 group-hover:scale-100 transition-transform">🔍 Zoom Photo</div>
+                       </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed">Wait until the official return/replacement window expires before submitting your refund claim.</p>
+                 </div>
+              </div>
+           </div>
+
+           {/* Footer Banner */}
+           <div className="p-6 md:p-8 rounded-[32px] bg-slate-900 text-white border border-slate-800 space-y-4 shadow-xl">
+              <div className="flex items-center gap-3">
+                 <div className="h-12 w-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl font-black shrink-0 border border-amber-500/30">
+                    🛡️
+                 </div>
+                 <div>
+                    <h4 className="text-sm md:text-base font-black text-white uppercase tracking-wide">The Importance of These Standards</h4>
+                    <p className="text-[10px] text-amber-400 font-black uppercase tracking-widest">Account Integrity & Longevity</p>
+                 </div>
+              </div>
+              <p className="text-xs md:text-sm text-slate-300 font-medium leading-relaxed">
+                 Amazon monitors engagement patterns to ensure the integrity of its platform. Adhering to these guidelines helps your account maintain the profile of a standard customer, which protects your reviewing privileges and ensures smooth transaction processing.
+              </p>
+              <div className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px] text-slate-400 font-medium">
+                 <span>These procedures are implemented for your security and to ensure the longevity of your account.</span>
+                 <span className="font-black text-amber-400 uppercase tracking-widest whitespace-nowrap bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20 text-center">Thank you — TeamToufik</span>
+              </div>
+           </div>
+        </div>
+      )
+    },
+    {
       id: "status-glossary",
       title: "Statuses",
       desc: "Meanings of tracking status labels.",
