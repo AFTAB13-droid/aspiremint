@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { User } from '@/modules/user/user.model';
 import connectToDatabase from '@/lib/db';
-import redis from '@/lib/redis';
+import { getOtp, deleteOtp } from '@/services/otpService';
 
 export async function GET(req: Request) {
   try {
@@ -59,13 +59,13 @@ export async function PUT(req: Request) {
         }
 
         const normalizedEmail = session.user.email.trim().toLowerCase();
-        const storedOtp = await redis.get(`payment_update_otp:${normalizedEmail}`);
+        const storedOtp = await getOtp(`payment_update_otp:${normalizedEmail}`);
         if (!storedOtp || String(storedOtp) !== String(otp).trim()) {
           return NextResponse.json({ success: false, message: 'Invalid or expired security code' }, { status: 400 });
         }
         
         // Delete OTP after successful verification
-        await redis.del(`payment_update_otp:${normalizedEmail}`);
+        deleteOtp(`payment_update_otp:${normalizedEmail}`).catch(() => {});
       }
     }
     

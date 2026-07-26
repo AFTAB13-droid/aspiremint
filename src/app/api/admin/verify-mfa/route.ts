@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import redis from "@/lib/redis";
+import { getOtp, deleteOtp } from "@/services/otpService";
 
 export async function POST(req: Request) {
   try {
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
     const userId = session.user.id;
     const mfaRedisKey = `admin_mfa_otp:${userId}`;
-    const storedOtp = await redis.get(mfaRedisKey);
+    const storedOtp = await getOtp(mfaRedisKey);
 
     if (!storedOtp) {
       return NextResponse.json({ success: false, message: "Verification code expired or invalid" }, { status: 400 });
@@ -28,8 +28,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "Invalid verification code. Please try again." }, { status: 400 });
     }
 
-    // Success! Clear Redis key
-    await redis.del(mfaRedisKey);
+    // Success! Clear key
+    deleteOtp(mfaRedisKey).catch(() => {});
 
     // Record audit trace for MFA clearance
     const { recordAudit } = await import("@/utils/audit");

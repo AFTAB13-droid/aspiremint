@@ -166,10 +166,10 @@ export default function SignupPage() {
 
       if (result.data.role === "MEDIATOR") {
         toast.success("Deployment Request Sent");
-        setTimeout(() => router.push("/registration-pending"), 1000);
+        setTimeout(() => router.replace("/registration-pending"), 200);
       } else {
         toast.success("Core Identity Initialized");
-        setTimeout(() => router.push("/login"), 1000);
+        setTimeout(() => router.replace("/login"), 200);
       }
     } catch (error) {
       toast.error("Network synchronization failure");

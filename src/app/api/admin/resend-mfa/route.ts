@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import redis from "@/lib/redis";
+import { checkRateLimit, storeOtp } from "@/services/otpService";
 
 export async function POST(req: Request) {
   try {
@@ -18,13 +18,10 @@ export async function POST(req: Request) {
     }
     const name = session.user.name || "Admin";
 
-    // Rate Limiting: max 3 resends per 15 minutes
+    // Rate Limiting: max 3 resends per 15 minutes (Fail-Safe)
     const rateLimitKey = `mfa_resend_limit:${userId}`;
-    const resends = await redis.incr(rateLimitKey);
-    if (resends === 1) {
-      await redis.expire(rateLimitKey, 900);
-    }
-    if (resends > 3) {
+    const { allowed } = await checkRateLimit(rateLimitKey, 3, 900);
+    if (!allowed) {
       return NextResponse.json({ success: false, message: "Too many resend requests. Please wait 15 minutes." }, { status: 429 });
     }
 
@@ -33,17 +30,14 @@ export async function POST(req: Request) {
     const newOtp = randomInt(100000, 999999).toString();
 
     const mfaRedisKey = `admin_mfa_otp:${userId}`;
-    await redis.set(mfaRedisKey, newOtp, { ex: 300 }); // Valid for 5 minutes
+    await storeOtp(mfaRedisKey, newOtp, 300); // Valid for 5 minutes with MongoDB backup
 
-    // Send email
+    // Send email (Non-blocking dispatch)
     const { sendOTPEmail } = await import("@/services/emailService");
-    try {
-      await sendOTPEmail(email, name, newOtp);
-      console.log(`[MFA RESEND] Sent OTP ${newOtp} to ${email}`);
-    } catch (mailError) {
+    sendOTPEmail(email, name, newOtp).catch((mailError) => {
       console.error("[MFA RESEND] Failed to send email:", mailError);
-      console.log(`[MFA RESEND FALLBACK] Code for ${email}: ${newOtp}`);
-    }
+    });
+    console.log(`[MFA RESEND] Dispatched OTP ${newOtp} to ${email}`);
 
     return NextResponse.json({ success: true, message: "Security code re-dispatched" });
   } catch (error: any) {

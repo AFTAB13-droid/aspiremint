@@ -3,7 +3,7 @@ import connectToDatabase from "@/lib/db";
 import { User } from "@/modules/user/user.model";
 import { sendOTPEmail } from "@/services/emailService";
 import bcrypt from "bcryptjs";
-import redis from "@/lib/redis";
+import { checkRateLimit } from "@/services/otpService";
 
 export async function POST(req: Request) {
   try {
@@ -15,13 +15,10 @@ export async function POST(req: Request) {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // --- RATE LIMITING: Max 2 forgot-password requests per email per 10 minutes ---
+    // --- RATE LIMITING: Max 2 forgot-password requests per email per 10 minutes (Fail-Safe) ---
     const rateLimitKey = `forgot_pw_rate:${normalizedEmail}`;
-    const attempts = await redis.incr(rateLimitKey);
-    if (attempts === 1) {
-      await redis.expire(rateLimitKey, 600); // 10-minute window
-    }
-    if (attempts > 2) {
+    const { allowed } = await checkRateLimit(rateLimitKey, 2, 600);
+    if (!allowed) {
       return NextResponse.json({
         success: false,
         message: "Too many reset requests. Please wait before trying again."
@@ -76,8 +73,10 @@ export async function POST(req: Request) {
     user.resetPasswordExpires = expires;
     await user.save();
 
-    // NOTE: rawOtp is ONLY sent via email, never logged
-    await sendOTPEmail(user.email, user.name, rawOtp);
+    // NOTE: rawOtp is ONLY sent via email, never logged (Non-blocking dispatch)
+    sendOTPEmail(user.email, user.name, rawOtp).catch(err => {
+      console.error("Forgot Password Mail Transmission Error:", err);
+    });
 
     return NextResponse.json({
       success: true,

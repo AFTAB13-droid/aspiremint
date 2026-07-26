@@ -2,7 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import connectToDatabase from "@/lib/db";
 import { User, IUser } from "@/modules/user/user.model";
-import redis from "@/lib/redis";
+import { checkRateLimit, storeOtp, getOtp, deleteOtp } from "@/services/otpService";
 import { headers } from "next/headers";
 
 
@@ -55,18 +55,15 @@ export const authOptions: NextAuthOptions = {
 
         const normalizedEmail = credentials.email.toLowerCase().trim();
 
-        // --- BRUTE-FORCE PROTECTION ---
-        // Lock account for 15 minutes after 5 failed attempts
+        // --- BRUTE-FORCE PROTECTION (Fail-Safe against Upstash Quota/Outage) ---
         const lockKey = `login_lock:${normalizedEmail}`;
         const attemptsKey = `login_attempts:${normalizedEmail}`;
 
-        const isLocked = await redis.get(lockKey);
+        const isLocked = await getOtp(lockKey);
         if (isLocked) {
-          const ttl = await redis.ttl(lockKey);
-          const waitMins = Math.ceil(ttl / 60);
-          throw new Error(`Account temporarily locked due to too many failed attempts. Try again in ${waitMins} minute(s).`);
+          throw new Error("Account temporarily locked due to too many failed attempts. Try again in 15 minute(s).");
         }
-        // --------------------------------
+        // ------------------------------------------------------------------------
 
         await connectToDatabase();
 
@@ -74,8 +71,7 @@ export const authOptions: NextAuthOptions = {
 
         if (!user) {
           // Increment failed attempts even for non-existent emails (prevent enumeration)
-          const attempts = await redis.incr(attemptsKey);
-          if (attempts === 1) await redis.expire(attemptsKey, 900);
+          await checkRateLimit(attemptsKey, 5, 900);
           throw new Error("Invalid credentials");
         }
 
@@ -84,19 +80,18 @@ export const authOptions: NextAuthOptions = {
 
         if (!isValid) {
           // Increment failed attempts and lock if threshold exceeded
-          const attempts = await redis.incr(attemptsKey);
-          if (attempts === 1) await redis.expire(attemptsKey, 900); // 15-min window
-          if (attempts >= 5) {
-            await redis.set(lockKey, "1", { ex: 900 }); // Lock for 15 minutes
-            await redis.del(attemptsKey);
+          const { allowed } = await checkRateLimit(attemptsKey, 4, 900);
+          if (!allowed) {
+            await storeOtp(lockKey, "1", 900); // Lock for 15 minutes
+            deleteOtp(attemptsKey).catch(() => {});
             throw new Error("Account temporarily locked due to too many failed attempts. Try again in 15 minute(s).");
           }
           throw new Error("Invalid credentials");
         }
 
         // --- Login success: clear brute-force counters ---
-        redis.del(attemptsKey).catch(() => {});
-        redis.del(lockKey).catch(() => {});
+        deleteOtp(attemptsKey).catch(() => {});
+        deleteOtp(lockKey).catch(() => {});
         // -------------------------------------------------
 
         if (!user.isActive) {
@@ -115,9 +110,9 @@ export const authOptions: NextAuthOptions = {
           const { randomInt } = await import("crypto");
           const mfaOtp = randomInt(100000, 999999).toString();
 
-          // Save in Redis for 5 minutes
+          // Save in fail-safe OTP service (Redis + MongoDB backup)
           const mfaRedisKey = `admin_mfa_otp:${user._id.toString()}`;
-          redis.set(mfaRedisKey, mfaOtp, { ex: 300 }).catch(() => {});
+          storeOtp(mfaRedisKey, mfaOtp, 300).catch(() => {});
 
           // Send Email OTP!
           try {
@@ -128,7 +123,7 @@ export const authOptions: NextAuthOptions = {
               console.log(`[MFA FALLBACK] OTP Code for ${user.email}: ${mfaOtp}`);
               console.log(`==================================================\n`);
             });
-            console.log(`[MFA] Sent OTP ${mfaOtp} to email ${user.email} asynchronously`);
+            console.log(`[MFA] Dispatched OTP ${mfaOtp} to email ${user.email} asynchronously`);
           } catch (mailError) {
              console.error("[MFA] Could not dispatch email function:", mailError);
           }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import { User, UserRole } from "@/modules/user/user.model";
-import redis from "@/lib/redis";
+import { getOtp, deleteOtp } from "@/services/otpService";
 import { sendWelcomeEmail } from "@/services/emailService";
 
 // Define the shape of our expected request body
@@ -65,9 +65,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // 5. Verify OTP from Redis
+    // 5. Verify OTP from Fail-Safe Service (Redis + MongoDB fallback)
     const normalizedEmail = email.trim().toLowerCase();
-    const storedOtp = await redis.get(`signup_otp:${normalizedEmail}`);
+    const storedOtp = await getOtp(`signup_otp:${normalizedEmail}`);
     
     if (!storedOtp || String(storedOtp) !== String(otp).trim()) {
       return NextResponse.json(
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
     }
  
     // Delete OTP after successful verification
-    await redis.del(`signup_otp:${normalizedEmail}`);
+    deleteOtp(`signup_otp:${normalizedEmail}`).catch(() => {});
 
     // 6. Create user (password will be hashed automatically by our Mongoose pre-save hook)
     const newUser = new User({

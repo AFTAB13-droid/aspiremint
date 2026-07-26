@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import redis from "@/lib/redis";
 import connectToDatabase from "@/lib/db";
 import { User } from "@/modules/user/user.model";
 import { sendOTPEmail } from "@/services/emailService";
+import { checkRateLimit, storeOtp } from "@/services/otpService";
 
 export async function POST(req: Request) {
   try {
@@ -14,15 +14,10 @@ export async function POST(req: Request) {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // --- RATE LIMITING: Max 3 OTP requests per email per 10 minutes ---
+    // --- RATE LIMITING: Max 3 OTP requests per email per 10 minutes (Fail-Safe) ---
     const rateLimitKey = `otp_rate:${normalizedEmail}`;
-    const attempts = await redis.incr(rateLimitKey);
-    if (attempts === 1) {
-      await redis.expire(rateLimitKey, 600); // 10-minute window
-    }
-    if (attempts > 3) {
-      const ttl = await redis.ttl(rateLimitKey);
-      const waitMins = Math.ceil(ttl / 60);
+    const { allowed, waitMins } = await checkRateLimit(rateLimitKey, 3, 600);
+    if (!allowed) {
       return NextResponse.json({
         success: false,
         message: `Too many OTP requests. Please wait ${waitMins} minute(s) before trying again.`
@@ -48,19 +43,13 @@ export async function POST(req: Request) {
     const { randomInt } = await import("crypto");
     const otp = randomInt(100000, 999999).toString();
 
-    // Store in Redis with 5-minute expiry
-    await redis.set(`signup_otp:${normalizedEmail}`, otp, { ex: 300 });
+    // Store in fail-safe OTP service (Redis with automatic MongoDB backup)
+    await storeOtp(`signup_otp:${normalizedEmail}`, otp, 300);
 
-    // NOTE: OTP is NOT logged to console — it is only sent via email
-    try {
-      await sendOTPEmail(email, email.split("@")[0], otp);
-    } catch (mailError) {
+    // NOTE: OTP is NOT logged to console — it is sent via email asynchronously (Non-blocking for instant UI response)
+    sendOTPEmail(email, email.split("@")[0], otp).catch(mailError => {
       console.error("Signup Mail Transmission Error:", mailError);
-      return NextResponse.json({
-        success: false,
-        message: "Failed to transmit security code. Please check your email address."
-      }, { status: 500 });
-    }
+    });
 
     return NextResponse.json({
       success: true,

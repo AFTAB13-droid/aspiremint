@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import redis from "@/lib/redis";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sendOTPEmail } from "@/services/emailService";
+import { storeOtp } from "@/services/otpService";
 
 export async function POST(req: Request) {
   try {
@@ -16,24 +16,17 @@ export async function POST(req: Request) {
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Store in Redis with 5-minute expiry
-    // Key format: payment_update_otp:email
+    // Store in fail-safe OTP service (Redis + MongoDB fallback)
     const normalizedEmail = email.trim().toLowerCase();
-    await redis.set(`payment_update_otp:${normalizedEmail}`, otp, { ex: 300 });
+    await storeOtp(`payment_update_otp:${normalizedEmail}`, otp, 300);
 
     // SIMULATED SENDING: Log to console
     console.log(`[PAYMENT SECURITY SERVICE] OTP for ${email} is: ${otp}`);
 
-    // SEND REAL EMAIL
-    try {
-      await sendOTPEmail(email, session.user.name || email.split('@')[0], otp, "PAYMENT");
-    } catch (mailError) {
+    // SEND REAL EMAIL (Non-blocking dispatch)
+    sendOTPEmail(email, session.user.name || email.split('@')[0], otp, "PAYMENT").catch(mailError => {
       console.error("Payment OTP Mail Transmission Error:", mailError);
-      return NextResponse.json({ 
-        success: false, 
-        message: "Failed to transmit security code to your email." 
-      }, { status: 500 });
-    }
+    });
     
     return NextResponse.json({ 
       success: true, 
