@@ -274,10 +274,11 @@ export function MobileActiveDeals({
                          const hasRemark = Boolean(remarks && remarks.trim().length > 0);
                          return (
                            <>
-                             <div className={`h-7 w-7 rounded-lg flex items-center justify-center border active:scale-90 transition-all ${hasRemark ? "bg-amber-500 text-white border-amber-400 shadow-md shadow-amber-500/40 animate-[pulse_2s_ease-in-out_infinite]" : "bg-indigo-50 text-indigo-400 border-indigo-100"}`}>
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                             <div className={`h-7 w-7 rounded-lg flex items-center justify-center border active:scale-90 transition-all duration-300 ${hasRemark ? "relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-600 text-white shadow-[0_5px_15px_rgba(245,158,11,0.5),inset_0_2px_4px_rgba(255,255,255,0.4)] border-amber-300/50 animate-[bounce_2s_infinite]" : "bg-indigo-50 text-indigo-400 border-indigo-100"}`}>
+                                {hasRemark && <div className="absolute inset-0 bg-white/20 blur-sm animate-[spin_3s_linear_infinite]" />}
+                                <svg className={`w-4 h-4 relative z-10 ${hasRemark ? "drop-shadow-md animate-pulse" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                              </div>
-                             <span className={`text-[8px] font-black uppercase tracking-widest ${hasRemark ? "text-amber-500" : "text-slate-400"}`}>Remarks</span>
+                             <span className={`text-[8px] font-black uppercase tracking-widest ${hasRemark ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600 font-extrabold drop-shadow-sm" : "text-slate-400"}`}>Remarks</span>
                            </>
                          );
                        })()}

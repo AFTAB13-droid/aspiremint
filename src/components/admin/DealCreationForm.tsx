@@ -24,6 +24,7 @@ interface Props {
 
 export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
   const [loading, setLoading] = useState(false);
+  const [deploymentStatus, setDeploymentStatus] = useState<"idle" | "deploying" | "success">("idle");
   const [brands, setBrands] = useState<Brand[]>([]);
   const [mediators, setMediators] = useState<Mediator[]>([]);
   const [marketplaces, setMarketplaces] = useState<IMarketplace[]>([]);
@@ -164,16 +165,15 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
     }
 
     setLoading(true);
-    const loadingId = toast.loading("Deploying new deal...");
+    setDeploymentStatus("deploying");
 
     try {
       let finalImageUrl = formData.productImage;
       
       // Handle File Upload if exists
       if (imageFile) {
-        toast.loading("Uploading product media...", { id: loadingId });
+        toast.loading("Uploading product media...");
         finalImageUrl = await handleFileUpload(imageFile);
-        // Sync back to local form state for the success screen
         setFormData(prev => ({ ...prev, productImage: finalImageUrl }));
       }
 
@@ -208,68 +208,22 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
 
       const json = await res.json();
       if (json.success) {
-        toast.success("Deal Active!", { id: loadingId });
+        toast.success("Deal Active!");
         setCreatedCode(json.data.productCode);
+        setDeploymentStatus("success");
       } else {
-        toast.error(json.message, { id: loadingId });
+        toast.error(json.message);
+        setDeploymentStatus("idle");
       }
     } catch (err: any) {
-      toast.error(err.message || "Network Error", { id: loadingId });
+      toast.error(err.message || "Network Error");
+      setDeploymentStatus("idle");
     } finally {
       setLoading(false);
     }
   };
 
-  if (createdCode) {
-    return (
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-[40px] border border-slate-100 shadow-2xl p-12 text-center max-w-2xl mx-auto space-y-8"
-      >
-        <div className="h-20 w-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
-          <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-        </div>
-        
-        {formData.productImage && (
-          <div className="mx-auto w-48 h-48 rounded-3xl overflow-hidden border-4 border-slate-50 shadow-inner">
-            <img src={formData.productImage} alt="Manifest Preview" className="w-full h-full object-cover" />
-          </div>
-        )}
-
-        <div>
-          <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Deal Posted Successfully</h3>
-          <p className="text-slate-500 mt-2 font-medium">Your automated product code is ready and synced.</p>
-        </div>
-        
-        <div className="bg-slate-50 rounded-3xl p-8 border border-slate-100 group relative">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Automated Product Code</p>
-          <p className="text-4xl font-black text-blue-600 tracking-tighter uppercase select-all">{createdCode}</p>
-          <button 
-            type="button"
-            onClick={() => {
-              navigator.clipboard.writeText(createdCode || "");
-              toast.success("Code copied!");
-            }}
-            className="absolute top-4 right-4 text-slate-300 hover:text-blue-500 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
-          </button>
-        </div>
-
-        <button 
-          type="button"
-          onClick={() => {
-            setCreatedCode(null);
-            onCreated();
-          }}
-          className="w-full h-[70px] bg-slate-900 text-white font-black text-sm uppercase tracking-[0.3em] rounded-2xl hover:bg-slate-800 transition-all shadow-xl"
-        >
-          CONFIRM & VIEW LEDGER
-        </button>
-      </motion.div>
-    );
-  }
+  // The popup is now rendered as a modal later in the component.
 
   return (
     <div className="relative">
@@ -678,6 +632,87 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
                </motion.div>
             </div>
           )}
+        </AnimatePresence>
+
+        {/* High-Tech Deployment Popup */}
+        <AnimatePresence>
+           {(deploymentStatus === "deploying" || deploymentStatus === "success") && (
+              <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-6">
+                 <motion.div 
+                   initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                   animate={{ opacity: 1, scale: 1, y: 0 }}
+                   exit={{ opacity: 0, scale: 0.8, y: 20 }}
+                   className="w-full max-w-lg bg-white rounded-[40px] shadow-2xl p-10 overflow-hidden relative text-center border border-white/50"
+                 >
+                    {/* Animated Background Gradients */}
+                    <div className={`absolute -top-24 -right-24 w-64 h-64 blur-[80px] rounded-full pointer-events-none transition-all duration-1000 ${deploymentStatus === "deploying" ? "bg-indigo-500/20 animate-pulse" : "bg-emerald-500/20"}`} />
+                    <div className={`absolute -bottom-24 -left-24 w-64 h-64 blur-[80px] rounded-full pointer-events-none transition-all duration-1000 ${deploymentStatus === "deploying" ? "bg-blue-500/20 animate-pulse" : "bg-emerald-500/20"}`} />
+                    
+                    <div className="relative z-10 space-y-6">
+                       {/* Product Image Preview */}
+                       {(formData.productImage || imageFile) && (
+                         <motion.div 
+                           initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
+                           className="w-32 h-32 mx-auto rounded-3xl overflow-hidden border-4 border-slate-50 shadow-inner"
+                         >
+                            <img src={imageFile ? URL.createObjectURL(imageFile) : formData.productImage} className="w-full h-full object-cover" alt="Preview" />
+                         </motion.div>
+                       )}
+
+                       <div className="space-y-1">
+                          <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">{createdCode || previewCode}</h3>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{formData.brandName} - {formData.productDetails || "Preparing Manifest"}</p>
+                       </div>
+
+                       <div className="h-px w-full bg-slate-100 my-6" />
+
+                       {deploymentStatus === "deploying" ? (
+                          <div className="space-y-6 py-4">
+                             {/* 3D Scanning/Deploying Animation */}
+                             <div className="flex justify-center">
+                                <div className="relative w-20 h-20 flex items-center justify-center">
+                                   <div className="absolute inset-0 border-4 border-indigo-100 rounded-full" />
+                                   <div className="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent border-b-transparent animate-[spin_1.5s_linear_infinite]" />
+                                   <div className="absolute inset-2 border-4 border-blue-400/50 rounded-full border-l-transparent border-r-transparent animate-[spin_2s_linear_infinite_reverse]" />
+                                   <svg className="w-8 h-8 text-indigo-600 animate-pulse drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                   </svg>
+                                </div>
+                             </div>
+                             <motion.p animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity }} className="text-[11px] font-black text-indigo-600 uppercase tracking-[0.3em]">
+                                Deploying Manifest To Network...
+                             </motion.p>
+                          </div>
+                       ) : (
+                          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="space-y-6">
+                             {/* Success State */}
+                             <div className="flex justify-center">
+                                <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", bounce: 0.5 }} className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.4)]">
+                                   <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                </motion.div>
+                             </div>
+                             <p className="text-[12px] font-black text-emerald-600 uppercase tracking-[0.3em] bg-emerald-50 inline-block px-4 py-1.5 rounded-full border border-emerald-100">
+                                Deployment Successful!
+                             </p>
+                             
+                             <div className="bg-slate-50 rounded-2xl p-6 relative overflow-hidden group">
+                                <div className="absolute inset-0 bg-indigo-500/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Generated Product Code</p>
+                                <p className="text-3xl font-black text-indigo-900 uppercase tracking-tighter select-all relative z-10">{createdCode}</p>
+                             </div>
+
+                             <button 
+                               onClick={() => { setDeploymentStatus("idle"); setCreatedCode(null); onCreated(); }} 
+                               className="w-full h-14 bg-slate-900 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-xl hover:bg-indigo-600 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-slate-900/20"
+                             >
+                               Confirm & View Ledger
+                             </button>
+                          </motion.div>
+                       )}
+                    </div>
+                 </motion.div>
+              </div>
+           )}
         </AnimatePresence>
       </div>
     </div>
