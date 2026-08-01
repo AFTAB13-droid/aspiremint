@@ -294,7 +294,7 @@ export default function SignupPage() {
                           </div>
                           <div className="space-y-2">
                              <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">Registration Done</h3>
-                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Redirecting to your dashboard...</p>
+                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Redirecting to login...</p>
                           </div>
                        </motion.div>
                     )}
