@@ -217,19 +217,20 @@ export async function POST(req: Request) {
       console.warn("Pusher active deal create trigger bypassed gracefully:", err);
     }
 
-    // Dispatch FCM Broadcast Advertisement push notification (awaiting to prevent Vercel termination)
+    // Dispatch FCM Broadcast Advertisement push notification (Fire-and-forget to prevent blocking UI)
     try {
-      const { sendBroadcastPushNotification } = await import("@/utils/fcm");
-      await sendBroadcastPushNotification({
-        title: `🔥 New Deal: ${brandName}`,
-        body: `A new deal has been launched for ${productDetails}. Claim your cashback now!`,
-        data: {
-          click_action: "/app/activedeals",
-          brandName: brandName,
-        }
+      import("@/utils/fcm").then(({ sendBroadcastPushNotification }) => {
+        sendBroadcastPushNotification({
+          title: `🔥 New Deal: ${brandName}`,
+          body: `A new deal has been launched for ${productDetails}. Claim your cashback now!`,
+          data: {
+            click_action: "/app/activedeals",
+            brandName: brandName,
+          }
+        }).catch(fcmErr => console.warn("FCM background error:", fcmErr));
       });
     } catch (fcmErr) {
-      console.warn("FCM broadcast load error in active deals:", fcmErr);
+      console.warn("FCM import error:", fcmErr);
     }
 
     return NextResponse.json({ success: true, data: deal });

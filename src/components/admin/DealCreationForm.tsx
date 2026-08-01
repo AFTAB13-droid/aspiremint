@@ -235,7 +235,7 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
         setDeploymentStatus("idle");
         setCreatedCode(null);
         onCreated();
-      }, 3000);
+      }, 1500);
     }
     return () => {
       if (timeout) clearTimeout(timeout);
@@ -700,7 +700,7 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
                                 </div>
                              </div>
                              <motion.p animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity }} className="text-[11px] font-black text-indigo-600 uppercase tracking-[0.3em]">
-                                Deploying Manifest To Network...
+                                Deploying Deal...
                              </motion.p>
                           </div>
                        ) : (
@@ -712,7 +712,7 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
                                 </motion.div>
                              </div>
                              <p className="text-[12px] font-black text-emerald-600 uppercase tracking-[0.3em] bg-emerald-50 inline-block px-4 py-1.5 rounded-full border border-emerald-100">
-                                Deployment Successful!
+                                Deal Added!
                              </p>
                              
                              <div className="bg-slate-50 rounded-2xl p-6 relative overflow-hidden group">
