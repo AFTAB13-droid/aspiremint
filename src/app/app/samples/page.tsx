@@ -38,12 +38,13 @@ const MarketplaceImageSelector = ({ type, setPreviewImage }: { type: 'ORDER' | '
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-3">
+      <div className="flex overflow-x-auto gap-2 pb-3 -mx-2 px-2 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <style dangerouslySetInnerHTML={{ __html: `::-webkit-scrollbar { display: none; }` }} />
         {marketplaces.map(mp => (
           <button 
             key={mp} 
             onClick={() => setMarketplace(mp)}
-            className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${marketplace === mp ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 scale-105' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+            className={`flex-shrink-0 px-5 py-2.5 rounded-full text-[10px] md:rounded-xl md:text-[11px] font-black uppercase tracking-widest transition-all ${marketplace === mp ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 md:scale-105' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
           >
             {mp}
           </button>
@@ -55,7 +56,7 @@ const MarketplaceImageSelector = ({ type, setPreviewImage }: { type: 'ORDER' | '
            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{marketplace} {type === 'ORDER' ? 'Order' : 'Return Period'} Snapshot</p>
            <div 
              onClick={() => setPreviewImage(getImageUrl(marketplace))}
-             className="relative rounded-[32px] overflow-hidden shadow-xl shadow-slate-200/50 group cursor-zoom-in h-[300px] md:h-[400px] bg-slate-900 border border-slate-800 flex items-start justify-center p-2 transform-gpu transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(79,70,229,0.3)]"
+             className="relative w-full rounded-3xl md:rounded-[32px] overflow-hidden shadow-xl shadow-slate-200/50 group cursor-zoom-in h-[350px] md:h-[400px] bg-slate-900 border border-slate-800 flex items-start justify-center p-2 transform-gpu transition-all duration-500 md:hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(79,70,229,0.3)] active:scale-[0.98]"
            >
               <div className="w-full h-full overflow-hidden rounded-[24px] relative bg-slate-800">
                 <img 
@@ -567,7 +568,7 @@ export default function HelpPage() {
                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Blinkit Invoice Snapshot</p>
                <div 
                  onClick={() => setPreviewImage("/samples/blinkit_invoice_ss.jpg")}
-                 className="relative rounded-[32px] overflow-hidden shadow-xl shadow-slate-200/50 group cursor-zoom-in h-[300px] md:h-[400px] bg-slate-900 border border-slate-800 flex items-start justify-center p-2 transform-gpu transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(79,70,229,0.3)]"
+                 className="relative w-full rounded-3xl md:rounded-[32px] overflow-hidden shadow-xl shadow-slate-200/50 group cursor-zoom-in h-[350px] md:h-[400px] bg-slate-900 border border-slate-800 flex items-start justify-center p-2 transform-gpu transition-all duration-500 md:hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(79,70,229,0.3)] active:scale-[0.98]"
                >
                   <div className="w-full h-full overflow-hidden rounded-[24px] relative bg-slate-800">
                     <img 
