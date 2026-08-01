@@ -29,6 +29,7 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
   const [mediators, setMediators] = useState<Mediator[]>([]);
   const [marketplaces, setMarketplaces] = useState<IMarketplace[]>([]);
   const [juhiAmId, setJuhiAmId] = useState<string>("");
+  const [isLoadingBrands, setIsLoadingBrands] = useState(true);
 
   // Form State
   const [formData, setFormData] = useState<{
@@ -100,6 +101,7 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
 
   const fetchInitialData = async () => {
     try {
+      setIsLoadingBrands(true);
       const [brandsRes, mediatorsRes, marketplacesRes] = await Promise.all([
         fetch("/api/brands"),
         fetch("/api/users?role=MEDIATOR&limit=100"),
@@ -125,6 +127,8 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
       }
     } catch (err) {
       toast.error("Failed to load dependency data");
+    } finally {
+      setIsLoadingBrands(false);
     }
   };
 
@@ -223,7 +227,20 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
     }
   };
 
-  // The popup is now rendered as a modal later in the component.
+  // Auto-Redirect after 3 seconds of success
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    if (deploymentStatus === "success") {
+      timeout = setTimeout(() => {
+        setDeploymentStatus("idle");
+        setCreatedCode(null);
+        onCreated();
+      }, 3000);
+    }
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [deploymentStatus, onCreated]);
 
   return (
     <div className="relative">
@@ -250,6 +267,8 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
                   onChange={(val) => setFormData({...formData, brandName: val})}
                   className="h-[60px] border-slate-200 bg-white focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-50"
                   placeholder="Select Brand..."
+                  isLoading={isLoadingBrands}
+                  searchable={true}
                 />
              </div>
              
