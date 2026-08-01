@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { motion, Variants } from "framer-motion";
+import { motion, Variants, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Logo } from "@/components/common/Logo";
@@ -48,6 +48,8 @@ export default function SignupPage() {
   const [sendingOtp, setSendingOtp] = useState(false);
   const otpInputRef = useRef<HTMLInputElement>(null);
   const [resendCountdown, setResendCountdown] = useState(0);
+  const [submitPhase, setSubmitPhase] = useState<0 | 1 | 2>(0);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -98,20 +100,21 @@ export default function SignupPage() {
   };
 
   const handleSendOtp = async () => {
+    setErrorMessage("");
     if (!formData.name || !formData.email || !formData.mobile || !formData.password || !formData.confirmPassword) {
-      return toast.error("Please fill all fields first");
+      return setErrorMessage("Please fill all fields first");
     }
     
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]).{8,}$/;
     if (!passwordRegex.test(formData.password)) {
-      return toast.error("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.");
+      return setErrorMessage("Password must be at least 8 characters long with uppercase, lowercase, number, and special character.");
     }
 
     if (formData.password !== formData.confirmPassword) {
-      return toast.error("Passwords do not match");
+      return setErrorMessage("Passwords do not match");
     }
     if (formData.mobile.length !== 10) {
-      return toast.error("Enter a valid 10-digit mobile number");
+      return setErrorMessage("Enter a valid 10-digit mobile number");
     }
 
     setSendingOtp(true);
@@ -127,10 +130,10 @@ export default function SignupPage() {
         setShowOtp(true);
         setResendCountdown(30); // 30 seconds cooldown for OTP resend
       } else {
-        toast.error(result.message || "Failed to send OTP");
+        setErrorMessage(result.message || "Failed to send OTP");
       }
     } catch (error) {
-      toast.error("Network failure during code transmission");
+      setErrorMessage("Network failure during code transmission");
     } finally {
       setSendingOtp(false);
     }
@@ -138,16 +141,18 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setErrorMessage("");
     if (!showOtp) {
       handleSendOtp();
       return;
     }
 
     if (!otp || otp.length !== 6) {
-      return toast.error("Enter 6-digit OTP code");
+      return setErrorMessage("Enter 6-digit OTP code");
     }
 
     setIsLoading(true);
+    setSubmitPhase(1);
 
     try {
       const response = await fetch("/api/auth/signup", {
@@ -159,21 +164,24 @@ export default function SignupPage() {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        toast.error(result.message || "Signup failed");
+        setErrorMessage(result.message || "Signup failed");
         setIsLoading(false);
+        setSubmitPhase(0);
         return;
       }
 
-      if (result.data.role === "MEDIATOR") {
-        toast.success("Deployment Request Sent");
-        setTimeout(() => router.replace("/registration-pending"), 200);
-      } else {
-        toast.success("Core Identity Initialized");
-        setTimeout(() => router.replace("/login"), 200);
-      }
+      setSubmitPhase(2);
+      setTimeout(() => {
+        if (result.data.role === "MEDIATOR") {
+          router.replace("/registration-pending");
+        } else {
+          router.replace("/login");
+        }
+      }, 2500);
     } catch (error) {
-      toast.error("Network synchronization failure");
+      setErrorMessage("Network synchronization failure");
       setIsLoading(false);
+      setSubmitPhase(0);
     }
   };
 
@@ -234,6 +242,65 @@ export default function SignupPage() {
                  <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-40" />
               </div>
             )}
+
+             <AnimatePresence>
+               {submitPhase > 0 && (
+                 <motion.div 
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: 1 }}
+                   exit={{ opacity: 0 }}
+                   className="absolute inset-0 z-50 bg-white/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center rounded-none lg:rounded-[56px]"
+                 >
+                    {submitPhase === 1 ? (
+                       <div className="flex flex-col items-center justify-center space-y-6">
+                          <div className="relative">
+                             <div className="h-24 w-24 rounded-full border-4 border-slate-100 flex items-center justify-center">
+                                <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                             </div>
+                             <div className="absolute inset-0 bg-blue-600/10 blur-xl rounded-full animate-pulse" />
+                          </div>
+                          <div className="space-y-2">
+                             <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest animate-pulse">Verifying Identity</h3>
+                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Please wait while we secure your account...</p>
+                          </div>
+                       </div>
+                    ) : (
+                       <motion.div 
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className="flex flex-col items-center justify-center space-y-6"
+                       >
+                          <div className="relative">
+                             <motion.div 
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", damping: 12, stiffness: 200 }}
+                                className="h-24 w-24 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-2xl shadow-emerald-500/40"
+                             >
+                                <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+                                   <motion.path 
+                                      initial={{ pathLength: 0 }}
+                                      animate={{ pathLength: 1 }}
+                                      transition={{ duration: 0.6, delay: 0.2 }}
+                                      strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" 
+                                   />
+                                </svg>
+                             </motion.div>
+                             <motion.div 
+                                animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.1, 0.4] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                                className="absolute inset-0 bg-emerald-500 rounded-full blur-2xl -z-10"
+                             />
+                          </div>
+                          <div className="space-y-2">
+                             <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">Registration Done</h3>
+                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Redirecting to your dashboard...</p>
+                          </div>
+                       </motion.div>
+                    )}
+                 </motion.div>
+               )}
+             </AnimatePresence>
 
             <form onSubmit={handleSubmit} className="relative z-10 flex-1 flex flex-col min-h-0">
 
@@ -458,8 +525,13 @@ export default function SignupPage() {
               </div>
 
               <div className="px-6 pb-6 pt-4 lg:px-12 lg:pb-12 lg:pt-8 relative z-20 shrink-0 bg-white lg:bg-transparent border-t border-slate-100 lg:border-none">
+                {errorMessage && (
+                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-[10px] font-bold text-rose-500 bg-rose-50 border border-rose-100 rounded-xl p-3 mb-4 text-center uppercase tracking-widest">
+                    {errorMessage}
+                  </motion.div>
+                )}
                 <button 
-                  type="submit" 
+                  type="submit"  
                   disabled={isLoading || sendingOtp}
                   className="w-full h-14 lg:h-20 bg-slate-900 text-white rounded-[16px] lg:rounded-[32px] font-black uppercase tracking-[0.4em] text-[10px] lg:text-[11px] shadow-xl lg:shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-4 group/btn relative overflow-hidden"
                 >
