@@ -15,7 +15,9 @@ interface HelpSection {
 
 const MarketplaceImageSelector = ({ type, setPreviewImage }: { type: 'ORDER' | 'RETURN', setPreviewImage: any }) => {
   const [marketplace, setMarketplace] = React.useState<string>("Amazon");
-  const marketplaces = ['Amazon', 'Flipkart', 'Blinkit', 'Zepto', 'Myntra'];
+  const marketplaces = ['Amazon', 'Flipkart', 'Blinkit', 'Zepto', 'Myntra'].filter(
+    mp => !(type === 'RETURN' && mp === 'Blinkit')
+  );
   
   const getImageUrl = (mp: string) => {
     return `/samples/${mp.toLowerCase()}_${type.toLowerCase()}_ss.png`;
