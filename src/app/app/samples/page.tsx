@@ -13,6 +13,51 @@ interface HelpSection {
   content: React.ReactNode;
 }
 
+const MarketplaceImageSelector = ({ type, setPreviewImage }: { type: 'ORDER' | 'RETURN', setPreviewImage: any }) => {
+  const [marketplace, setMarketplace] = React.useState<string>("Amazon");
+  const marketplaces = ['Amazon', 'Flipkart', 'Blinkit', 'Zepto', 'Myntra'];
+  
+  const getImageUrl = (mp: string) => {
+    return `/samples/${mp.toLowerCase()}_${type.toLowerCase()}_ss.png`;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap gap-3">
+        {marketplaces.map(mp => (
+          <button 
+            key={mp} 
+            onClick={() => setMarketplace(mp)}
+            className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${marketplace === mp ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+          >
+            {mp}
+          </button>
+        ))}
+      </div>
+      
+      {marketplace && (
+        <div className="space-y-3">
+           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{marketplace} {type === 'ORDER' ? 'Order' : 'Return Period'} Snapshot</p>
+           <div 
+             onClick={() => setPreviewImage(getImageUrl(marketplace))}
+             className="relative rounded-[32px] overflow-hidden border border-slate-100 shadow-xl shadow-slate-200/50 group cursor-zoom-in aspect-video bg-slate-50 flex items-center justify-center p-4 md:p-8"
+           >
+              <img 
+                src={getImageUrl(marketplace)} 
+                alt={`${marketplace} Sample`} 
+                className="w-full h-full object-cover md:object-contain group-hover:scale-105 transition-transform duration-500 rounded-xl"
+                onError={(e: any) => e.target.src = `https://placehold.co/800x450/f8fafc/cbd5e1?text=${marketplace}+Sample+Coming+Soon`}
+              />
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-5 py-2 bg-slate-900/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity">
+                🔍 Click to Expand
+              </div>
+           </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function HelpPage() {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -439,6 +484,85 @@ export default function HelpPage() {
               </ul>
            </div>
         </div>
+      )
+    },
+    {
+      id: "order-ss",
+      title: "Order SS",
+      desc: "Marketplace specific order screenshot samples.",
+      color: "bg-blue-500",
+      icon: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+      content: (
+         <div className="space-y-8">
+            <div className="p-6 rounded-3xl bg-blue-50 border border-blue-100">
+               <h3 className="text-sm font-black text-blue-900 uppercase tracking-widest mb-2">Order Screenshots</h3>
+               <p className="text-[10px] font-medium text-slate-500 leading-relaxed">View how an order screenshot should look for each marketplace.</p>
+            </div>
+            <MarketplaceImageSelector type="ORDER" setPreviewImage={setPreviewImage} />
+         </div>
+      )
+    },
+    {
+      id: "return-period-ss",
+      title: "Return Period SS",
+      desc: "Marketplace specific return period over screenshot samples.",
+      color: "bg-indigo-500",
+      icon: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      content: (
+         <div className="space-y-8">
+            <div className="p-6 rounded-3xl bg-indigo-50 border border-indigo-100">
+               <h3 className="text-sm font-black text-indigo-900 uppercase tracking-widest mb-2">Return Period Over Screenshots</h3>
+               <p className="text-[10px] font-medium text-slate-500 leading-relaxed">View how a return period closed screenshot should look for each marketplace.</p>
+            </div>
+            <MarketplaceImageSelector type="RETURN" setPreviewImage={setPreviewImage} />
+         </div>
+      )
+    },
+    {
+      id: "invoice-ss",
+      title: "Invoice SS",
+      desc: "Invoice screenshot samples (Blinkit Only).",
+      color: "bg-emerald-500",
+      icon: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+      content: (
+         <div className="space-y-8">
+            <div className="p-6 rounded-3xl bg-emerald-50 border border-emerald-100">
+               <div className="flex items-center gap-3 mb-2">
+                 <h3 className="text-sm font-black text-emerald-900 uppercase tracking-widest">Blinkit Invoice Screenshots</h3>
+                 <span className="px-2 py-1 bg-emerald-600 text-white text-[8px] font-black uppercase rounded">Blinkit Only</span>
+               </div>
+               <p className="text-[10px] font-medium text-slate-500 leading-relaxed">Invoice screenshots are strictly required for Blinkit orders only. Other marketplaces do not require invoice screenshots.</p>
+            </div>
+            <div className="space-y-3">
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Blinkit Invoice Snapshot</p>
+               <div 
+                 onClick={() => setPreviewImage("/samples/blinkit_invoice_ss.png")}
+                 className="relative rounded-[32px] overflow-hidden border border-slate-100 shadow-xl shadow-slate-200/50 group cursor-zoom-in aspect-video bg-slate-50 flex items-center justify-center p-4 md:p-8"
+               >
+                  <img 
+                    src="/samples/blinkit_invoice_ss.png" 
+                    alt="Blinkit Invoice Sample" 
+                    className="w-full h-full object-cover md:object-contain group-hover:scale-105 transition-transform duration-500 rounded-xl"
+                    onError={(e: any) => e.target.src = "https://placehold.co/800x450/f8fafc/cbd5e1?text=Blinkit+Invoice+Coming+Soon"}
+                  />
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-5 py-2 bg-slate-900/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity">
+                    🔍 Click to Expand
+                  </div>
+               </div>
+            </div>
+         </div>
       )
     }
   ];
