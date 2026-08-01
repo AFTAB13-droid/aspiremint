@@ -657,7 +657,7 @@ export default function HelpPage() {
                           <p className="text-[9px] text-slate-400 font-medium mt-1 leading-tight">{s.desc}</p>
                        </button>
                     ))}
-                    <div className="col-span-2 p-8 rounded-[40px] bg-slate-900 text-white flex items-center justify-between mt-4 shadow-2xl">
+                    <div onClick={() => router.push('/app/support')} className="col-span-2 p-8 rounded-[40px] bg-slate-900 text-white flex items-center justify-between mt-4 shadow-2xl cursor-pointer hover:scale-[1.02] transition-transform">
                        <div className="space-y-1">
                           <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Need personal aid?</p>
                           <p className="text-lg font-black text-white uppercase tracking-tight">Support</p>
@@ -711,7 +711,7 @@ export default function HelpPage() {
                  <div className="relative z-10 space-y-4">
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Contact</p>
                     <p className="text-sm font-black text-white uppercase tracking-tight">Direct Support Center</p>
-                    <button className="w-full py-3 bg-blue-600 rounded-xl text-[9px] font-black tracking-widest uppercase hover:bg-blue-700 transition-all">Chat Now</button>
+                    <button onClick={() => router.push('/app/support')} className="w-full py-3 bg-blue-600 rounded-xl text-[9px] font-black tracking-widest uppercase hover:bg-blue-700 transition-all">Chat Now</button>
                  </div>
               </div>
            </div>
