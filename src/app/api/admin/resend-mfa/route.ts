@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
     // Send email (Non-blocking dispatch)
     const { sendOTPEmail } = await import("@/services/emailService");
-    sendOTPEmail(email, name, newOtp).catch((mailError) => {
+    await sendOTPEmail(email, name, newOtp).catch((mailError) => {
       console.error("[MFA RESEND] Failed to send email:", mailError);
     });
     console.log(`[MFA RESEND] Dispatched OTP ${newOtp} to ${email}`);

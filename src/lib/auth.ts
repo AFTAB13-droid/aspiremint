@@ -119,7 +119,7 @@ export const authOptions: NextAuthOptions = {
           // Send Email OTP!
           try {
             const { sendOTPEmail } = await import("@/services/emailService");
-            sendOTPEmail(user.email, user.name, mfaOtp).catch(mailError => {
+            await sendOTPEmail(user.email, user.name, mfaOtp).catch(mailError => {
               console.error("[MFA] Failed to send OTP email asynchronously:", mailError);
               console.log(`\n==================================================`);
               console.log(`[MFA FALLBACK] OTP Code for ${user.email}: ${mfaOtp}`);

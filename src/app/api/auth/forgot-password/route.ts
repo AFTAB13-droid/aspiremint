@@ -74,7 +74,7 @@ export async function POST(req: Request) {
     await user.save();
 
     // NOTE: rawOtp is ONLY sent via email, never logged (Non-blocking dispatch)
-    sendOTPEmail(user.email, user.name, rawOtp).catch(err => {
+    await sendOTPEmail(user.email, user.name, rawOtp).catch(err => {
       console.error("Forgot Password Mail Transmission Error:", err);
     });
 

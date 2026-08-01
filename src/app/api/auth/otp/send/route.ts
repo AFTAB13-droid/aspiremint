@@ -46,8 +46,8 @@ export async function POST(req: Request) {
     // Store in fail-safe OTP service (Redis with automatic MongoDB backup)
     await storeOtp(`signup_otp:${normalizedEmail}`, otp, 300);
 
-    // NOTE: OTP is NOT logged to console — it is sent via email asynchronously (Non-blocking for instant UI response)
-    sendOTPEmail(email, email.split("@")[0], otp).catch(mailError => {
+    // NOTE: Awaiting OTP email to ensure serverless platforms (Vercel) do not kill the container before transport
+    await sendOTPEmail(email, email.split("@")[0], otp).catch(mailError => {
       console.error("Signup Mail Transmission Error:", mailError);
     });
 

@@ -92,7 +92,7 @@ export async function POST(req: Request) {
     await newUser.save();
 
     // 7. Send Welcome Email asynchronously
-    sendWelcomeEmail(newUser.email, newUser.name).catch((emailError) => {
+    await sendWelcomeEmail(newUser.email, newUser.name).catch((emailError) => {
       console.error("Failed to send welcome email:", emailError);
     });
 

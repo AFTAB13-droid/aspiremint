@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     console.log(`[PAYMENT SECURITY SERVICE] OTP for ${email} is: ${otp}`);
 
     // SEND REAL EMAIL (Non-blocking dispatch)
-    sendOTPEmail(email, session.user.name || email.split('@')[0], otp, "PAYMENT").catch(mailError => {
+    await sendOTPEmail(email, session.user.name || email.split('@')[0], otp, "PAYMENT").catch(mailError => {
       console.error("Payment OTP Mail Transmission Error:", mailError);
     });
     
