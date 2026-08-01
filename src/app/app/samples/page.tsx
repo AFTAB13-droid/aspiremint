@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface HelpSection {
   id: string;
@@ -79,8 +79,16 @@ const MarketplaceImageSelector = ({ type, setPreviewImage }: { type: 'ORDER' | '
 
 export default function HelpPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const tab = searchParams?.get('tab');
+    if (tab) {
+      setActiveSection(tab);
+    }
+  }, [searchParams]);
 
   const sections: HelpSection[] = [
     {

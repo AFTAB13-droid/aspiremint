@@ -281,9 +281,28 @@ export default function FillRefundPage() {
   const isSubmittedDeal = rt === "SUBMITTED" || rt === "REVIEW SUBMITTED" || rt === "REVIEW_SUBMITTED";
   const isEmptyBox = (order.dealType || "").toLowerCase().includes("empty box");
 
-  const RenderProofInput = ({ label, field, sublabel }: { label: string, field: string, sublabel?: string }) => (
+  const RenderProofInput = ({ label, field, sublabel }: { label: string, field: string, sublabel?: string }) => {
+    let tabLink = "";
+    if (field === 'returnPeriodScreenshot') {
+       const isBlinkit = order.marketplace?.toLowerCase().includes("blinkit") || order.brandName?.toLowerCase().includes("blinkit");
+       if (isBlinkit) tabLink = "invoice-ss";
+       else tabLink = "return-period-ss";
+    }
+
+    return (
     <div className="space-y-3">
-       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{label}</label>
+       <div className="flex items-center justify-between ml-1">
+           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</label>
+           {tabLink && (
+               <button 
+                 type="button" 
+                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(`/app/samples?tab=${tabLink}`, '_blank'); }} 
+                 className="px-2.5 py-1 bg-slate-100 text-slate-500 rounded flex-shrink-0 text-[8px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+               >
+                 View Sample
+               </button>
+           )}
+       </div>
        <div className="relative group">
           {!formData[field] ? (
              <label className={`relative flex flex-col items-center justify-center h-48 rounded-[32px] border-2 border-dashed transition-all cursor-pointer overflow-hidden ${isUploading ? 'bg-slate-50 border-slate-100 opacity-50 cursor-not-allowed' : 'bg-slate-50 border-slate-200 hover:border-blue-400'}`}>
@@ -294,7 +313,7 @@ export default function FillRefundPage() {
                 {isUploading === field ? (
                    <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
                 ) : (
-                   <div className="text-center p-6">
+                   <div className="text-center p-6 pointer-events-none">
                       <svg className="w-8 h-8 text-slate-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                       <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{sublabel || "Select Snapshot"}</span>
                    </div>
