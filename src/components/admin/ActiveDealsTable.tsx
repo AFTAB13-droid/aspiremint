@@ -478,15 +478,13 @@ export function ActiveDealsTable({
                 <td className="px-6 py-6 text-center">
                   {(() => {
                     const displayRemark = role === 'USER' ? deal.userRemarks : deal.mediatorRemarks;
-                    return displayRemark ? (
+                    const hasRemark = Boolean(displayRemark && displayRemark.trim().length > 0);
+                    return (
                       <div className="relative group/remark flex justify-center">
                         <button 
-                          className={`h-9 w-9 rounded-full flex items-center justify-center transition-all ${role === 'USER' ? "bg-indigo-50 text-indigo-500 hover:bg-indigo-100" : "bg-amber-50 text-amber-500 hover:bg-amber-100"}`}
+                          className={`h-9 w-9 rounded-full flex items-center justify-center transition-all ${hasRemark ? "bg-amber-500 text-white shadow-lg shadow-amber-500/40 animate-[pulse_2s_ease-in-out_infinite]" : "bg-slate-50 text-slate-400 hover:bg-slate-100 border border-slate-200"}`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            // If we want a simple clickable popup, we could use a state, 
-                            // but a hover tooltip is often cleaner for "Info".
-                            // Let's implement a premium hover-based tooltip since the user suggested hover.
                           }}
                         >
                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -495,22 +493,29 @@ export function ActiveDealsTable({
                         </button>
                         
                         {/* Premium Hover Card */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 opacity-0 invisible group-hover/remark:opacity-100 group-hover/remark:visible transition-all duration-300 z-[110] translate-y-2 group-hover/remark:translate-y-0">
-                          <div className={`rounded-2xl p-4 shadow-2xl border ${role === 'USER' ? "bg-white border-indigo-100" : "bg-white border-amber-100"}`}>
-                            <div className="flex items-center gap-2 mb-2">
-                               <div className={`h-2 w-2 rounded-full ${role === 'USER' ? "bg-indigo-500" : "bg-amber-500"}`} />
-                               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Deal Remarks</span>
+                        {hasRemark ? (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 opacity-0 invisible group-hover/remark:opacity-100 group-hover/remark:visible transition-all duration-300 z-[110] translate-y-2 group-hover/remark:translate-y-0 pointer-events-none">
+                            <div className="rounded-2xl p-4 shadow-2xl border bg-white border-amber-100">
+                              <div className="flex items-center gap-2 mb-2">
+                                 <div className="h-2 w-2 rounded-full bg-amber-500" />
+                                 <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Deal Remarks</span>
+                              </div>
+                              <p className="text-[11px] font-medium leading-relaxed text-slate-600 text-left italic">
+                                 "{displayRemark}"
+                              </p>
+                              {/* Arrow */}
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-8 border-transparent border-t-white" />
                             </div>
-                            <p className="text-[11px] font-medium leading-relaxed text-slate-600 text-left italic">
-                               "{displayRemark}"
-                            </p>
-                            {/* Arrow */}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-8 border-transparent border-t-white" />
                           </div>
-                        </div>
+                        ) : (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-40 opacity-0 invisible group-hover/remark:opacity-100 group-hover/remark:visible transition-all duration-300 z-[110] translate-y-2 group-hover/remark:translate-y-0 pointer-events-none">
+                            <div className="rounded-xl p-3 shadow-xl border bg-white border-slate-100 text-center">
+                              <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">No Remarks Added</p>
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-8 border-transparent border-t-white" />
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <span className="text-[9px] font-black text-slate-200 uppercase tracking-widest italic opacity-40">None</span>
                     );
                   })()}
                 </td>

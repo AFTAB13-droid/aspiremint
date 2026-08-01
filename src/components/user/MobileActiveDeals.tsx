@@ -262,16 +262,25 @@ export function MobileActiveDeals({
                     )}
                     <div 
                       className="flex items-center gap-1.5 cursor-pointer" 
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         const remarks = (role === 'ADMIN' || role === 'MEDIATOR') ? deal.mediatorRemarks : deal.userRemarks;
-                        const fallback = "No Remark";
+                        const fallback = "No Remarks added by Admin yet.";
                         setSelectedRemark(remarks || fallback);
                       }}
                     >
-                       <div className="h-7 w-7 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center border border-indigo-100 active:scale-90 transition-transform">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                       </div>
-                       <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Remarks</span>
+                       {(() => {
+                         const remarks = (role === 'ADMIN' || role === 'MEDIATOR') ? deal.mediatorRemarks : deal.userRemarks;
+                         const hasRemark = Boolean(remarks && remarks.trim().length > 0);
+                         return (
+                           <>
+                             <div className={`h-7 w-7 rounded-lg flex items-center justify-center border active:scale-90 transition-all ${hasRemark ? "bg-amber-500 text-white border-amber-400 shadow-md shadow-amber-500/40 animate-[pulse_2s_ease-in-out_infinite]" : "bg-indigo-50 text-indigo-400 border-indigo-100"}`}>
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                             </div>
+                             <span className={`text-[8px] font-black uppercase tracking-widest ${hasRemark ? "text-amber-500" : "text-slate-400"}`}>Remarks</span>
+                           </>
+                         );
+                       })()}
                     </div>
                  </div>
               </div>
