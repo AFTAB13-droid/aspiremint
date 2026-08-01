@@ -212,7 +212,6 @@ export async function POST(req: Request) {
       // Run all external post-transaction tasks concurrently to speed up API response
       const externalTasks = [];
 
-      // 1. Google Sheets Push
       externalTasks.push(
         import('@/utils/googleSheets').then(({ pushToGoogleSheet }) => 
           pushToGoogleSheet("ORDER", {
@@ -224,6 +223,11 @@ export async function POST(req: Request) {
             "order Amount": amount,
             "order ss": screenshot || "",
             "Mediator Name": assignedMediator?.systemDisplayName || assignedMediator?.name || "Unassigned",
+            "Deal Type": reviewType || "",
+            "Exchange Product": exchangeProduct || "",
+            "Less Amount": lessAmount || 0,
+            "Refund Amount": (Number(amount) || 0) - (Number(lessAmount) || 0),
+            "Product Link": dealDoc.productLink || "",
           })
         ).catch(err => console.error("Google sheets push error:", err))
       );
