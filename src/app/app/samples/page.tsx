@@ -78,6 +78,14 @@ const MarketplaceImageSelector = ({ type, setPreviewImage }: { type: 'ORDER' | '
 };
 
 export default function HelpPage() {
+  return (
+    <React.Suspense fallback={<div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">Loading...</div>}>
+      <HelpPageContent />
+    </React.Suspense>
+  );
+}
+
+function HelpPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeSection, setActiveSection] = useState<string | null>(null);
