@@ -20,7 +20,20 @@ const MarketplaceImageSelector = ({ type, setPreviewImage }: { type: 'ORDER' | '
   );
   
   const getImageUrl = (mp: string) => {
-    return `/samples/${mp.toLowerCase()}_${type.toLowerCase()}_ss.png`;
+    const map: Record<string, string> = {
+      'amazon_order': '.png',
+      'amazon_return': '.png',
+      'flipkart_order': '.png',
+      'flipkart_return': '.png',
+      'meesho_order': '.jpg',
+      'meesho_return': '.jpg',
+      'blinkit_order': '.jpg',
+      'myntra_order': '.jpg',
+      'myntra_return': '.jpg'
+    };
+    const key = `${mp.toLowerCase()}_${type.toLowerCase()}`;
+    const ext = map[key] || '.png';
+    return `/samples/${key}_ss${ext}`;
   };
 
   return (
@@ -30,7 +43,7 @@ const MarketplaceImageSelector = ({ type, setPreviewImage }: { type: 'ORDER' | '
           <button 
             key={mp} 
             onClick={() => setMarketplace(mp)}
-            className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${marketplace === mp ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+            className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${marketplace === mp ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 scale-105' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
           >
             {mp}
           </button>
@@ -42,16 +55,19 @@ const MarketplaceImageSelector = ({ type, setPreviewImage }: { type: 'ORDER' | '
            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{marketplace} {type === 'ORDER' ? 'Order' : 'Return Period'} Snapshot</p>
            <div 
              onClick={() => setPreviewImage(getImageUrl(marketplace))}
-             className="relative rounded-[32px] overflow-hidden border border-slate-100 shadow-xl shadow-slate-200/50 group cursor-zoom-in aspect-video bg-slate-50 flex items-center justify-center p-4 md:p-8"
+             className="relative rounded-[32px] overflow-hidden shadow-xl shadow-slate-200/50 group cursor-zoom-in h-[300px] md:h-[400px] bg-slate-900 border border-slate-800 flex items-start justify-center p-2 transform-gpu transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(79,70,229,0.3)]"
            >
-              <img 
-                src={getImageUrl(marketplace)} 
-                alt={`${marketplace} Sample`} 
-                className="w-full h-full object-cover md:object-contain group-hover:scale-105 transition-transform duration-500 rounded-xl"
-                onError={(e: any) => e.target.src = `https://placehold.co/800x450/f8fafc/cbd5e1?text=${marketplace}+Sample+Coming+Soon`}
-              />
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-5 py-2 bg-slate-900/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity">
-                🔍 Click to Expand
+              <div className="w-full h-full overflow-hidden rounded-[24px] relative bg-slate-800">
+                <img 
+                  src={getImageUrl(marketplace)} 
+                  alt={`${marketplace} Sample`} 
+                  className="w-full h-auto min-h-full object-cover object-top group-hover:scale-[1.02] transition-transform duration-700"
+                  onError={(e: any) => e.target.src = `https://placehold.co/800x450/f8fafc/cbd5e1?text=${marketplace}+Sample+Coming+Soon`}
+                />
+                <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent pointer-events-none" />
+              </div>
+              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 px-6 py-2.5 bg-indigo-600/90 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_10px_30px_rgba(79,70,229,0.5)] group-hover:scale-110 transition-transform">
+                🚀 Scroll Full Image
               </div>
            </div>
         </div>
@@ -550,17 +566,20 @@ export default function HelpPage() {
             <div className="space-y-3">
                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Blinkit Invoice Snapshot</p>
                <div 
-                 onClick={() => setPreviewImage("/samples/blinkit_invoice_ss.png")}
-                 className="relative rounded-[32px] overflow-hidden border border-slate-100 shadow-xl shadow-slate-200/50 group cursor-zoom-in aspect-video bg-slate-50 flex items-center justify-center p-4 md:p-8"
+                 onClick={() => setPreviewImage("/samples/blinkit_invoice_ss.jpg")}
+                 className="relative rounded-[32px] overflow-hidden shadow-xl shadow-slate-200/50 group cursor-zoom-in h-[300px] md:h-[400px] bg-slate-900 border border-slate-800 flex items-start justify-center p-2 transform-gpu transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(79,70,229,0.3)]"
                >
-                  <img 
-                    src="/samples/blinkit_invoice_ss.png" 
-                    alt="Blinkit Invoice Sample" 
-                    className="w-full h-full object-cover md:object-contain group-hover:scale-105 transition-transform duration-500 rounded-xl"
-                    onError={(e: any) => e.target.src = "https://placehold.co/800x450/f8fafc/cbd5e1?text=Blinkit+Invoice+Coming+Soon"}
-                  />
-                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-5 py-2 bg-slate-900/80 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity">
-                    🔍 Click to Expand
+                  <div className="w-full h-full overflow-hidden rounded-[24px] relative bg-slate-800">
+                    <img 
+                      src="/samples/blinkit_invoice_ss.jpg" 
+                      alt="Blinkit Invoice Sample" 
+                      className="w-full h-auto min-h-full object-cover object-top group-hover:scale-[1.02] transition-transform duration-700"
+                      onError={(e: any) => e.target.src = "https://placehold.co/800x450/f8fafc/cbd5e1?text=Blinkit+Invoice+Coming+Soon"}
+                    />
+                    <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent pointer-events-none" />
+                  </div>
+                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 px-6 py-2.5 bg-indigo-600/90 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_10px_30px_rgba(79,70,229,0.5)] group-hover:scale-110 transition-transform">
+                    🚀 Scroll Full Image
                   </div>
                </div>
             </div>
@@ -584,16 +603,21 @@ export default function HelpPage() {
             onClick={() => setPreviewImage(null)}
             className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-xl flex flex-col items-center justify-center p-4 cursor-zoom-out"
           >
-             <button className="absolute top-8 right-8 h-12 w-12 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all">
+             <button className="absolute top-8 right-8 h-12 w-12 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all z-[110]">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
              </button>
-             <motion.img 
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                src={previewImage} 
-                className="max-w-full max-h-[85vh] rounded-3xl shadow-2xl border border-white/10 object-contain"
-             />
-             <p className="mt-8 text-white/50 text-[10px] font-black uppercase tracking-[0.2em]">Pinch to zoom / Click anywhere to close</p>
+             <div 
+                className="w-full max-w-2xl max-h-[85vh] overflow-y-auto overflow-x-hidden rounded-[32px] shadow-[0_30px_100px_rgba(0,0,0,0.8)] border border-white/10 scroll-smooth bg-black relative flex justify-start flex-col"
+                onClick={(e) => e.stopPropagation()}
+             >
+                <motion.img 
+                   initial={{ scale: 0.9, y: 20 }}
+                   animate={{ scale: 1, y: 0 }}
+                   src={previewImage} 
+                   className="w-full h-auto object-contain min-h-[50vh]"
+                />
+             </div>
+             <p className="mt-8 text-white/50 text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">Swipe/Scroll to see full length</p>
           </motion.div>
         )}
       </AnimatePresence>
