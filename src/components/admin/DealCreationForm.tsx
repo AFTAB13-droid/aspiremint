@@ -569,8 +569,9 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
              </button>
           </div>
         </form>
+      </div>
 
-        <AnimatePresence>
+      <AnimatePresence>
           {showMediatorPopup && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 transition-all duration-300">
                <motion.div initial={{ opacity: 0, scale: 0.98, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98, y: 10 }} className="relative w-full max-w-2xl bg-white rounded-[40px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] p-10 border border-slate-100 ring-1 ring-black/5">
@@ -714,7 +715,6 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
               </div>
            )}
         </AnimatePresence>
-      </div>
     </div>
   );
 };
