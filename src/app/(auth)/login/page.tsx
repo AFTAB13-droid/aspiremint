@@ -113,7 +113,7 @@ export default function LoginPage() {
       >
         <div className="absolute -inset-4 bg-blue-600/10 blur-[100px] rounded-full -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
         
-        <div className="relative group overflow-hidden rounded-[40px] lg:rounded-[56px] bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_32px_80px_-15px_rgba(0,0,0,0.1)]">
+        <div className="relative group overflow-hidden rounded-[40px] lg:rounded-[56px] bg-gradient-to-b from-[#e0f7fa]/90 via-white/90 to-white/90 backdrop-blur-2xl border border-white/60 shadow-[0_32px_80px_-15px_rgba(0,0,0,0.1)]">
             {/* SPEEDY ANIMATED BACKGROUND - Moved to base layer */}
             {isLargeScreen && (
               <div className="absolute inset-0 overflow-hidden pointer-events-none">

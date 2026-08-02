@@ -35,30 +35,23 @@ export default function AuthLayout({
   return (
     <div className={`flex min-h-[100dvh] w-full relative overflow-hidden ${outfit.className} antialiased`}>
       
-      {/* DESKTOP BACKGROUND (White & Blue High Tech) */}
-      <div className="absolute inset-0 hidden lg:block overflow-hidden bg-white z-0">
-         {/* Background base */}
-         <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1.5px,transparent_1.5px)] [background-size:32px_32px] opacity-10" />
+      {/* DESKTOP BACKGROUND (Sky & Clouds) */}
+      <div className="absolute inset-0 hidden lg:block overflow-hidden z-0">
+         {/* Sky Background Image */}
+         <div 
+           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=2560&q=80')" }}
+         />
+         {/* Light overlay to match the soft look */}
+         <div className="absolute inset-0 bg-white/20" />
          
-         {/* Animated deep blue gradients */}
-         <motion.div 
-            animate={{ 
-               scale: [1, 1.2, 1],
-               rotate: [0, 90, 0],
-               opacity: [0.15, 0.25, 0.15]
-            }}
-            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-            className="absolute -top-[20%] -left-[10%] w-[50%] h-[70%] bg-blue-600 rounded-full blur-[140px] mix-blend-multiply"
-         />
-         <motion.div 
-            animate={{ 
-               scale: [1, 1.3, 1],
-               rotate: [0, -90, 0],
-               opacity: [0.1, 0.2, 0.1]
-            }}
-            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-            className="absolute -bottom-[10%] -right-[5%] w-[50%] h-[60%] bg-indigo-500 rounded-full blur-[140px] mix-blend-multiply"
-         />
+         {/* Concentric Arcs / Rings */}
+         <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40">
+            <div className="w-[600px] h-[600px] rounded-full border-[1.5px] border-white/70 absolute" />
+            <div className="w-[1000px] h-[1000px] rounded-full border-[1.5px] border-white/50 absolute" />
+            <div className="w-[1400px] h-[1400px] rounded-full border-[1.5px] border-white/30 absolute" />
+            <div className="w-[1800px] h-[1800px] rounded-full border-[1.5px] border-white/10 absolute" />
+         </div>
 
          {/* Left Side Ads / High Tech Stats */}
          <div className="absolute top-0 bottom-0 left-0 w-[25%] p-12 flex flex-col justify-between z-10">
@@ -116,9 +109,18 @@ export default function AuthLayout({
       </div>
 
       {/* MOBILE BACKGROUND */}
-      <div className="absolute inset-0 block lg:hidden pointer-events-none z-0 bg-slate-50">
-         <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] bg-blue-100 rounded-full blur-[120px] opacity-40 mix-blend-multiply" />
-         <div className="absolute -bottom-[10%] -right-[5%] w-[50%] h-[50%] bg-indigo-100 rounded-full blur-[120px] opacity-30 mix-blend-multiply" />
+      <div className="absolute inset-0 block lg:hidden pointer-events-none z-0">
+         <div 
+           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1080&q=80')" }}
+         />
+         <div className="absolute inset-0 bg-white/30" />
+         
+         {/* Concentric Arcs / Rings for mobile */}
+         <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40">
+            <div className="w-[300px] h-[300px] rounded-full border-[1.5px] border-white/70 absolute" />
+            <div className="w-[600px] h-[600px] rounded-full border-[1.5px] border-white/50 absolute" />
+         </div>
       </div>
 
       {/* CENTER FORM SIDE - Middle on Desktop, Full on Mobile */}

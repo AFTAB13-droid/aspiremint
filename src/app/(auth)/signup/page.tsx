@@ -215,7 +215,7 @@ export default function SignupPage() {
           variants={item}
           className="relative group flex-1 flex flex-col min-h-0"
         >
-        <div className="relative group overflow-hidden rounded-none lg:rounded-[56px] bg-white lg:bg-white/40 backdrop-blur-2xl border-none lg:border lg:border-white/60 shadow-none lg:shadow-[0_32px_80px_-15px_rgba(0,0,0,0.1)] flex-1 flex flex-col min-h-0">
+        <div className="relative group overflow-hidden rounded-none lg:rounded-[56px] bg-gradient-to-b from-[#e0f7fa]/95 via-white/95 to-white/95 lg:from-[#e0f7fa]/90 lg:via-white/90 lg:to-white/90 backdrop-blur-2xl border-none lg:border lg:border-white/60 shadow-none lg:shadow-[0_32px_80px_-15px_rgba(0,0,0,0.1)] flex-1 flex flex-col min-h-0">
             {/* SPEEDY ANIMATED BACKGROUND - Primary Visual Layer */}
             {isLargeScreen && (
               <div className="absolute inset-0 overflow-hidden pointer-events-none">
