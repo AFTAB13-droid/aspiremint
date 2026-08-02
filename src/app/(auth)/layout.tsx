@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Outfit } from "next/font/google";
+import Image from "next/image";
 
 const outfit = Outfit({ subsets: ["latin"] });
 
@@ -33,24 +34,20 @@ export default function AuthLayout({
   return (
     <div className={`flex min-h-[100dvh] w-full relative overflow-hidden ${outfit.className} antialiased`}>
       
-      {/* DESKTOP BACKGROUND */}
-      <div className="absolute inset-0 hidden lg:block overflow-hidden z-0">
-         {/* Sky Background Image */}
-         <div 
-           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-           style={{ backgroundImage: "url('/back.png')" }}
+      {/* GLOBAL BACKGROUND */}
+      <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none bg-slate-100">
+         <Image 
+           src="/back.png"
+           alt="AspireMint Background"
+           fill
+           priority
+           quality={100}
+           className="object-cover"
          />
-         {/* Light overlay to match the soft look */}
-         <div className="absolute inset-0 bg-white/20" />
-      </div>
-
-      {/* MOBILE BACKGROUND */}
-      <div className="absolute inset-0 block lg:hidden pointer-events-none z-0">
-         <div 
-           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-           style={{ backgroundImage: "url('/back.png')" }}
-         />
-         <div className="absolute inset-0 bg-white/30" />
+         {/* Desktop overlay */}
+         <div className="absolute inset-0 hidden lg:block bg-white/20" />
+         {/* Mobile overlay */}
+         <div className="absolute inset-0 block lg:hidden bg-white/30" />
       </div>
 
       {/* CENTER FORM SIDE - Middle on Desktop, Full on Mobile */}
