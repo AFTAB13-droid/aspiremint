@@ -801,7 +801,15 @@ export function ActiveDealsTable({
                                type="number"
                                className="w-full h-10 bg-white border-2 border-slate-200 rounded-lg px-3 text-xs font-black text-slate-900 outline-none focus:border-indigo-500 transition-all font-mono"
                                value={dealToEdit?.reviewSlots || ""}
-                               onChange={(e) => setDealToEdit({ ...dealToEdit, reviewSlots: e.target.value === '' ? 0 : parseInt(e.target.value) || 0 })}
+                               onChange={(e) => {
+                                  const newVal = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
+                                  const delta = newVal - (deal?.reviewSlots || 0);
+                                  setDealToEdit({ 
+                                    ...dealToEdit, 
+                                    reviewSlots: newVal,
+                                    remainingReview: Math.max(0, (deal?.remainingReview || 0) + delta)
+                                  });
+                               }}
                             />
                           </div>
                           <div className="space-y-1">
@@ -813,7 +821,15 @@ export function ActiveDealsTable({
                                type="number"
                                className="w-full h-10 bg-white border-2 border-slate-200 rounded-lg px-3 text-xs font-black text-slate-900 outline-none focus:border-indigo-500 transition-all font-mono"
                                value={dealToEdit?.ratingSlots || ""}
-                               onChange={(e) => setDealToEdit({ ...dealToEdit, ratingSlots: e.target.value === '' ? 0 : parseInt(e.target.value) || 0 })}
+                               onChange={(e) => {
+                                  const newVal = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
+                                  const delta = newVal - (deal?.ratingSlots || 0);
+                                  setDealToEdit({ 
+                                    ...dealToEdit, 
+                                    ratingSlots: newVal,
+                                    remainingRating: Math.max(0, (deal?.remainingRating || 0) + delta)
+                                  });
+                               }}
                             />
                           </div>
                           <div className="space-y-1">
@@ -825,7 +841,15 @@ export function ActiveDealsTable({
                                type="number"
                                className="w-full h-10 bg-white border-2 border-slate-200 rounded-lg px-3 text-xs font-black text-slate-900 outline-none focus:border-indigo-500 transition-all font-mono"
                                value={dealToEdit?.onlyOrderSlots || ""}
-                               onChange={(e) => setDealToEdit({ ...dealToEdit, onlyOrderSlots: e.target.value === '' ? 0 : parseInt(e.target.value) || 0 })}
+                               onChange={(e) => {
+                                  const newVal = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
+                                  const delta = newVal - (deal?.onlyOrderSlots || 0);
+                                  setDealToEdit({ 
+                                    ...dealToEdit, 
+                                    onlyOrderSlots: newVal,
+                                    remainingOnly: Math.max(0, (deal?.remainingOnly || 0) + delta)
+                                  });
+                               }}
                             />
                           </div>
                           <div className="space-y-1">
@@ -837,7 +861,15 @@ export function ActiveDealsTable({
                                type="number"
                                className="w-full h-10 bg-white border-2 border-slate-200 rounded-lg px-3 text-xs font-black text-slate-900 outline-none focus:border-indigo-500 transition-all font-mono"
                                value={dealToEdit?.submittedSlots || ""}
-                               onChange={(e) => setDealToEdit({ ...dealToEdit, submittedSlots: e.target.value === '' ? 0 : parseInt(e.target.value) || 0 })}
+                               onChange={(e) => {
+                                  const newVal = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
+                                  const delta = newVal - (deal?.submittedSlots || 0);
+                                  setDealToEdit({ 
+                                    ...dealToEdit, 
+                                    submittedSlots: newVal,
+                                    remainingSubmitted: Math.max(0, (deal?.remainingSubmitted || 0) + delta)
+                                  });
+                               }}
                             />
                           </div>
                        </div>

@@ -33,29 +33,42 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     // Synchronization logic: Update ActiveDeals if productCodes were changed
     if (updateData.productCodes) {
-      const { ActiveDeal } = await import('@/modules/brand/deal.model');
-      
       const syncPromises = updateData.productCodes.map(async (pc: any) => {
-        // Calculate total stock from granular fields
-        const total = (pc.stockReview || 0) + (pc.stockRating || 0) + (pc.stockOnly || 0) + (pc.stockSubmitted || 0);
+        // We must fetch the existing ActiveDeal to calculate the delta!
+        // We cannot just reset it, otherwise we lose historical consumed stock data.
+        const { ActiveDeal } = await import('@/modules/brand/deal.model');
+        const deal = await ActiveDeal.findOne({ productCode: pc.code });
         
-        return ActiveDeal.findOneAndUpdate(
-          { productCode: pc.code },
-          { 
+        if (deal) {
+          const reviewDelta = (pc.stockReview || 0) - (deal.remainingReview || 0);
+          const ratingDelta = (pc.stockRating || 0) - (deal.remainingRating || 0);
+          const onlyDelta = (pc.stockOnly || 0) - (deal.remainingOnly || 0);
+          const subDelta = (pc.stockSubmitted || 0) - (deal.remainingSubmitted || 0);
+
+          const newTotalReview = Math.max(0, (deal.reviewSlots || 0) + reviewDelta);
+          const newTotalRating = Math.max(0, (deal.ratingSlots || 0) + ratingDelta);
+          const newTotalOnly = Math.max(0, (deal.onlyOrderSlots || 0) + onlyDelta);
+          const newTotalSub = Math.max(0, (deal.submittedSlots || 0) + subDelta);
+
+          const totalSlots = newTotalReview + newTotalRating + newTotalOnly + newTotalSub;
+          const remainingSlots = (pc.stockReview || 0) + (pc.stockRating || 0) + (pc.stockOnly || 0) + (pc.stockSubmitted || 0);
+
+          return ActiveDeal.findByIdAndUpdate(deal._id, {
             $set: {
-              totalSlots: total,
-              remainingSlots: total, // Reset to match new registry state
-              reviewSlots: pc.stockReview || 0,
+              reviewSlots: newTotalReview,
               remainingReview: pc.stockReview || 0,
-              ratingSlots: pc.stockRating || 0,
+              ratingSlots: newTotalRating,
               remainingRating: pc.stockRating || 0,
-              onlyOrderSlots: pc.stockOnly || 0,
+              onlyOrderSlots: newTotalOnly,
               remainingOnly: pc.stockOnly || 0,
-              submittedSlots: pc.stockSubmitted || 0,
-              remainingSubmitted: pc.stockSubmitted || 0
+              submittedSlots: newTotalSub,
+              remainingSubmitted: pc.stockSubmitted || 0,
+              totalSlots: totalSlots,
+              remainingSlots: remainingSlots,
+              isActive: (deal.isActive === false && remainingSlots > 0) ? true : deal.isActive
             }
-          }
-        );
+          });
+        }
       });
       
       await Promise.all(syncPromises);
