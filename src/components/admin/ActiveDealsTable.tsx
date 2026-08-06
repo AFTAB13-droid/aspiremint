@@ -803,7 +803,7 @@ export function ActiveDealsTable({
                                value={dealToEdit?.reviewSlots || ""}
                                onChange={(e) => {
                                   const newVal = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
-                                  const originalDeal = activeDeals.find(d => d._id === dealToEdit?._id);
+                                  const originalDeal = deals.find((d:any) => d._id === dealToEdit?._id);
                                   const delta = newVal - (originalDeal?.reviewSlots || 0);
                                   setDealToEdit({ 
                                     ...dealToEdit, 
@@ -824,7 +824,7 @@ export function ActiveDealsTable({
                                value={dealToEdit?.ratingSlots || ""}
                                onChange={(e) => {
                                   const newVal = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
-                                  const originalDeal = activeDeals.find(d => d._id === dealToEdit?._id);
+                                  const originalDeal = deals.find((d:any) => d._id === dealToEdit?._id);
                                   const delta = newVal - (originalDeal?.ratingSlots || 0);
                                   setDealToEdit({ 
                                     ...dealToEdit, 
@@ -845,7 +845,7 @@ export function ActiveDealsTable({
                                value={dealToEdit?.onlyOrderSlots || ""}
                                onChange={(e) => {
                                   const newVal = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
-                                  const originalDeal = activeDeals.find(d => d._id === dealToEdit?._id);
+                                  const originalDeal = deals.find((d:any) => d._id === dealToEdit?._id);
                                   const delta = newVal - (originalDeal?.onlyOrderSlots || 0);
                                   setDealToEdit({ 
                                     ...dealToEdit, 
@@ -866,7 +866,7 @@ export function ActiveDealsTable({
                                value={dealToEdit?.submittedSlots || ""}
                                onChange={(e) => {
                                   const newVal = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
-                                  const originalDeal = activeDeals.find(d => d._id === dealToEdit?._id);
+                                  const originalDeal = deals.find((d:any) => d._id === dealToEdit?._id);
                                   const delta = newVal - (originalDeal?.submittedSlots || 0);
                                   setDealToEdit({ 
                                     ...dealToEdit, 
