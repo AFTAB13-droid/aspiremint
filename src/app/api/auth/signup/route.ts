@@ -91,8 +91,8 @@ export async function POST(req: Request) {
 
     await newUser.save();
 
-    // 7. Send Welcome Email asynchronously
-    await sendWelcomeEmail(newUser.email, newUser.name).catch((emailError) => {
+    // 7. Send Welcome Email asynchronously without awaiting (prevents Vercel timeout on burst traffic)
+    sendWelcomeEmail(newUser.email, newUser.name).catch((emailError) => {
       console.error("Failed to send welcome email:", emailError);
     });
 
