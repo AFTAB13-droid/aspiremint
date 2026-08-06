@@ -41,6 +41,8 @@ async function connectToDatabase() {
       serverSelectionTimeoutMS: 5000, // Reduced to fail fast instead of hanging for 10s
       socketTimeoutMS: 45000,
       family: 4, // Force IPv4
+      maxPoolSize: 1, // Crucial for Serverless: limits each lambda to 1 connection to avoid crushing the MongoDB Free Tier limit
+      minPoolSize: 0,
       // Removed maxIdleTimeMS completely. In serverless/Next.js, aggressive idle disconnects cause major latency spikes on "cold" API routes.
     };
 
