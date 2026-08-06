@@ -803,11 +803,12 @@ export function ActiveDealsTable({
                                value={dealToEdit?.reviewSlots || ""}
                                onChange={(e) => {
                                   const newVal = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
-                                  const delta = newVal - (deal?.reviewSlots || 0);
+                                  const originalDeal = activeDeals.find(d => d._id === dealToEdit?._id);
+                                  const delta = newVal - (originalDeal?.reviewSlots || 0);
                                   setDealToEdit({ 
                                     ...dealToEdit, 
                                     reviewSlots: newVal,
-                                    remainingReview: Math.max(0, (deal?.remainingReview || 0) + delta)
+                                    remainingReview: Math.max(0, (originalDeal?.remainingReview || 0) + delta)
                                   });
                                }}
                             />
@@ -823,11 +824,12 @@ export function ActiveDealsTable({
                                value={dealToEdit?.ratingSlots || ""}
                                onChange={(e) => {
                                   const newVal = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
-                                  const delta = newVal - (deal?.ratingSlots || 0);
+                                  const originalDeal = activeDeals.find(d => d._id === dealToEdit?._id);
+                                  const delta = newVal - (originalDeal?.ratingSlots || 0);
                                   setDealToEdit({ 
                                     ...dealToEdit, 
                                     ratingSlots: newVal,
-                                    remainingRating: Math.max(0, (deal?.remainingRating || 0) + delta)
+                                    remainingRating: Math.max(0, (originalDeal?.remainingRating || 0) + delta)
                                   });
                                }}
                             />
@@ -843,11 +845,12 @@ export function ActiveDealsTable({
                                value={dealToEdit?.onlyOrderSlots || ""}
                                onChange={(e) => {
                                   const newVal = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
-                                  const delta = newVal - (deal?.onlyOrderSlots || 0);
+                                  const originalDeal = activeDeals.find(d => d._id === dealToEdit?._id);
+                                  const delta = newVal - (originalDeal?.onlyOrderSlots || 0);
                                   setDealToEdit({ 
                                     ...dealToEdit, 
                                     onlyOrderSlots: newVal,
-                                    remainingOnly: Math.max(0, (deal?.remainingOnly || 0) + delta)
+                                    remainingOnly: Math.max(0, (originalDeal?.remainingOnly || 0) + delta)
                                   });
                                }}
                             />
@@ -863,11 +866,12 @@ export function ActiveDealsTable({
                                value={dealToEdit?.submittedSlots || ""}
                                onChange={(e) => {
                                   const newVal = e.target.value === '' ? 0 : parseInt(e.target.value) || 0;
-                                  const delta = newVal - (deal?.submittedSlots || 0);
+                                  const originalDeal = activeDeals.find(d => d._id === dealToEdit?._id);
+                                  const delta = newVal - (originalDeal?.submittedSlots || 0);
                                   setDealToEdit({ 
                                     ...dealToEdit, 
                                     submittedSlots: newVal,
-                                    remainingSubmitted: Math.max(0, (deal?.remainingSubmitted || 0) + delta)
+                                    remainingSubmitted: Math.max(0, (originalDeal?.remainingSubmitted || 0) + delta)
                                   });
                                }}
                             />

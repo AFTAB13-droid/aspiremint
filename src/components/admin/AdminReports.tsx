@@ -129,7 +129,7 @@ export const AdminReports: React.FC<AdminReportsProps> = ({ orders = [], allBran
         summaries[brand].verifyingCount += 1;
       }
 
-      const payout = o.refundDetails?.expectedPayout || (Number(o.amount) || 0) + (Number(o.lessAmount) || 0);
+      const payout = o.refundDetails?.expectedPayout ?? (o.dealType === 'Empty Box' ? ((Number(o.amount) || 0) + (Number(o.lessAmount) || 0)) : ((Number(o.amount) || 0) - (Number(o.lessAmount) || 0)));
       summaries[brand].totalPayout += payout;
       summaries[brand].adminProfit += Number(o.adminProfit) || 0;
       summaries[brand].mediatorCommission += Number(o.mediatorCommission) || 0;
@@ -263,7 +263,7 @@ export const AdminReports: React.FC<AdminReportsProps> = ({ orders = [], allBran
       o.productCode,
       o.amount,
       o.lessAmount || 0,
-      o.refundDetails?.expectedPayout || (Number(o.amount) || 0) + (Number(o.lessAmount) || 0),
+      o.refundDetails?.expectedPayout ?? (o.dealType === 'Empty Box' ? ((Number(o.amount) || 0) + (Number(o.lessAmount) || 0)) : ((Number(o.amount) || 0) - (Number(o.lessAmount) || 0))),
       o.status,
       new Date(o.createdAt).toLocaleString("en-GB"),
     ]);
@@ -688,7 +688,7 @@ export const AdminReports: React.FC<AdminReportsProps> = ({ orders = [], allBran
                             <td className="px-6 py-3 uppercase text-slate-800">{o.brandName}</td>
                             <td className="px-6 py-3 uppercase font-mono">{o.productCode}</td>
                             <td className="px-6 py-3 text-right font-mono text-slate-800">
-                              ₹{(o.refundDetails?.expectedPayout || (Number(o.amount) || 0) + (Number(o.lessAmount) || 0)).toLocaleString()}
+                              ₹{(o.refundDetails?.expectedPayout ?? (o.dealType === 'Empty Box' ? ((Number(o.amount) || 0) + (Number(o.lessAmount) || 0)) : ((Number(o.amount) || 0) - (Number(o.lessAmount) || 0)))).toLocaleString()}
                             </td>
                             <td className="px-6 py-3 text-center">
                               <span className="inline-block px-2.5 py-1 text-[8px] font-black uppercase rounded-lg border bg-slate-50 border-slate-100 text-slate-500">

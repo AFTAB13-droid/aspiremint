@@ -172,7 +172,7 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
     }
     if (dataToExport.length === 0) return toast.error("No records found for the selected criteria");
     const headers = ["Order ID", "Buyer Name", "Mediator Name", "Brand", "Product Code", "Amount", "Refund Amount", "Review Type", "Deal Type", "Status", "Order Photo", "Review Photo", "Return Period Photo", "Delivery Photo", "Date"];
-    const csvContent = [headers.join(","), ...dataToExport.map(o => [o.aspireOrderId, `"${o.buyer?.name || 'Anonymous'}"`, `"${o.mediator?.systemDisplayName || o.mediatorName || o.mediator?.name || 'Standard'}"`, `"${o.brandName || 'N/A'}"`, o.productCode || "N/A", o.amount || 0, o.refundDetails?.expectedPayout || (o.amount - (o.lessAmount || 0)), o.reviewType || "N/A", o.dealType || "N/A", o.status, o.screenshot || "N/A", o.refundProof?.reviewScreenshot || "N/A", o.refundProof?.returnPeriodScreenshot || "N/A", o.refundProof?.deliveryScreenshot || "N/A", new Date(o.createdAt).toLocaleDateString()].join(","))].join("\n");
+    const csvContent = [headers.join(","), ...dataToExport.map(o => [o.aspireOrderId, `"${o.buyer?.name || 'Anonymous'}"`, `"${o.mediator?.systemDisplayName || o.mediatorName || o.mediator?.name || 'Standard'}"`, `"${o.brandName || 'N/A'}"`, o.productCode || "N/A", o.amount || 0, o.refundDetails?.expectedPayout ?? (o.dealType === 'Empty Box' ? (o.amount + (o.lessAmount || 0)) : (o.amount - (o.lessAmount || 0))), o.reviewType || "N/A", o.dealType || "N/A", o.status, o.screenshot || "N/A", o.refundProof?.reviewScreenshot || "N/A", o.refundProof?.returnPeriodScreenshot || "N/A", o.refundProof?.deliveryScreenshot || "N/A", new Date(o.createdAt).toLocaleDateString()].join(","))].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -655,7 +655,7 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
                        </div>
                        <div className="flex items-center justify-between">
                           <span className="text-[7px] font-black text-emerald-500 uppercase tracking-widest">Refund</span>
-                          <span className="text-[11px] font-black text-emerald-600">₹{order.refundDetails?.expectedPayout || (order.amount - (order.lessAmount || 0))}</span>
+                          <span className="text-[11px] font-black text-emerald-600">₹{order.refundDetails?.expectedPayout ?? (order.dealType === 'Empty Box' ? (order.amount + (order.lessAmount || 0)) : (order.amount - (order.lessAmount || 0)))}</span>
                        </div>
                        <div className="h-px bg-slate-100 my-0.5" />
                        <div className="grid grid-cols-2 gap-2">

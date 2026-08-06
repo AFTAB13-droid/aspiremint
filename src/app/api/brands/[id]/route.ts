@@ -72,6 +72,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       });
       
       await Promise.all(syncPromises);
+      
+      // Clear cache so that the Active Deals page reflects the new stock immediately
+      const { invalidateDealsCache } = await import('@/lib/redis');
+      await invalidateDealsCache();
     }
 
     if (brand) console.log("Update Successful:", brand.name, "ExchangeCount:", brand.exchangeProducts?.length);

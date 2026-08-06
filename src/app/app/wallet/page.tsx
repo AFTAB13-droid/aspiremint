@@ -830,7 +830,7 @@ export default function PassbookPage() {
                                   <div className="space-y-0.5 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
                                     <div className="flex justify-between max-w-[180px]">
                                       <span>Refund Amount:</span>
-                                      <span className="text-slate-600">₹{((order as any).refundDetails?.expectedPayout || (order.amount - ((order as any).lessAmount || 0))).toLocaleString()}</span>
+                                      <span className="text-slate-600">₹{((order as any).refundDetails?.expectedPayout ?? ((order as any).dealType === 'Empty Box' ? ((order as any).amount + ((order as any).lessAmount || 0)) : ((order as any).amount - ((order as any).lessAmount || 0)))).toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between max-w-[180px]">
                                       <span>Mediator Earning:</span>
