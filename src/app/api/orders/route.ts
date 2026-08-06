@@ -126,6 +126,15 @@ export async function POST(req: Request) {
       // Handle both Document and ModifyResult types
       const dealDoc = (dealUpdate as any).value || dealUpdate;
 
+      // Automatically archive deal if all slots are consumed
+      if (dealDoc.remainingSlots === 0) {
+        await ActiveDeal.findByIdAndUpdate(
+          dealDoc._id,
+          { $set: { isActive: false } },
+          { session: mongoSession }
+        );
+      }
+
       const newOrder = new Order({
         buyer: session.user.id,
         buyerEmail: user.email,

@@ -249,6 +249,28 @@ export function UserDossierModal({ user, onClose, onUpdate }: UserDossierModalPr
                               <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{m.lab}</p>
                            </motion.div>
                         ))}
+                        
+                        <div className="col-span-3 mt-2 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 rounded-[24px] flex items-center justify-between shadow-sm">
+                           <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 bg-amber-500 rounded-2xl flex items-center justify-center text-white shadow-md shadow-amber-500/20">
+                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                              </div>
+                              <div>
+                                 <p className="text-[9px] font-black text-amber-600/70 uppercase tracking-widest">Legacy External Refunds</p>
+                                 <p className="text-[11px] font-bold text-slate-600 mt-0.5 leading-tight">
+                                    {exData.previousRefundFetched ? 
+                                       (exData.previousRefundAmount > 0 ? `Verified in Array` : `No Legacy Refunds Found`) 
+                                       : `Data Not Synced / Unavailable`}
+                                 </p>
+                              </div>
+                           </div>
+                           {exData.previousRefundFetched && exData.previousRefundAmount > 0 && (
+                              <div className="text-right">
+                                 <p className="text-xl font-black text-amber-600">₹{exData.previousRefundAmount.toLocaleString()}</p>
+                                 <p className="text-[8px] font-black uppercase text-amber-500 tracking-widest">Total Value</p>
+                              </div>
+                           )}
+                        </div>
                      </>
                   )}
                   {exData.role === 'MEDIATOR' && (

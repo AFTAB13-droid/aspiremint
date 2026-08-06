@@ -55,6 +55,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       finalBody.remainingSlots = oldDeal.remainingSlots;
     }
 
+    // Reactivate the deal automatically if it was archived but stocks were added
+    if (!oldDeal.isActive && finalBody.remainingSlots > 0) {
+      finalBody.isActive = true;
+    }
+
     // 1. Sync global commission to all assigned mediators if commission is being updated
     if (body.commission !== undefined && oldDeal.assignedMediators) {
       const currentMediators = JSON.parse(JSON.stringify(oldDeal.assignedMediators));
@@ -75,11 +80,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       await Brand.findOneAndUpdate(
         { name: oldDeal.brandName, "productCodes.code": oldDeal.productCode },
         { $set: { 
-            "productCodes.$.stock": finalBody.totalSlots,
-            "productCodes.$.stockReview": finalBody.reviewSlots,
-            "productCodes.$.stockRating": finalBody.ratingSlots,
-            "productCodes.$.stockOnly": finalBody.onlyOrderSlots,
-            "productCodes.$.stockSubmitted": finalBody.submittedSlots
+            "productCodes.$.stock": finalBody.remainingSlots,
+            "productCodes.$.stockReview": finalBody.remainingReview,
+            "productCodes.$.stockRating": finalBody.remainingRating,
+            "productCodes.$.stockOnly": finalBody.remainingOnly,
+            "productCodes.$.stockSubmitted": finalBody.remainingSubmitted
         } }
       );
     }
@@ -108,31 +113,14 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     if (!deal) return NextResponse.json({ success: false, message: 'Deal not found' }, { status: 404 });
 
     if (mode === "archive") {
-      // 1. Zero out stocks in ActiveDeal and mark inactive
+      // 1. Mark deal as inactive, but preserve the remaining stocks
       await ActiveDeal.findByIdAndUpdate(params.id, {
         $set: {
-          isActive: false,
-          remainingSlots: 0,
-          remainingReview: 0,
-          remainingRating: 0,
-          remainingOnly: 0,
-          remainingSubmitted: 0
+          isActive: false
         }
       });
 
-      // 2. Zero out stock in Brand registry as well (but keep the entry)
-      if (deal.brandName && deal.productCode) {
-        await Brand.findOneAndUpdate(
-          { name: deal.brandName, "productCodes.code": deal.productCode },
-          { $set: { 
-              "productCodes.$.stock": 0,
-              "productCodes.$.stockReview": 0,
-              "productCodes.$.stockRating": 0,
-              "productCodes.$.stockOnly": 0,
-              "productCodes.$.stockSubmitted": 0
-          } }
-        );
-      }
+      // (We no longer zero out the brand registry so the remaining stock is preserved upon restore)
     } else {
       // FULL DELETE MODE
       // 1. Remove from Brand Inventory entirely
