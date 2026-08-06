@@ -117,7 +117,7 @@ export function GlobalNotificationPoller() {
       }
     };
 
-    const interval = setInterval(pollNotifications, 8000);
+    const interval = setInterval(pollNotifications, 30000);
     return () => clearInterval(interval);
   }, [session, usePollingFallback]);
 

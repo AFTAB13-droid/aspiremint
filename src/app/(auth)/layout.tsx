@@ -41,7 +41,6 @@ export default function AuthLayout({
            alt="AspireMint Background"
            fill
            priority
-           quality={100}
            className="object-cover"
          />
          {/* Desktop overlay */}

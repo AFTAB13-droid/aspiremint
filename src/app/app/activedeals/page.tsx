@@ -34,7 +34,9 @@ export default function ActiveDealsPage() {
   }, []);
 
   const fetchDeals = async (status: string = "active") => {
-    setLoading(true);
+    if (deals.length === 0) {
+      setLoading(true);
+    }
     try {
       const res = await fetch(`/api/deals/active?status=${status}&v=${Date.now()}`);
       const json = await res.json();
