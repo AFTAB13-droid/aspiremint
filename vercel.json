@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "regions": ["bom1", "sin1"],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    },
+    {
+      "source": "/api/deals/active",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=5, stale-while-revalidate=30"
+        }
+      ]
+    }
+  ]
+}

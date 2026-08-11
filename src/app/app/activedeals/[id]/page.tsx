@@ -42,14 +42,45 @@ export default function SingleDealDetailPage() {
       const res = await fetch(`/api/deals/active/${dealId}?v=${Date.now()}`);
       const json = await res.json();
       if (json.success) {
+        if (!json.data.isActive && role !== "ADMIN") {
+          toast.error("This campaign has been archived and is no longer available.");
+          router.push("/app/activedeals");
+          return;
+        }
         setDeal(json.data);
       } else {
+        if (role !== "ADMIN") {
+          toast.error("This campaign has been archived and is no longer available.");
+          router.push("/app/activedeals");
+          return;
+        }
         toast.error(json.message || "Failed to load deal details");
       }
     } catch (err) {
       toast.error("Network error loading deal");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRestoreDeal = async () => {
+    if (!deal) return;
+    const loadingId = toast.loading("Restoring deal to live...");
+    try {
+      const res = await fetch(`/api/deals/active/${deal._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: true }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success("Deal restored to live!", { id: loadingId });
+        fetchDealDetails();
+      } else {
+        toast.error(json.message || "Failed to restore deal", { id: loadingId });
+      }
+    } catch (err) {
+      toast.error("Failed to restore deal", { id: loadingId });
     }
   };
 
@@ -180,7 +211,12 @@ export default function SingleDealDetailPage() {
             </div>
             <h1 className="text-sm sm:text-base md:text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
               {deal.productCode}
-              {isHotDeal && !isOut && (
+              {!deal.isActive && (
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-white text-[8px] font-black uppercase tracking-widest shadow-sm">
+                  ARCHIVED
+                </span>
+              )}
+              {isHotDeal && !isOut && deal.isActive && (
                 <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[8px] font-black uppercase tracking-widest shadow-sm">
                   HOT DEAL
                 </span>
@@ -192,6 +228,15 @@ export default function SingleDealDetailPage() {
         {/* Quick Action Pills (Only shown to Admin and Mediator) */}
         {role !== 'USER' && (
           <div className="flex items-center gap-2 self-end sm:self-auto">
+            {!deal.isActive && isAdm && (
+              <button
+                onClick={handleRestoreDeal}
+                className="h-10 sm:h-11 px-4 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm"
+              >
+                Restore Deal
+              </button>
+            )}
+
             <button
               onClick={handleCopyLink}
               className="h-10 sm:h-11 px-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-100 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm"
