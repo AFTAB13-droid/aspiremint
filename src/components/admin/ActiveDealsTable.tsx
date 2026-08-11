@@ -229,6 +229,7 @@ export function ActiveDealsTable({
           <thead>
             <tr className="bg-slate-50/50">
               <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50">Deal Details</th>
+              <th className="px-3 py-5 text-[10px] font-black text-emerald-600 uppercase tracking-widest border-b border-indigo-50 text-center w-12">Share</th>
               <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Protocol & Marketplace</th>
               <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">STOCKS</th>
               {role !== 'USER' && (
@@ -252,6 +253,7 @@ export function ActiveDealsTable({
                       </div>
                     </div>
                   </td>
+                  <td className="px-3 py-6"><div className="flex justify-center"><Skeleton className="h-9 w-9 rounded-xl" /></div></td>
                   <td className="px-6 py-6">
                     <div className="flex flex-col items-center gap-2">
                       <Skeleton className="h-5 w-16 rounded-full" />
@@ -341,7 +343,7 @@ export function ActiveDealsTable({
                            )}
                         </div>
                         <Link href={`/app/activedeals/${deal.productCode || deal._id}`} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 group-hover:text-indigo-500 transition-colors block">
-                           {deal.brandName} • {deal.productDetails}
+                           {deal.productDetails}
                         </Link>
                         {boughtText && !isOut && (
                            <motion.div 
@@ -356,6 +358,16 @@ export function ActiveDealsTable({
                         )}
                      </div>
                   </div>
+                </td>
+
+                <td className="px-3 py-6 text-center w-12">
+                  <button 
+                    onClick={() => handleWhatsAppShare(deal)}
+                    className="h-9 w-9 rounded-xl bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white border border-emerald-100 flex items-center justify-center transition-all shadow-sm hover:scale-105 active:scale-95 mx-auto"
+                    title="Share Deal Link via WhatsApp"
+                  >
+                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.393 0 12.03c0 2.122.554 4.197 1.613 6.06L0 24l6.117-1.605a11.803 11.803 0 005.925 1.586h.005c6.632 0 12.028-5.396 12.033-12.034a11.846 11.846 0 00-3.486-8.417z"/></svg>
+                  </button>
                 </td>
                 <td className="px-6 py-6 text-center">
                   <div className="flex flex-col items-center gap-2">
@@ -619,7 +631,7 @@ export function ActiveDealsTable({
             })}
             {paginatedDeals.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-8 py-20 text-center">
+                <td colSpan={8} className="px-8 py-20 text-center">
                   <p className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em]">No manifestations found matching your criteria</p>
                 </td>
               </tr>

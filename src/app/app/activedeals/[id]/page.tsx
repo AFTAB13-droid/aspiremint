@@ -28,6 +28,7 @@ export default function SingleDealDetailPage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     if (dealId) {
@@ -224,11 +225,23 @@ export default function SingleDealDetailPage() {
               className="relative aspect-square w-full rounded-[28px] bg-slate-50 border border-slate-100 overflow-hidden cursor-pointer group-hover:shadow-md transition-all flex items-center justify-center"
             >
               {deal.productImage ? (
-                <img
-                  src={deal.productImage}
-                  alt={deal.productDetails}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
+                <>
+                  {!imageLoaded && (
+                    <div className="absolute inset-0 bg-slate-100 animate-pulse flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin" />
+                    </div>
+                  )}
+                  <img
+                    src={deal.productImage?.includes('cloudinary.com') ? deal.productImage.replace('/image/upload/', '/image/upload/q_auto,f_auto,w_800,c_limit/') : deal.productImage}
+                    alt={deal.productDetails}
+                    loading="eager"
+                    decoding="async"
+                    onLoad={() => setImageLoaded(true)}
+                    className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-700 ease-out ${
+                      imageLoaded ? "opacity-100 blur-0 scale-100" : "opacity-0 blur-lg scale-105"
+                    }`}
+                  />
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center text-slate-300 gap-2">
                   <ShoppingBag className="w-16 h-16 opacity-30" />
