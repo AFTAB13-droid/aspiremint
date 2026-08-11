@@ -55,26 +55,40 @@ export async function POST(req: Request) {
     const newTicket = new SupportTicket(ticketData);
     await newTicket.save();
 
-    // Trigger notification for Mediator if order dispute query is raised
-    if (newTicket.type === 'ORDER_DISPUTE' && newTicket.mediator) {
-      try {
-        const { NotificationService } = await import("@/services/notification.service");
-        const { NotificationType } = await import("@/modules/notification/notification.model");
-        
-        // Find order references for message
+    // Trigger notifications for Admin and Mediator
+    try {
+      const { NotificationService } = await import("@/services/notification.service");
+      const { NotificationType } = await import("@/modules/notification/notification.model");
+      const { User } = await import("@/modules/user/user.model");
+
+      // 1. Notify all Admins
+      const admins = await User.find({ role: 'ADMIN', isActive: true }).select('_id');
+      if (admins.length > 0) {
+        const adminIds = admins.map(a => a._id.toString());
+        await NotificationService.createBulk({
+          recipients: adminIds,
+          type: NotificationType.SUPPORT_TICKET_CREATED,
+          title: "New Support Query Raised",
+          message: `${session.user.name || 'User'} created a ${newTicket.type === 'ORDER_DISPUTE' ? 'Order Dispute' : 'General'} query: "${subject}".`,
+          actionUrl: `/app/admin/support`,
+        });
+      }
+
+      // 2. Notify assigned Mediator if it is an Order Dispute
+      if (newTicket.type === 'ORDER_DISPUTE' && newTicket.mediator) {
         const order = await Order.findById(newTicket.order).select('userOrderId aspireOrderId');
         const orderRef = order?.userOrderId || order?.aspireOrderId || "N/A";
 
         await NotificationService.create({
           recipient: newTicket.mediator.toString(),
-          type: NotificationType.SYSTEM,
-          title: "New Order Query Raised",
-          message: `Buyer has raised a dispute query for Order ID: ${orderRef}.`,
-          actionUrl: `/app/support`,
+          type: NotificationType.SUPPORT_TICKET_CREATED,
+          title: "New Order Dispute Query",
+          message: `Buyer raised a dispute query for Order ID: ${orderRef}.`,
+          actionUrl: `/app/mediators/support`,
         });
-      } catch (notifErr) {
-        console.error("Failed to generate support ticket mediator notification:", notifErr);
       }
+    } catch (notifErr) {
+      console.error("Failed to generate support ticket creation notification:", notifErr);
     }
 
     return NextResponse.json({ 

@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, CheckCircle2, Trash2, Bell, Info, ShieldAlert, Check, Megaphone, 
-  ExternalLink, ArrowLeft, Trash, Inbox, Clock, CheckCheck 
+  ExternalLink, ArrowLeft, Trash, Inbox, Clock, CheckCheck, MessageSquare 
 } from "lucide-react";
 import { formatTimeAgo } from "@/utils/formatTimeAgo";
 import toast from "react-hot-toast";
@@ -135,10 +135,14 @@ export function NotificationSidebar({ isOpen, onClose, userRole }: NotificationS
     switch (type) {
       case "ORDER_APPROVED":
       case "REFUND_COMPLETED":
+      case "SUPPORT_TICKET_RESOLVED":
         return <CheckCircle2 className="w-5 h-5 text-emerald-500" />;
       case "ORDER_REJECTED":
       case "ORDER_INVALIDATED":
         return <X className="w-5 h-5 text-rose-500" />;
+      case "SUPPORT_TICKET_CREATED":
+      case "SUPPORT_TICKET_REPLY":
+        return <MessageSquare className="w-5 h-5 text-indigo-500" />;
       case "ADMIN_ALERT":
       case "BROADCAST_MESSAGE":
         return <ShieldAlert className="w-5 h-5 text-indigo-500" />;
