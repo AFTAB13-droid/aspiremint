@@ -218,14 +218,17 @@ export default function NewOrderPage() {
   // Real-time Order ID validation
   useEffect(() => {
     const checkId = async () => {
-      if (!formData.userOrderId || formData.userOrderId.length < 4) {
+      const trimmedId = formData.userOrderId?.trim() || "";
+      if (!trimmedId || trimmedId.length < 4) {
         setIdExists(false);
         return;
       }
       
       setCheckingId(true);
       try {
-        const res = await fetch(`/api/orders/check?orderId=${encodeURIComponent(formData.userOrderId)}`);
+        const res = await fetch(`/api/orders/check?orderId=${encodeURIComponent(trimmedId)}&t=${Date.now()}`, {
+          cache: 'no-store'
+        });
         const json = await res.json();
         if (json.success) {
           setIdExists(json.exists);
