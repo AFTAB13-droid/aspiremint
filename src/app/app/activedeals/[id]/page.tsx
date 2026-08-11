@@ -160,13 +160,13 @@ export default function SingleDealDetailPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 pb-28 space-y-8 overflow-x-hidden">
+    <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-3 sm:py-6 pb-28 space-y-4 sm:space-y-8 overflow-x-hidden">
       {/* Dynamic Header & Breadcrumbs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/70 backdrop-blur-md p-4 md:p-5 rounded-[28px] border border-slate-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/70 backdrop-blur-md p-3.5 sm:p-5 rounded-[24px] sm:rounded-[28px] border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
-            className="h-11 w-11 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all active:scale-95 shadow-sm"
+            className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all active:scale-95 shadow-sm shrink-0"
             title="Go Back"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -177,7 +177,7 @@ export default function SingleDealDetailPage() {
               <span>/</span>
               <span className="text-indigo-600">{deal.brandName}</span>
             </div>
-            <h1 className="text-base md:text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
+            <h1 className="text-sm sm:text-base md:text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
               {deal.productCode}
               {isHotDeal && !isOut && (
                 <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[8px] font-black uppercase tracking-widest shadow-sm">
@@ -193,7 +193,7 @@ export default function SingleDealDetailPage() {
           <div className="flex items-center gap-2 self-end sm:self-auto">
             <button
               onClick={handleCopyLink}
-              className="h-11 px-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-100 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm"
+              className="h-10 sm:h-11 px-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-100 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm"
             >
               {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
               {copied ? "Copied Link" : "Copy Link"}
@@ -201,7 +201,7 @@ export default function SingleDealDetailPage() {
 
             <button
               onClick={handleWhatsAppShare}
-              className="h-11 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 transition-all active:scale-95"
+              className="h-10 sm:h-11 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 transition-all active:scale-95"
             >
               <Share2 className="w-4 h-4" />
               Share Deal
@@ -211,11 +211,11 @@ export default function SingleDealDetailPage() {
       </div>
 
       {/* Main Single Deal View Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8">
         
         {/* Left Section: Product Image Showcase */}
-        <div className="lg:col-span-5 space-y-6">
-          <div className="relative bg-white rounded-[36px] p-6 border border-slate-100 shadow-sm overflow-hidden group">
+        <div className="lg:col-span-5 space-y-4 sm:space-y-6">
+          <div className="relative bg-white rounded-[32px] sm:rounded-[36px] p-4 sm:p-6 border border-slate-100 shadow-sm overflow-hidden group">
             {/* Background Accent */}
             <div className={`absolute top-0 right-0 w-48 h-48 blur-3xl opacity-10 pointer-events-none ${isOut ? 'bg-rose-500' : 'bg-indigo-500'}`} />
 
@@ -299,8 +299,8 @@ export default function SingleDealDetailPage() {
         </div>
 
         {/* Right Section: Core Specifications, Inventory & CTA */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="bg-white rounded-[36px] p-6 md:p-8 border border-slate-100 shadow-sm space-y-6">
+        <div className="lg:col-span-7 space-y-4 sm:space-y-6">
+          <div className="bg-white rounded-[32px] sm:rounded-[36px] p-5 sm:p-8 border border-slate-100 shadow-sm space-y-5 sm:space-y-6">
             
             {/* Title & Product Code Bar */}
             <div className="space-y-3 pb-6 border-b border-slate-100">
