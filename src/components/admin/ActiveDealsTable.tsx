@@ -149,6 +149,7 @@ export function ActiveDealsTable({
   };
 
   const handleWhatsAppShare = async (deal: any) => {
+    const directUrl = typeof window !== 'undefined' ? `${window.location.origin}/app/activedeals/${deal.productCode || deal._id}` : '';
     const messageParts = [
       deal.productImage ? `🖼️ *Preview:* ${deal.productImage}` : null,
       `🔥 *NEW DEAL ALERT!* 🔥`,
@@ -160,7 +161,8 @@ export function ActiveDealsTable({
       `⭐ *Review Type:* ${deal.reviewType === "SUBMITTED" ? "REVIEW SUBMITTED" : deal.reviewType}`,
       `💰 *Less/Commission:* ₹________`,
       deal.productLink ? `🔗 *Product Link:* ${deal.productLink}` : null,
-      `*DM to claim now!* 🚀`
+      `✨ *Claim Deal Link:* ${directUrl}`,
+      `*Click the link above to view details & claim cashback!* 🚀`
     ].filter(Boolean);
     const message = messageParts.join('\n\n').trim();
 
@@ -180,6 +182,12 @@ export function ActiveDealsTable({
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+  };
+
+  const handleCopyDealLink = (deal: any) => {
+    const directUrl = typeof window !== 'undefined' ? `${window.location.origin}/app/activedeals/${deal.productCode || deal._id}` : '';
+    navigator.clipboard.writeText(directUrl);
+    toast.success(`Direct deal link copied for [${deal.productCode}]!`);
   };
 
   return (
@@ -327,14 +335,14 @@ export function ActiveDealsTable({
                      </div>
                      <div>
                         <div className="flex items-center gap-2">
-                           <span className="text-sm font-black text-slate-900 uppercase tracking-tight group-hover:text-indigo-600 transition-colors">{deal.productCode}</span>
+                           <Link href={`/app/activedeals/${deal.productCode || deal._id}`} className="text-sm font-black text-slate-900 uppercase tracking-tight group-hover:text-indigo-600 transition-colors hover:underline">{deal.productCode}</Link>
                            {deal.createdAt && (
                              <span className="text-[9px] font-bold text-slate-300 ml-1">Posted: {formatTimeAgo(deal.createdAt)}</span>
                            )}
                         </div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 group-hover:text-indigo-400 transition-colors">
+                        <Link href={`/app/activedeals/${deal.productCode || deal._id}`} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 group-hover:text-indigo-500 transition-colors block">
                            {deal.brandName} • {deal.productDetails}
-                        </p>
+                        </Link>
                         {boughtText && !isOut && (
                            <motion.div 
                              initial={{ opacity: 0 }}

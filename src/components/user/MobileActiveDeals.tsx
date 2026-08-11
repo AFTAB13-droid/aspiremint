@@ -223,15 +223,17 @@ export function MobileActiveDeals({
                 {/* Core Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-[13px] font-black text-slate-900 uppercase tracking-tight break-all leading-tight">{deal.productCode}</h3>
+                    <Link href={`/app/activedeals/${deal.productCode || deal._id}`} className="text-[13px] font-black text-slate-900 uppercase tracking-tight break-all leading-tight hover:text-blue-600 transition-colors">
+                      {deal.productCode}
+                    </Link>
                     <span className="text-[8px] font-black text-slate-300 uppercase whitespace-nowrap mt-1 shrink-0">{formatTimeAgo(deal.createdAt)}</span>
                   </div>
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 truncate">{deal.brandName}</p>
                   
                   {deal.productDetails && (
-                     <p className="text-[10px] font-black text-slate-700 uppercase tracking-tight mt-1 leading-relaxed break-words line-clamp-2">
+                     <Link href={`/app/activedeals/${deal.productCode || deal._id}`} className="text-[10px] font-black text-slate-700 uppercase tracking-tight mt-1 leading-relaxed break-words line-clamp-2 block hover:text-blue-600 transition-colors">
                        {deal.productDetails}
-                     </p>
+                     </Link>
                    )}
                   
                   <div className="flex flex-wrap items-center gap-2 mt-2.5">
@@ -252,6 +254,13 @@ export function MobileActiveDeals({
               {/* Manifest Details Context Row */}
               <div className="mt-4 flex items-center justify-between px-1">
                  <div className="flex items-center gap-3">
+                    <Link href={`/app/activedeals/${deal.productCode || deal._id}`} className="flex items-center gap-1.5 group/link">
+                       <div className="h-7 w-7 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center border border-indigo-100 group-hover/link:bg-indigo-600 group-hover/link:text-white transition-all">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                       </div>
+                       <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest">View Page</span>
+                    </Link>
+
                     {deal.productLink && (
                        <a href={deal.productLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 group/link">
                           <div className="h-7 w-7 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center border border-blue-100 group-hover/link:bg-blue-600 group-hover/link:text-white transition-all">
@@ -345,6 +354,7 @@ export function MobileActiveDeals({
                     ) : (
                       <button 
                         onClick={async () => {
+                          const directUrl = typeof window !== 'undefined' ? `${window.location.origin}/app/activedeals/${deal.productCode || deal._id}` : '';
                           const messageParts = [
                             deal.productImage ? `🖼️ *Preview:* ${deal.productImage}` : null,
                             `🔥 *NEW DEAL ALERT!* 🔥`,
@@ -356,7 +366,8 @@ export function MobileActiveDeals({
                             `⭐ *Review Type:* ${deal.reviewType === "SUBMITTED" ? "REVIEW SUBMITTED" : deal.reviewType}`,
                             `💰 *Less/Commission:* ₹________`,
                             deal.productLink ? `🔗 *Product Link:* ${deal.productLink}` : null,
-                            `*DM to claim now!* 🚀`
+                            `✨ *Claim Deal Link:* ${directUrl}`,
+                            `*Click link above to view details & claim cashback!* 🚀`
                           ].filter(Boolean);
                           const message = messageParts.join('\n\n').trim();
                           

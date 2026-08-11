@@ -6,6 +6,69 @@ import { ActiveDeal } from '@/modules/brand/deal.model';
 import { Brand } from '@/modules/brand/brand.model';
 import { invalidateDealsCache } from '@/lib/redis';
 
+export async function GET(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+
+    const user = session.user as any;
+    const { id } = params;
+    await connectToDatabase();
+
+    const isJuhi = user.name?.toLowerCase().includes("juhi");
+    const isAdmin = user.role === 'ADMIN' || isJuhi;
+
+    let deal = null;
+    const mongoose = (await import('mongoose')).default;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      deal = await ActiveDeal.findById(id).lean();
+    }
+    
+    if (!deal) {
+      deal = await ActiveDeal.findOne({ productCode: id }).lean();
+    }
+
+    if (!deal) {
+      return NextResponse.json({ success: false, message: 'Deal not found' }, { status: 404 });
+    }
+
+    // Role-based visibility check
+    if (!isAdmin && !(deal as any).isActive) {
+      return NextResponse.json({ success: false, message: 'This deal is no longer active' }, { status: 404 });
+    }
+
+    if (user.role === 'MEDIATOR' && !isJuhi) {
+      const isAssigned = (deal as any).assignedMediators?.some((m: any) => m.mediatorId?.toString() === user.id || m.isAll);
+      if (!isAssigned) {
+        return NextResponse.json({ success: false, message: 'Access denied for this deal' }, { status: 403 });
+      }
+    }
+
+    let displayPayout = 0;
+    if (user.role === 'MEDIATOR') {
+      displayPayout = (deal as any).assignedMediators?.find((m: any) => m.mediatorId?.toString() === user.id)?.commission || (deal as any).commission || 0;
+    } else {
+      displayPayout = (deal as any).assignedMediators?.[0]?.commission || (deal as any).commission || 0;
+    }
+    if (isJuhi) {
+      displayPayout = (deal as any).juhiCommission || 0;
+    }
+
+    const sanitizedDeal = {
+      ...deal,
+      commission: isAdmin ? (deal as any).commission : undefined,
+      productImage: (deal as any).productImage || "",
+      displayPayout: user.role === 'USER' ? undefined : displayPayout,
+      juhiCommission: (deal as any).juhiCommission || 0
+    };
+
+    return NextResponse.json({ success: true, data: sanitizedDeal });
+  } catch (error) {
+    console.error('Fetch single deal error:', error);
+    return NextResponse.json({ success: false, message: 'Failed to fetch deal details' }, { status: 500 });
+  }
+}
+
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
