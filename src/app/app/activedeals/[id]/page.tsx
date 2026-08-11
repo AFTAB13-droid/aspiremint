@@ -197,7 +197,13 @@ export default function SingleDealDetailPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/70 backdrop-blur-md p-3.5 sm:p-5 rounded-[24px] sm:rounded-[28px] border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.back()}
+            onClick={() => {
+              if (typeof window !== "undefined" && window.history.length > 2 && document.referrer && document.referrer.includes(window.location.host)) {
+                router.back();
+              } else {
+                router.push("/app/activedeals");
+              }
+            }}
             className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all active:scale-95 shadow-sm shrink-0"
             title="Go Back"
           >
