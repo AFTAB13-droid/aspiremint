@@ -188,24 +188,26 @@ export default function SingleDealDetailPage() {
           </div>
         </div>
 
-        {/* Quick Action Pills */}
-        <div className="flex items-center gap-2 self-end sm:self-auto">
-          <button
-            onClick={handleCopyLink}
-            className="h-11 px-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-100 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm"
-          >
-            {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-            {copied ? "Copied Link" : "Copy Link"}
-          </button>
+        {/* Quick Action Pills (Only shown to Admin and Mediator) */}
+        {role !== 'USER' && (
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <button
+              onClick={handleCopyLink}
+              className="h-11 px-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-100 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm"
+            >
+              {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+              {copied ? "Copied Link" : "Copy Link"}
+            </button>
 
-          <button
-            onClick={handleWhatsAppShare}
-            className="h-11 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 transition-all active:scale-95"
-          >
-            <Share2 className="w-4 h-4" />
-            Share Deal
-          </button>
-        </div>
+            <button
+              onClick={handleWhatsAppShare}
+              className="h-11 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 transition-all active:scale-95"
+            >
+              <Share2 className="w-4 h-4" />
+              Share Deal
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Main Single Deal View Layout */}
@@ -356,13 +358,13 @@ export default function SingleDealDetailPage() {
                 />
               </div>
 
-              {/* Granular Breakdown */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                <p className="text-xs font-black text-slate-700">
-                  <span className="text-indigo-600 font-extrabold text-sm">{deal.remainingSlots || 0}</span> / {deal.totalSlots || 0} Total Slots Remaining
-                </p>
+              {/* Granular Breakdown (Shown only to Admin & Mediator) */}
+              {role !== 'USER' ? (
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                  <p className="text-xs font-black text-slate-700">
+                    <span className="text-indigo-600 font-extrabold text-sm">{deal.remainingSlots || 0}</span> / {deal.totalSlots || 0} Total Slots Remaining
+                  </p>
 
-                {(isAdm || isMediator) && (
                   <div className="flex flex-wrap items-center gap-2">
                     {deal.reviewSlots > 0 && (
                       <span className="text-[9px] font-black text-slate-600 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
@@ -385,8 +387,17 @@ export default function SingleDealDetailPage() {
                       </span>
                     )}
                   </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="pt-1 flex items-center justify-between">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Realtime Availability Status
+                  </p>
+                  <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">
+                    {isOut ? "Unavailable" : "Active Campaign"}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Economics & Yield Card (For Admin & Mediator) */}
@@ -439,34 +450,36 @@ export default function SingleDealDetailPage() {
                 deal.remainingSlots > 0 ? (
                   <Link
                     href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
-                    className="w-full sm:flex-1 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-blue-600/30 active:scale-95 transition-all"
+                    className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-blue-600/30 active:scale-95 transition-all"
                   >
                     <ShoppingBag className="w-5 h-5" />
                     Fill Order Form Now
                   </Link>
                 ) : (
-                  <div className="w-full sm:flex-1 h-14 bg-slate-100 text-slate-400 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 cursor-not-allowed">
+                  <div className="w-full h-14 bg-slate-100 text-slate-400 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 cursor-not-allowed">
                     <AlertTriangle className="w-5 h-5" />
                     Campaign Sold Out
                   </div>
                 )
               ) : (
-                <Link
-                  href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
-                  className="w-full sm:flex-1 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-indigo-600/30 active:scale-95 transition-all"
-                >
-                  <ShoppingBag className="w-5 h-5" />
-                  Fill Form For Order
-                </Link>
-              )}
+                <>
+                  <Link
+                    href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
+                    className="w-full sm:flex-1 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-indigo-600/30 active:scale-95 transition-all"
+                  >
+                    <ShoppingBag className="w-5 h-5" />
+                    Fill Form For Order
+                  </Link>
 
-              <button
-                onClick={handleWhatsAppShare}
-                className="w-full sm:w-auto h-14 px-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
-              >
-                <Share2 className="w-5 h-5" />
-                Share
-              </button>
+                  <button
+                    onClick={handleWhatsAppShare}
+                    className="w-full sm:w-auto h-14 px-8 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+                  >
+                    <Share2 className="w-5 h-5" />
+                    Share
+                  </button>
+                </>
+              )}
             </div>
 
           </div>
@@ -480,32 +493,34 @@ export default function SingleDealDetailPage() {
             deal.remainingSlots > 0 ? (
               <Link
                 href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
-                className="flex-1 h-12 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 active:scale-95 transition-all"
+                className="w-full h-12 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 active:scale-95 transition-all"
               >
                 Fill Order Form
                 <ShoppingBag className="w-4 h-4" />
               </Link>
             ) : (
-              <div className="flex-1 h-12 bg-slate-100 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 cursor-not-allowed">
+              <div className="w-full h-12 bg-slate-100 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 cursor-not-allowed">
                 Sold Out
               </div>
             )
           ) : (
-            <Link
-              href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
-              className="flex-1 h-12 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 active:scale-95 transition-all"
-            >
-              Fill Order Form
-              <ShoppingBag className="w-4 h-4" />
-            </Link>
-          )}
+            <>
+              <Link
+                href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
+                className="flex-1 h-12 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 active:scale-95 transition-all"
+              >
+                Fill Order Form
+                <ShoppingBag className="w-4 h-4" />
+              </Link>
 
-          <button
-            onClick={handleWhatsAppShare}
-            className="h-12 w-12 bg-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-600/20 active:scale-95 transition-all shrink-0"
-          >
-            <Share2 className="w-5 h-5" />
-          </button>
+              <button
+                onClick={handleWhatsAppShare}
+                className="h-12 w-12 bg-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-600/20 active:scale-95 transition-all shrink-0"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
+            </>
+          )}
         </div>
       </div>
 

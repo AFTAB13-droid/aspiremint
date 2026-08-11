@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatTimeAgo } from "@/utils/formatTimeAgo";
 import Link from "next/link";
@@ -28,6 +29,7 @@ export function MobileActiveDeals({
   searchQuery, setSearchQuery,
   currentPage, setCurrentPage, totalPages
 }: MobileActiveDealsProps) {
+  const router = useRouter();
   const [selectedRemark, setSelectedRemark] = useState<string | null>(null);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
@@ -183,7 +185,8 @@ export function MobileActiveDeals({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
-              className="relative bg-white rounded-[32px] p-5 border border-slate-100 shadow-sm overflow-hidden group active:scale-[0.98] transition-all"
+              onClick={() => router.push(`/app/activedeals/${deal.productCode || deal._id}`)}
+              className="relative bg-white rounded-[32px] p-5 border border-slate-100 shadow-sm overflow-hidden group active:scale-[0.98] transition-all cursor-pointer hover:border-indigo-200"
             >
               {/* Background Accent */}
               <div className={`absolute top-0 right-0 w-32 h-32 blur-3xl opacity-[0.03] pointer-events-none -mr-10 -mt-10 ${isOut ? 'bg-rose-500' : 'bg-blue-500'}`} />
