@@ -1,12 +1,18 @@
 import nodemailer from "nodemailer";
 
 export const transporter = nodemailer.createTransport({
+  pool: true,
+  maxConnections: 5,
+  maxMessages: 100,
+  rateLimit: 10,
   host: process.env.SMTP_HOST || "smtp.zeptomail.in",
   port: Number(process.env.SMTP_PORT) || 587,
   auth: {
     user: process.env.SMTP_USER || "emailapikey",
     pass: process.env.SMTP_PASS,
   },
+  connectionTimeout: 5000,
+  socketTimeout: 10000,
 });
 
 if (!process.env.SMTP_PASS) {
