@@ -100,8 +100,17 @@ export default function DealsPage() {
           statusMatch = ["UNDER_VERIFICATION", "REFUND_FORM_SUBMITTED"].includes(order.status);
         }
         
-        const searchMatch = (order.brandName || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          (order.aspireOrderId || "").toLowerCase().includes(searchQuery.toLowerCase());
+        const buyerName = order.buyer?.name || "";
+        const buyerEmail = order.buyer?.email || "";
+        const searchMatch = 
+          (order.aspireOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (order.userOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (order.merchantOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (buyerName).toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (buyerEmail).toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (order.reviewName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (order.productCode || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (order.brandName || "").toLowerCase().includes(searchQuery.toLowerCase());
         
         const mediatorMatch = selectedMediator === "ALL" || order.mediator?._id === selectedMediator || order.mediator === selectedMediator;
 
@@ -111,8 +120,17 @@ export default function DealsPage() {
       // Existing Admin/User filtering
       const isPast = ["PAST", "REJECTED", "COMPLETED", "REFUNDED"].includes(order.status);
       const matchesFilter = filterType === "ACTIVE" ? !isPast : isPast;
-      const matchesSearch = (order.brandName || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          (order.aspireOrderId || "").toLowerCase().includes(searchQuery.toLowerCase());
+      const buyerName = order.buyer?.name || "";
+      const buyerEmail = order.buyer?.email || "";
+      const matchesSearch = 
+        (order.aspireOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (order.userOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (order.merchantOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (buyerName).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (buyerEmail).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (order.reviewName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (order.productCode || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (order.brandName || "").toLowerCase().includes(searchQuery.toLowerCase());
       return matchesFilter && matchesSearch;
     });
   }, [orders, filterType, searchQuery, activeTab, isSubAdmin]);

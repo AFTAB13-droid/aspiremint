@@ -307,12 +307,18 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
   const filteredOrders = useMemo(() => {
     let result = orders.filter(order => {
       const buyerName = order.buyer?.name || "";
+      const buyerEmail = order.buyer?.email || "";
       const matchesSearch = 
         (order.aspireOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (order.userOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (order.merchantOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         (buyerName).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (buyerEmail).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (order.reviewName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (order.productCode || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         (order.brandName || "").toLowerCase().includes(searchQuery.toLowerCase());
       const matchesBrand = brandFilter === "All Brands" || order.brandName === brandFilter;
-      const matchesPlatform = platformFilter === "All Platforms" || (order.platform || "Amazon") === platformFilter;
+      const matchesPlatform = platformFilter === "All Platforms" || (order.marketplace || "Amazon") === platformFilter;
       let matchesDate = true;
       if (dateFilter) {
          const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
