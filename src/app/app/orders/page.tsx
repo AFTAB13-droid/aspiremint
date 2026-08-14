@@ -103,14 +103,14 @@ export default function DealsPage() {
         const buyerName = order.buyer?.name || "";
         const buyerEmail = order.buyer?.email || "";
         const searchMatch = 
-          (order.aspireOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (order.userOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (order.merchantOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (buyerName).toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (buyerEmail).toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (order.reviewName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (order.productCode || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (order.brandName || "").toLowerCase().includes(searchQuery.toLowerCase());
+          String(order.aspireOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          String(order.userOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          String(order.merchantOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          String(buyerName).toLowerCase().includes(searchQuery.toLowerCase()) ||
+          String(buyerEmail).toLowerCase().includes(searchQuery.toLowerCase()) ||
+          String(order.reviewName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          String(order.productCode || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+          String(order.brandName || "").toLowerCase().includes(searchQuery.toLowerCase());
         
         const mediatorMatch = selectedMediator === "ALL" || order.mediator?._id === selectedMediator || order.mediator === selectedMediator;
 
@@ -123,14 +123,14 @@ export default function DealsPage() {
       const buyerName = order.buyer?.name || "";
       const buyerEmail = order.buyer?.email || "";
       const matchesSearch = 
-        (order.aspireOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (order.userOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (order.merchantOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (buyerName).toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (buyerEmail).toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (order.reviewName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (order.productCode || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (order.brandName || "").toLowerCase().includes(searchQuery.toLowerCase());
+        String(order.aspireOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(order.userOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(order.merchantOrderId || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(buyerName).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(buyerEmail).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(order.reviewName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(order.productCode || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(order.brandName || "").toLowerCase().includes(searchQuery.toLowerCase());
       return matchesFilter && matchesSearch;
     });
   }, [orders, filterType, searchQuery, activeTab, isSubAdmin]);
