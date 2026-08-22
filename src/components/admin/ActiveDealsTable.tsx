@@ -596,8 +596,8 @@ export function ActiveDealsTable({
                               onClick={() => {
                                 setDealToEdit({
                                   ...deal,
-                                  commission: deal.commission ?? (deal.dealType === 'Empty Box' ? 0 : deal.displayPayout),
-                                  juhiCommission: deal.juhiCommission ?? 0,
+                                  commission: deal.commission !== undefined && deal.commission !== null ? deal.commission : "N/A",
+                                  juhiCommission: deal.juhiCommission !== undefined && deal.juhiCommission !== null ? deal.juhiCommission : "N/A",
                                   totalSlots: deal.totalSlots ?? 0,
                                   productLink: deal.productLink ?? "",
                                   userRemarks: deal.userRemarks ?? "",
@@ -617,8 +617,8 @@ export function ActiveDealsTable({
                                 onClick={() => {
                                   setDealToEdit({
                                     ...deal,
-                                    commission: deal.commission ?? (deal.dealType === 'Empty Box' ? 0 : deal.displayPayout),
-                                    juhiCommission: deal.juhiCommission ?? 0,
+                                    commission: deal.commission !== undefined && deal.commission !== null ? deal.commission : "N/A",
+                                    juhiCommission: deal.juhiCommission !== undefined && deal.juhiCommission !== null ? deal.juhiCommission : "N/A",
                                     totalSlots: deal.totalSlots ?? 0,
                                     productLink: deal.productLink ?? "",
                                     userRemarks: deal.userRemarks ?? "",
@@ -988,33 +988,45 @@ export function ActiveDealsTable({
                           </span>
                        </div>
                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <label className={`text-[8px] font-black uppercase tracking-widest pl-1 ${(dealToEdit?.commission || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                              Std Rate
-                            </label>
-                            <input 
-                               type="number"
-                               className={`w-full h-11 bg-white border-2 rounded-xl px-4 text-xs font-black outline-none transition-all shadow-inner ${
-                                 (dealToEdit?.commission || 0) >= 0 ? 'border-emerald-100 focus:border-emerald-500 text-emerald-900' : 'border-rose-100 focus:border-rose-500 text-rose-900'
-                               }`}
-                               value={dealToEdit?.commission ?? ''}
-                               onChange={(e) => setDealToEdit({ ...dealToEdit, commission: e.target.value === '' ? '' : parseInt(e.target.value) })}
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className={`text-[8px] font-black uppercase tracking-widest pl-1 ${(dealToEdit?.juhiCommission || 0) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                              Juhi Rate
-                            </label>
-                            <input 
-                               type="number"
-                               className={`w-full h-11 bg-white border-2 rounded-xl px-4 text-xs font-black outline-none transition-all shadow-inner ${
-                                 (dealToEdit?.juhiCommission || 0) >= 0 ? 'border-emerald-100 focus:border-emerald-500 text-emerald-900' : 'border-rose-100 focus:border-rose-500 text-rose-900'
-                               }`}
-                               value={dealToEdit?.juhiCommission ?? ''}
-                               onChange={(e) => setDealToEdit({ ...dealToEdit, juhiCommission: e.target.value === '' ? '' : parseInt(e.target.value) })}
-                            />
-                          </div>
-                       </div>
+                           <div className="space-y-1">
+                             <label className={`text-[8px] font-black uppercase tracking-widest pl-1 ${
+                               dealToEdit?.commission === "N/A" || dealToEdit?.commission === "" || isNaN(Number(dealToEdit?.commission))
+                                 ? 'text-slate-400'
+                                 : Number(dealToEdit?.commission) >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                             }`}>
+                               Std Rate
+                             </label>
+                             <input 
+                                type="text"
+                                className={`w-full h-11 bg-white border-2 rounded-xl px-4 text-xs font-black outline-none transition-all shadow-inner ${
+                                  dealToEdit?.commission === "N/A" || dealToEdit?.commission === "" || isNaN(Number(dealToEdit?.commission))
+                                    ? 'border-slate-100 focus:border-slate-400 text-slate-500'
+                                    : Number(dealToEdit?.commission) >= 0 ? 'border-emerald-100 focus:border-emerald-500 text-emerald-900' : 'border-rose-100 focus:border-rose-500 text-rose-900'
+                                }`}
+                                value={dealToEdit?.commission ?? ''}
+                                onChange={(e) => setDealToEdit({ ...dealToEdit, commission: e.target.value })}
+                             />
+                           </div>
+                           <div className="space-y-1">
+                             <label className={`text-[8px] font-black uppercase tracking-widest pl-1 ${
+                               dealToEdit?.juhiCommission === "N/A" || dealToEdit?.juhiCommission === "" || isNaN(Number(dealToEdit?.juhiCommission))
+                                 ? 'text-slate-400'
+                                 : Number(dealToEdit?.juhiCommission) >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                             }`}>
+                               Juhi Rate
+                             </label>
+                             <input 
+                                type="text"
+                                className={`w-full h-11 bg-white border-2 rounded-xl px-4 text-xs font-black outline-none transition-all shadow-inner ${
+                                  dealToEdit?.juhiCommission === "N/A" || dealToEdit?.juhiCommission === "" || isNaN(Number(dealToEdit?.juhiCommission))
+                                    ? 'border-slate-100 focus:border-slate-400 text-slate-500'
+                                    : Number(dealToEdit?.juhiCommission) >= 0 ? 'border-emerald-100 focus:border-emerald-500 text-emerald-900' : 'border-rose-100 focus:border-rose-500 text-rose-900'
+                                }`}
+                                value={dealToEdit?.juhiCommission ?? ''}
+                                onChange={(e) => setDealToEdit({ ...dealToEdit, juhiCommission: e.target.value })}
+                             />
+                           </div>
+                        </div>
                     </div>
                   </div>
                 </div>
@@ -1032,8 +1044,18 @@ export function ActiveDealsTable({
                       ratingSlots: parseInt(dealToEdit.ratingSlots as any) || 0,
                       onlyOrderSlots: parseInt(dealToEdit.onlyOrderSlots as any) || 0,
                       submittedSlots: parseInt(dealToEdit.submittedSlots as any) || 0,
-                      commission: parseInt(dealToEdit.commission as any) || 0,
-                      juhiCommission: parseInt(dealToEdit.juhiCommission as any) || 0,
+                      commission: (() => {
+                          const val = dealToEdit.commission;
+                          if (val === undefined || val === null || val === "" || String(val).trim().toUpperCase() === "N/A") return "N/A";
+                          const num = Number(val);
+                          return isNaN(num) ? "N/A" : num;
+                       })(),
+                      juhiCommission: (() => {
+                          const val = dealToEdit.juhiCommission;
+                          if (val === undefined || val === null || val === "" || String(val).trim().toUpperCase() === "N/A") return "N/A";
+                          const num = Number(val);
+                          return isNaN(num) ? "N/A" : num;
+                       })(),
                       productLink: dealToEdit.productLink,
                       userRemarks: dealToEdit.userRemarks,
                       mediatorRemarks: dealToEdit.mediatorRemarks,
