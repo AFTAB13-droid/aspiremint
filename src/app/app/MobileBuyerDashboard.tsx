@@ -11,7 +11,7 @@ import toast from "react-hot-toast";
 import { 
   TrendingUp, Package, RefreshCw, Clock, CheckCircle2, ChevronRight, X,
   ShieldCheck, AlertCircle, Sparkles, Megaphone, User as UserIcon, Wallet, Activity, Zap, Gift,
-  Flag, Flame, Palette, Sword, Music, Star, Moon
+  Flag, Flame, Palette, Sword, Music, Star, Moon, ShoppingBag
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
@@ -462,6 +462,61 @@ export default function MobileBuyerDashboard({
                </div>
             ))}
          </div>
+      </div>
+
+      {/* ACTIVE CAMPAIGNS LIST */}
+      <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm py-5 px-6">
+         <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">🔥 Live Cashbacks</h3>
+            <Link href="/app/activedeals" className="text-xs font-bold text-blue-600 tracking-wide">See All ({activeDeals.length})</Link>
+         </div>
+
+         {activeDeals.length === 0 ? (
+            <div className="py-8 text-center bg-slate-50/50 rounded-2xl">
+               <Megaphone className="w-6 h-6 text-slate-300 mx-auto mb-2" />
+               <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">No active cashbacks</p>
+            </div>
+         ) : (
+            <div className="flex flex-col gap-3">
+               {activeDeals.slice(0, 3).map((deal) => {
+                  return (
+                     <div 
+                        key={deal._id}
+                        onClick={() => router.push(`/app/activedeals/${deal.productCode || deal._id}`)}
+                        className="p-4 rounded-2xl bg-slate-50 border border-slate-100 active:bg-slate-100 transition-colors flex items-center justify-between gap-3 cursor-pointer"
+                     >
+                        <div className="flex items-center gap-3 min-w-0">
+                           <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shrink-0 shadow-xs">
+                              {deal.productImage ? (
+                                 <img src={deal.productImage} className="w-full h-full object-cover rounded-xl" alt="" />
+                              ) : (
+                                 <ShoppingBag className="w-5 h-5 text-indigo-500" />
+                              )}
+                           </div>
+                           <div className="min-w-0">
+                              <h5 className="font-black text-slate-900 text-xs truncate leading-tight">{deal.brandName}</h5>
+                              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate mt-0.5">{deal.productCode}</p>
+                           </div>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                           <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Juhi's Comm/Less</p>
+                           <div className="flex items-center gap-1 bg-indigo-50/50 px-1.5 py-0.5 rounded border border-indigo-100 shadow-xs">
+                              <span className="h-1 w-1 rounded-full bg-indigo-500 animate-pulse" />
+                              {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === 0 ? (
+                                 <span className="text-[9px] font-black text-indigo-600">Ask Juhi</span>
+                              ) : (
+                                 <span className={`text-[9px] font-black ${deal.juhiCommission >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                    {deal.juhiCommission >= 0 ? '+' : '-'}₹{Math.abs(deal.juhiCommission)}
+                                 </span>
+                              )}
+                           </div>
+                        </div>
+                     </div>
+                  );
+               })}
+            </div>
+         )}
       </div>
 
       {/* RECENT ORDERS LIST */}

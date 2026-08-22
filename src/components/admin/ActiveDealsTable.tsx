@@ -234,8 +234,10 @@ export function ActiveDealsTable({
               )}
               <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Protocol & Marketplace</th>
               <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">STOCKS</th>
-              {role !== 'USER' && (
+              {role !== 'USER' ? (
                 <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Amount</th>
+              ) : (
+                <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Juhi's Commission/Less</th>
               )}
               <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Product Link</th>
               {!isAdm && <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Remarks</th>}
@@ -458,7 +460,7 @@ export function ActiveDealsTable({
                       )}
                    </div>
                 </td>
-                {role !== 'USER' && (
+                {role !== 'USER' ? (
                   <td className="px-6 py-6 text-center">
                      {deal.displayPayout !== undefined ? (
                         <div className="flex flex-col items-center">
@@ -473,7 +475,7 @@ export function ActiveDealsTable({
                               </span>
                               {role === 'ADMIN' && deal.juhiCommission !== undefined && (
                                  <span className="text-[7px] font-bold text-indigo-400 uppercase mt-0.5 px-1.5 py-0.5 bg-indigo-50 rounded-md">
-                                    Juhi's Less: ₹{deal.juhiCommission}
+                                    Juhi's Less: {deal.juhiCommission === 0 ? "Ask Juhi" : `₹${deal.juhiCommission}`}
                                  </span>
                               )}
                            </div>
@@ -481,6 +483,21 @@ export function ActiveDealsTable({
                      ) : (
                         <span className="text-[10px] font-black text-slate-200 uppercase tracking-widest italic">Protected</span>
                      )}
+                  </td>
+                ) : (
+                  <td className="px-6 py-6 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="flex items-center gap-1.5 bg-indigo-50/50 px-3 py-1.5 rounded-2xl border border-indigo-100 shadow-sm relative overflow-hidden group">
+                        <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-pulse" />
+                        {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === 0 ? (
+                          <span className="text-[11px] font-black text-indigo-600">Ask Juhi</span>
+                        ) : (
+                          <span className={`text-[11px] font-black ${deal.juhiCommission >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {deal.juhiCommission >= 0 ? '+' : '-'}₹{Math.abs(deal.juhiCommission)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </td>
                 )}
                 <td className="px-6 py-6 text-center">

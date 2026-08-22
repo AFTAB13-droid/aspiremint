@@ -330,27 +330,41 @@ export function MobileActiveDeals({
                 </div>
 
                 <div className="flex items-center justify-between pt-1">
-                  {role !== 'USER' && (
+                  {role !== 'USER' ? (
                     <div className="flex flex-col">
                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Amount</p>
                       <p className={`text-base font-black tracking-tighter mt-1 ${deal.displayPayout >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                         {deal.displayPayout >= 0 ? '+' : '-'}₹{Math.abs(deal.displayPayout || 0)}
                       </p>
                     </div>
+                  ) : (
+                    <div className="flex flex-col">
+                      <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest leading-none">Juhi's Comm./Less</p>
+                      <div className="flex items-center gap-1.5 mt-1 bg-indigo-50/50 px-2 py-1 rounded-xl border border-indigo-100 shadow-sm self-start">
+                        <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                        {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === 0 ? (
+                          <span className="text-xs font-black text-indigo-600">Ask Juhi</span>
+                        ) : (
+                          <span className={`text-xs font-black ${deal.juhiCommission >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {deal.juhiCommission >= 0 ? '+' : '-'}₹{Math.abs(deal.juhiCommission)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   )}
 
-                  <div className={`flex items-center gap-2 ${role === 'USER' ? 'w-full' : ''}`}>
+                  <div className="flex items-center gap-2">
                     {role === 'USER' ? (
                       deal.remainingSlots > 0 ? (
                         <Link 
                           href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
-                          className="h-11 px-6 bg-blue-600 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 active:scale-95 transition-all w-full"
+                          className="h-11 px-6 bg-blue-600 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 active:scale-95 transition-all"
                         >
                           Fill Form
                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                         </Link>
                       ) : (
-                        <div className="h-11 px-6 bg-slate-50 border border-slate-100 text-slate-300 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 cursor-not-allowed w-full">
+                        <div className="h-11 px-6 bg-slate-50 border border-slate-100 text-slate-300 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 cursor-not-allowed">
                           Sold Out
                         </div>
                       )

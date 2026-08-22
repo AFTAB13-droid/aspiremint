@@ -464,6 +464,25 @@ export default function SingleDealDetailPage() {
               )}
             </div>
 
+            {/* Juhi's Commission / Less Card */}
+            <div className="p-5 bg-gradient-to-r from-indigo-50 to-indigo-50/30 rounded-[28px] border border-indigo-100/60 flex items-center justify-between shadow-sm relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl -mr-6 -mt-6 pointer-events-none group-hover:scale-110 transition-transform" />
+              <div>
+                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Juhi's Commission / Less</p>
+                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Deduction or Incentive tier</p>
+              </div>
+              <div className="text-right bg-white px-4 py-2 rounded-2xl border border-indigo-100 shadow-sm relative z-10 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
+                {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === 0 ? (
+                  <span className="text-sm font-black text-indigo-600">Ask Juhi</span>
+                ) : (
+                  <span className={`text-base font-black ${deal.juhiCommission >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {deal.juhiCommission >= 0 ? '+' : '-'}₹{Math.abs(deal.juhiCommission)}
+                  </span>
+                )}
+              </div>
+            </div>
+
             {/* Economics & Yield Card (For Admin & Mediator) */}
             {role !== 'USER' && deal.displayPayout !== undefined && (
               <div className="p-5 bg-gradient-to-r from-emerald-50 to-teal-50/50 rounded-[28px] border border-emerald-100/60 flex items-center justify-between">

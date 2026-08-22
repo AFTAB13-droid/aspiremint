@@ -16,7 +16,7 @@ import {
   TrendingUp, Package, RefreshCw, MoreVertical, Search, Filter, 
   ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, XCircle, ChevronRight,
   Bell, X, Zap, ShieldCheck, Info, Sparkles, AlertCircle, Megaphone, User as UserIcon, Gift,
-  Flag, Flame, Palette, Sword, Music, Star, Moon
+  Flag, Flame, Palette, Sword, Music, Star, Moon, ShoppingBag
 } from "lucide-react";
 import { useMotionValue, useTransform, useSpring } from "framer-motion";
 
@@ -691,6 +691,91 @@ export default function BuyerDashboard({
             </div>
          </motion.div>
       </div>
+
+      {/* ACTIVE CAMPAIGNS & OFFERS */}
+      <motion.div 
+         initial={{ opacity: 0, y: 20 }}
+         animate={{ opacity: 1, y: 0 }}
+         transition={{ delay: 0.35 }}
+         className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm"
+      >
+         <div className="flex items-center justify-between mb-10">
+            <div>
+               <h3 className="text-2xl font-black text-slate-900">🔥 Live Campaigns & Cashbacks</h3>
+               <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Select a campaign below to claim your rewards</p>
+            </div>
+            <Link href="/app/activedeals" className="px-6 py-3 bg-slate-50 text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-colors border border-slate-100">
+               View All Deals ({activeDeals.length})
+            </Link>
+         </div>
+
+         {activeDeals.length === 0 ? (
+            <div className="py-20 text-center bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-200">
+               <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm text-slate-300">
+                  <Megaphone className="w-8 h-8" />
+               </div>
+               <p className="text-slate-400 font-black uppercase tracking-widest text-xs">No active campaigns at the moment</p>
+            </div>
+         ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+               {activeDeals.slice(0, 3).map((deal) => {
+                  const isOut = (deal.remainingSlots || 0) <= 0;
+                  return (
+                     <motion.div
+                        key={deal._id}
+                        whileHover={{ y: -8, scale: 1.01 }}
+                        onClick={() => router.push(`/app/activedeals/${deal.productCode || deal._id}`)}
+                        className="group relative bg-slate-50/50 hover:bg-white rounded-[32px] p-6 border border-slate-100 hover:border-indigo-100 transition-all duration-300 cursor-pointer shadow-xs hover:shadow-xl"
+                     >
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:scale-110 transition-transform" />
+                        <div className="flex gap-4 items-start">
+                           <div className="w-16 h-16 rounded-2xl bg-white border border-slate-100 overflow-hidden shrink-0 shadow-sm">
+                              {deal.productImage ? (
+                                 <img src={deal.productImage} className="w-full h-full object-cover" alt="" />
+                              ) : (
+                                 <div className="w-full h-full flex items-center justify-center text-indigo-400 bg-indigo-50/20">
+                                    <ShoppingBag className="w-6 h-6" />
+                                 </div>
+                              )}
+                           </div>
+                           <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-2">
+                                 <span className="text-[11px] font-black text-indigo-600 uppercase tracking-widest">{deal.productCode}</span>
+                                 <span className="text-[8px] font-black uppercase tracking-tight text-slate-400">{deal.marketplace}</span>
+                              </div>
+                              <h4 className="font-black text-slate-900 text-sm truncate mt-1 group-hover:text-indigo-600 transition-colors">{deal.brandName}</h4>
+                              <p className="text-[10px] font-bold text-slate-400 truncate uppercase mt-0.5">{deal.productDetails}</p>
+                           </div>
+                        </div>
+
+                        <div className="h-px w-full bg-slate-100 my-4" />
+
+                        <div className="flex items-center justify-between">
+                           <div>
+                              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Juhi's Commission/Less</p>
+                              <div className="flex items-center gap-1.5 mt-1 bg-indigo-50/50 px-2 py-0.5 rounded-lg border border-indigo-100 shadow-sm self-start">
+                                 <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                                 {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === 0 ? (
+                                    <span className="text-[9px] font-black text-indigo-600">Ask Juhi</span>
+                                 ) : (
+                                    <span className={`text-[9px] font-black ${deal.juhiCommission >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                       {deal.juhiCommission >= 0 ? '+' : '-'}₹{Math.abs(deal.juhiCommission)}
+                                    </span>
+                                 )}
+                              </div>
+                           </div>
+                           {isOut ? (
+                              <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest bg-rose-50 px-2.5 py-1.5 rounded-xl border border-rose-100">Out of Stock</span>
+                           ) : (
+                              <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-100">Claim Payout</span>
+                           )}
+                        </div>
+                     </motion.div>
+                  );
+               })}
+            </div>
+         )}
+      </motion.div>
 
       {/* RECENT ACTIVITY TABLE */}
       <motion.div 
