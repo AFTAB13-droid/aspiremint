@@ -478,7 +478,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
               buyer.name, 
               order.aspireOrderId, 
               status, 
-              order.amount, 
+              updatedOrder.refundDetails?.expectedPayout || order.amount, 
               status === OrderStatus.REFUND_REJECTED ? (body["refundDetails.rejectionNote"] || "Verification failed") : undefined
             );
          } catch (mailErr) {
@@ -496,7 +496,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
                   order.aspireOrderId,
                   {
                      transactionId: updatedOrder.paymentDetails?.transactionId,
-                     amount: updatedOrder.amount,
+                     paidAmount: updatedOrder.refundDetails?.expectedPayout || updatedOrder.amount,
                      paidAt: updatedOrder.paymentDetails?.paidAt || new Date(),
                      paidByName: mediator?.systemDisplayName || mediator?.name || session.user.name,
                      brandName: updatedOrder.brandName,

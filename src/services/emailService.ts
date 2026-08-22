@@ -184,11 +184,15 @@ export const sendOrderCreationEmail = async (email: string, name: string, orderD
 };
 
 export const sendRefundSubmittedEmail = async (email: string, name: string, orderData: any) => {
+  const refundAmt = orderData.refundDetails?.expectedPayout !== undefined && orderData.refundDetails?.expectedPayout !== null
+    ? orderData.refundDetails.expectedPayout
+    : (orderData.amount || 0);
+
   const details = [
     { label: "Order ID", value: orderData.userOrderId || "N/A" },
     { label: "Brand", value: orderData.brandName || "N/A" },
     { label: "Product Code", value: orderData.productCode || "N/A" },
-    { label: "Refund Amount", value: `₹${orderData.amount || 0}` }
+    { label: "Refund Amount", value: `₹${refundAmt?.toLocaleString() || "0"}` }
   ];
 
   const body = `
