@@ -165,10 +165,8 @@ export function MobileActiveDeals({
           const isHotDeal = deal.createdAt && (Date.now() - new Date(deal.createdAt).getTime() < 24 * 60 * 60 * 1000);
           
           let boughtText = "";
-          if (consumedSlots >= 50) {
-            boughtText = "🔥 50+ users bought this";
-          } else if (consumedSlots >= 10) {
-            boughtText = `🔥 ${consumedSlots} users bought this`;
+          if (consumedSlots > 10) {
+            boughtText = "🔥 Trending";
           }
 
           const getStockStatus = () => {

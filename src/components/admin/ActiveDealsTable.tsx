@@ -289,10 +289,8 @@ export function ActiveDealsTable({
               const isOut = deal.remainingSlots <= 0;
               
               let boughtText = "";
-              if (consumedSlots >= 50) {
-                boughtText = "🔥 50+ users bought this";
-              } else if (consumedSlots >= 10) {
-                boughtText = `🔥 ${consumedSlots} users bought this`;
+              if (consumedSlots > 10) {
+                boughtText = "🔥 Trending";
               }
 
               return (

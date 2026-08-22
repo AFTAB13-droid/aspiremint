@@ -185,10 +185,8 @@ export default function SingleDealDetailPage() {
   const isLimited = deal.remainingSlots >= 4 && deal.remainingSlots < 7;
 
   let boughtText = "";
-  if (consumedSlots >= 50) {
-    boughtText = "🔥 50+ users bought this deal";
-  } else if (consumedSlots >= 10) {
-    boughtText = `🔥 ${consumedSlots} users bought this deal`;
+  if (consumedSlots > 10) {
+    boughtText = "🔥 Trending";
   }
 
   return (
