@@ -18,8 +18,38 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [isMobileOpen, setMobileOpen] = useState(false);
   const [isDesktopCollapsed, setDesktopCollapsed] = useState(true);
+  const [themeClass, setThemeClass] = useState("");
+
   React.useEffect(() => {
     (window as any).setMobileOpen = setMobileOpen;
+
+    const fetchTheme = async () => {
+      try {
+        const res = await fetch("/api/config/banner");
+        const json = await res.json();
+        if (json.success && json.data) {
+          const config = json.data;
+          if (config.isActive && config.applyAppTheme && config.template !== "DEFAULT") {
+            setThemeClass(`theme-${config.template.toLowerCase()}`);
+          } else {
+            setThemeClass("");
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch global banner theme:", err);
+      }
+    };
+    fetchTheme();
+
+    const handleRefresh = () => {
+      fetchTheme();
+    };
+    window.addEventListener("FCM_REFRESH_DATA", handleRefresh);
+    window.addEventListener("REFRESH_BANNER_THEME", handleRefresh);
+    return () => {
+      window.removeEventListener("FCM_REFRESH_DATA", handleRefresh);
+      window.removeEventListener("REFRESH_BANNER_THEME", handleRefresh);
+    };
   }, []);
 
   if (status === "loading") {
@@ -34,7 +64,7 @@ export default function DashboardLayout({
   const role = (session.user as any).role || "USER";
 
   return (
-    <div className="flex h-[100dvh] w-full bg-[#f8fafc] overflow-hidden text-slate-900">
+    <div className={`flex h-[100dvh] w-full bg-[#f8fafc] overflow-hidden text-slate-900 transition-colors duration-500 ${themeClass}`}>
       <Sidebar 
         userRole={role} 
         isMobileOpen={isMobileOpen} 

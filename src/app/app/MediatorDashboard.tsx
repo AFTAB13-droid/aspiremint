@@ -8,7 +8,8 @@ import { usePusher } from "@/hooks/usePusher";
 import toast from "react-hot-toast";
 import { 
   TrendingUp, Package, RefreshCw, MoreVertical, Clock, CheckCircle2, ChevronRight,
-  Bell, X, Zap, ShieldCheck, Info, Search, Filter, Activity, Cpu, Database, Sparkles, AlertCircle, Megaphone, User as UserIcon, ArrowUpRight, Gift
+  Bell, X, Zap, ShieldCheck, Info, Search, Filter, Activity, Cpu, Database, Sparkles, AlertCircle, Megaphone, User as UserIcon, ArrowUpRight, Gift,
+  Flag, Flame, Palette, Sword, Music, Star, Moon
 } from "lucide-react";
 import { useMotionValue, useTransform, useSpring } from "framer-motion";
 import { 
@@ -198,6 +199,13 @@ export default function MediatorDashboard({
                    bannerConfig.icon === "shield" ? <ShieldCheck className="w-8 h-8" /> : 
                    bannerConfig.icon === "zap" ? <Zap className="w-8 h-8" /> : 
                    bannerConfig.icon === "gift" ? <Gift className="w-8 h-8" /> : 
+                   bannerConfig.icon === "flag" ? <Flag className="w-8 h-8" /> : 
+                   bannerConfig.icon === "flame" ? <Flame className="w-8 h-8" /> : 
+                   bannerConfig.icon === "palette" ? <Palette className="w-8 h-8" /> : 
+                   bannerConfig.icon === "sword" ? <Sword className="w-8 h-8" /> : 
+                   bannerConfig.icon === "music" ? <Music className="w-8 h-8" /> : 
+                   bannerConfig.icon === "star" ? <Star className="w-8 h-8" /> : 
+                   bannerConfig.icon === "moon" ? <Moon className="w-8 h-8" /> : 
                    <UserIcon className="w-8 h-8" />}
                </motion.div>
                <div>
@@ -205,6 +213,14 @@ export default function MediatorDashboard({
                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse shadow-[0_0_8px_white]" />
                      {bannerConfig.template === "SALE" ? "EXCLUSIVE OFFER" : 
                       bannerConfig.template === "NEW_DEALS" ? `🔥 LIVE CAMPAIGNS: ${activeDeals.length} ACTIVE` :
+                      bannerConfig.template === "DIWALI" ? "FESTIVE CELEBRATION" :
+                      bannerConfig.template === "INDEPENDENCE_DAY" || bannerConfig.template === "REPUBLIC_DAY" ? "PATRIOTIC DAY" :
+                      bannerConfig.template === "HOLI" ? "FESTIVAL OF COLORS" :
+                      bannerConfig.template === "RAKHI" ? "RAKSHA BANDHAN" :
+                      bannerConfig.template === "JANMASHTAMI" ? "JANMASHTAMI UTSAV" :
+                      bannerConfig.template === "DUSSEHRA" ? "VIJAYADASHAMI" :
+                      bannerConfig.template === "MUHARRAM" ? "MUHARRAM OBSERVANCE" :
+                      bannerConfig.template === "EID" ? "EID CELEBRATION" :
                       "SYSTEM NOTICE"}
                   </div>
                   <h1 className="text-3xl font-black text-white tracking-tight leading-tight drop-shadow-md">

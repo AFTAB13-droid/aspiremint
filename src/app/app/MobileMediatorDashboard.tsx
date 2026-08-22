@@ -9,7 +9,8 @@ import { usePusher } from "@/hooks/usePusher";
 import toast from "react-hot-toast";
 import { 
   TrendingUp, Package, RefreshCw, Clock, CheckCircle2, ChevronRight,
-  ShieldCheck, AlertCircle, Sparkles, Megaphone, User as UserIcon, Activity, Zap, Info, Cpu, Database, Gift
+  ShieldCheck, AlertCircle, Sparkles, Megaphone, User as UserIcon, Activity, Zap, Info, Cpu, Database, Gift,
+  Flag, Flame, Palette, Sword, Music, Star, Moon
 } from "lucide-react";
 
 interface MediatorDashboardProps {
@@ -149,19 +150,34 @@ export default function MobileMediatorDashboard({
           )}
           <div className="relative z-10 flex items-start gap-4">
             <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 mt-1">
-               {bannerConfig.icon === "sparkles" ? <Sparkles className="w-6 h-6" /> : 
-                bannerConfig.icon === "alert" ? <AlertCircle className="w-6 h-6" /> : 
-                bannerConfig.icon === "megaphone" ? <Megaphone className="w-6 h-6" /> : 
-                bannerConfig.icon === "shield" ? <ShieldCheck className="w-6 h-6" /> : 
-                bannerConfig.icon === "zap" ? <Zap className="w-6 h-6" /> : 
-                bannerConfig.icon === "gift" ? <Gift className="w-6 h-6" /> : 
-                <UserIcon className="w-6 h-6" />}
+                {bannerConfig.icon === "sparkles" ? <Sparkles className="w-6 h-6" /> : 
+                 bannerConfig.icon === "alert" ? <AlertCircle className="w-6 h-6" /> : 
+                 bannerConfig.icon === "megaphone" ? <Megaphone className="w-6 h-6" /> : 
+                 bannerConfig.icon === "shield" ? <ShieldCheck className="w-6 h-6" /> : 
+                 bannerConfig.icon === "zap" ? <Zap className="w-6 h-6" /> : 
+                 bannerConfig.icon === "gift" ? <Gift className="w-6 h-6" /> : 
+                 bannerConfig.icon === "flag" ? <Flag className="w-6 h-6" /> : 
+                 bannerConfig.icon === "flame" ? <Flame className="w-6 h-6" /> : 
+                 bannerConfig.icon === "palette" ? <Palette className="w-6 h-6" /> : 
+                 bannerConfig.icon === "sword" ? <Sword className="w-6 h-6" /> : 
+                 bannerConfig.icon === "music" ? <Music className="w-6 h-6" /> : 
+                 bannerConfig.icon === "star" ? <Star className="w-6 h-6" /> : 
+                 bannerConfig.icon === "moon" ? <Moon className="w-6 h-6" /> : 
+                 <UserIcon className="w-6 h-6" />}
             </div>
             <div className="flex-1 min-w-0">
               <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-white/20 rounded-full text-[8px] font-black uppercase tracking-widest mb-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                 {bannerConfig.template === "SALE" ? "OFFER" : 
                  bannerConfig.template === "NEW_DEALS" ? `🔥 LIVE: ${activeDeals.length}` : 
+                 bannerConfig.template === "DIWALI" ? "DIWALI" :
+                 bannerConfig.template === "INDEPENDENCE_DAY" || bannerConfig.template === "REPUBLIC_DAY" ? "PATRIOTIC" :
+                 bannerConfig.template === "HOLI" ? "HOLI" :
+                 bannerConfig.template === "RAKHI" ? "RAKHI" :
+                 bannerConfig.template === "JANMASHTAMI" ? "JANMASHTAMI" :
+                 bannerConfig.template === "DUSSEHRA" ? "DUSSEHRA" :
+                 bannerConfig.template === "MUHARRAM" ? "MUHARRAM" :
+                 bannerConfig.template === "EID" ? "EID" :
                  "NOTICE"}
               </div>
               <h1 className="text-xl font-black tracking-tight leading-tight mb-1">

@@ -3,9 +3,27 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
-import { Save, Megaphone, AlertCircle, Sparkles, User, RefreshCw, LayoutTemplate, ArrowUpRight, ShieldCheck, Zap, Gift } from "lucide-react";
+import { Save, Megaphone, AlertCircle, Sparkles, User, RefreshCw, LayoutTemplate, ArrowUpRight, ShieldCheck, Zap, Gift, Flag, Flame, Palette, Sword, Music, Star, Moon } from "lucide-react";
 
-export type BannerTemplateType = "DEFAULT" | "SALE" | "NOTICE" | "MILESTONE" | "PROMO" | "NEW_DEALS" | "HOLO" | "EARN";
+export type BannerTemplateType = 
+  | "DEFAULT" 
+  | "SALE" 
+  | "NOTICE" 
+  | "MILESTONE" 
+  | "PROMO" 
+  | "NEW_DEALS" 
+  | "HOLO" 
+  | "EARN"
+  | "DIWALI"
+  | "INDEPENDENCE_DAY"
+  | "REPUBLIC_DAY"
+  | "HOLI"
+  | "RAKHI"
+  | "JANMASHTAMI"
+  | "DUSSEHRA"
+  | "MUHARRAM"
+  | "EID"
+  | "NEW_YEAR";
 export type BannerTargetAudience = "ALL" | "BUYER" | "MEDIATOR";
 
 export interface BannerConfig {
@@ -20,6 +38,7 @@ export interface BannerConfig {
   expiresAt?: string;
   targetAudience: BannerTargetAudience;
   actionLink?: string;
+  applyAppTheme?: boolean;
 }
 
 const getColorClasses = (color: string) => {
@@ -43,7 +62,8 @@ const TEMPLATES: Record<BannerTemplateType, BannerConfig> = {
     primaryColor: "blue",
     bgGradient: "linear-gradient(135deg, #0f172a, #1e293b)",
     animationType: "NONE",
-    targetAudience: "ALL"
+    targetAudience: "ALL",
+    applyAppTheme: false
   },
   SALE: {
     isActive: true,
@@ -55,7 +75,8 @@ const TEMPLATES: Record<BannerTemplateType, BannerConfig> = {
     bgGradient: "linear-gradient(135deg, #e11d48, #be123c, #9f1239)",
     animationType: "SHIMMER",
     targetAudience: "ALL",
-    actionLink: "/deals"
+    actionLink: "/deals",
+    applyAppTheme: false
   },
   NOTICE: {
     isActive: true,
@@ -66,7 +87,8 @@ const TEMPLATES: Record<BannerTemplateType, BannerConfig> = {
     primaryColor: "amber",
     bgGradient: "linear-gradient(135deg, #f59e0b, #d97706, #b45309)",
     animationType: "PULSE",
-    targetAudience: "ALL"
+    targetAudience: "ALL",
+    applyAppTheme: false
   },
   MILESTONE: {
     isActive: true,
@@ -77,7 +99,8 @@ const TEMPLATES: Record<BannerTemplateType, BannerConfig> = {
     primaryColor: "indigo",
     bgGradient: "linear-gradient(135deg, #4f46e5, #4338ca, #3730a3)",
     animationType: "SPARKLE",
-    targetAudience: "ALL"
+    targetAudience: "ALL",
+    applyAppTheme: false
   },
   PROMO: {
     isActive: true,
@@ -88,7 +111,8 @@ const TEMPLATES: Record<BannerTemplateType, BannerConfig> = {
     primaryColor: "emerald",
     bgGradient: "linear-gradient(135deg, #059669, #10b981, #d97706, #10b981, #059669)",
     animationType: "SHIMMER",
-    targetAudience: "ALL"
+    targetAudience: "ALL",
+    applyAppTheme: false
   },
   NEW_DEALS: {
     isActive: true,
@@ -99,7 +123,8 @@ const TEMPLATES: Record<BannerTemplateType, BannerConfig> = {
     primaryColor: "rose",
     bgGradient: "linear-gradient(135deg, #ff007f, #7928ca, #ff007f)",
     animationType: "SHIMMER",
-    targetAudience: "ALL"
+    targetAudience: "ALL",
+    applyAppTheme: false
   },
   HOLO: {
     isActive: true,
@@ -110,7 +135,8 @@ const TEMPLATES: Record<BannerTemplateType, BannerConfig> = {
     primaryColor: "purple",
     bgGradient: "linear-gradient(135deg, #a855f7, #6366f1, #3b82f6, #ec4899, #a855f7)",
     animationType: "SPARKLE",
-    targetAudience: "ALL"
+    targetAudience: "ALL",
+    applyAppTheme: false
   },
   EARN: {
     isActive: true,
@@ -121,7 +147,128 @@ const TEMPLATES: Record<BannerTemplateType, BannerConfig> = {
     primaryColor: "indigo",
     bgGradient: "linear-gradient(135deg, #7c3aed, #db2777, #eab308, #db2777, #7c3aed)",
     animationType: "SHIMMER",
-    targetAudience: "ALL"
+    targetAudience: "ALL",
+    applyAppTheme: false
+  },
+  DIWALI: {
+    isActive: true,
+    template: "DIWALI",
+    title: "HAPPY DIWALI! 🪔",
+    subtitle: "Shubh Deepavali to our AspireMint Family. May prosperity guide your path!",
+    icon: "flame",
+    primaryColor: "amber",
+    bgGradient: "linear-gradient(135deg, #4a154b, #d97706, #ea580c)",
+    animationType: "SPARKLE",
+    targetAudience: "ALL",
+    applyAppTheme: true
+  },
+  INDEPENDENCE_DAY: {
+    isActive: true,
+    template: "INDEPENDENCE_DAY",
+    title: "HAPPY INDEPENDENCE DAY! 🇮🇳",
+    subtitle: "Celebrating Freedom, Integrity, and Trust. Proud to be Indian.",
+    icon: "flag",
+    primaryColor: "indigo",
+    bgGradient: "linear-gradient(135deg, #f97316, #ffffff, #10b981)",
+    animationType: "SHIMMER",
+    targetAudience: "ALL",
+    applyAppTheme: true
+  },
+  REPUBLIC_DAY: {
+    isActive: true,
+    template: "REPUBLIC_DAY",
+    title: "HAPPY REPUBLIC DAY! 🇮🇳",
+    subtitle: "Honouring the Constitution and Sovereignty of our nation.",
+    icon: "flag",
+    primaryColor: "indigo",
+    bgGradient: "linear-gradient(135deg, #f97316, #ffffff, #10b981)",
+    animationType: "SHIMMER",
+    targetAudience: "ALL",
+    applyAppTheme: true
+  },
+  HOLI: {
+    isActive: true,
+    template: "HOLI",
+    title: "HAPPY HOLI! 🎨",
+    subtitle: "Color your deals with joy and claim double multipliers today!",
+    icon: "palette",
+    primaryColor: "rose",
+    bgGradient: "linear-gradient(135deg, #ec4899, #06b6d4, #eab308)",
+    animationType: "PULSE",
+    targetAudience: "ALL",
+    applyAppTheme: true
+  },
+  RAKHI: {
+    isActive: true,
+    template: "RAKHI",
+    title: "RAKSHA BANDHAN CELEBRATION 🎁",
+    subtitle: "Cherishing sibling bonds with secure rewards and special multipliers.",
+    icon: "gift",
+    primaryColor: "purple",
+    bgGradient: "linear-gradient(135deg, #db2777, #7c3aed, #f43f5e)",
+    animationType: "SPARKLE",
+    targetAudience: "ALL",
+    applyAppTheme: true
+  },
+  JANMASHTAMI: {
+    isActive: true,
+    template: "JANMASHTAMI",
+    title: "HAPPY JANMASHTAMI! 🪈",
+    subtitle: "Celebrating Lord Krishna's divine advent. May joy fill your home!",
+    icon: "music",
+    primaryColor: "purple",
+    bgGradient: "linear-gradient(135deg, #0f172a, #06b6d4, #fbbf24)",
+    animationType: "SPARKLE",
+    targetAudience: "ALL",
+    applyAppTheme: true
+  },
+  DUSSEHRA: {
+    isActive: true,
+    template: "DUSSEHRA",
+    title: "HAPPY DUSSEHRA! 🏹",
+    subtitle: "Celebrating the victory of Good over Evil. Time for prosperous beginnings!",
+    icon: "sword",
+    primaryColor: "amber",
+    bgGradient: "linear-gradient(135deg, #7f1d1d, #d97706, #991b1b)",
+    animationType: "SHIMMER",
+    targetAudience: "ALL",
+    applyAppTheme: true
+  },
+  MUHARRAM: {
+    isActive: true,
+    template: "MUHARRAM",
+    title: "MUHARRAM OBSERVANCE 🌙",
+    subtitle: "Wishing you peace, harmony, and prayer in the sacred Islamic New Year.",
+    icon: "moon",
+    primaryColor: "emerald",
+    bgGradient: "linear-gradient(135deg, #022c22, #064e3b, #1e293b)",
+    animationType: "PULSE",
+    targetAudience: "ALL",
+    applyAppTheme: true
+  },
+  EID: {
+    isActive: true,
+    template: "EID",
+    title: "EID MUBARAK! 🌙",
+    subtitle: "Wishing you and your family peace, prosperity, and blessings.",
+    icon: "moon",
+    primaryColor: "emerald",
+    bgGradient: "linear-gradient(135deg, #064e3b, #047857, #fbbf24)",
+    animationType: "SHIMMER",
+    targetAudience: "ALL",
+    applyAppTheme: true
+  },
+  NEW_YEAR: {
+    isActive: true,
+    template: "NEW_YEAR",
+    title: "HAPPY NEW YEAR! ✨",
+    subtitle: "Unleash higher commissions and secure deals in the coming year!",
+    icon: "star",
+    primaryColor: "amber",
+    bgGradient: "linear-gradient(135deg, #0f172a, #d97706, #1e293b)",
+    animationType: "SPARKLE",
+    targetAudience: "ALL",
+    applyAppTheme: true
   }
 };
 
@@ -159,6 +306,7 @@ export const BannerManager = () => {
       const json = await res.json();
       if (json.success) {
         toast.success("Global Banner Updated!");
+        window.dispatchEvent(new Event("REFRESH_BANNER_THEME"));
       } else {
         toast.error(json.message || "Failed to update");
       }
@@ -181,6 +329,13 @@ export const BannerManager = () => {
       case "shield": return <ShieldCheck className={className} />;
       case "zap": return <Zap className={className} />;
       case "gift": return <Gift className={className} />;
+      case "flag": return <Flag className={className} />;
+      case "flame": return <Flame className={className} />;
+      case "palette": return <Palette className={className} />;
+      case "sword": return <Sword className={className} />;
+      case "music": return <Music className={className} />;
+      case "star": return <Star className={className} />;
+      case "moon": return <Moon className={className} />;
       default: return <User className={className} />;
     }
   };
@@ -231,12 +386,25 @@ export const BannerManager = () => {
 
           {/* Configuration Editor */}
           <div className="space-y-6">
-             <div className="flex items-center justify-between p-4 rounded-2xl border border-slate-200 bg-slate-50">
-                <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Banner Status</span>
-                <label className="relative inline-flex items-center cursor-pointer">
-                   <input type="checkbox" className="sr-only peer" checked={config.isActive} onChange={(e) => setConfig({...config, isActive: e.target.checked})} />
-                   <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
+             <div className="flex flex-col gap-4 p-4 rounded-2xl border border-slate-200 bg-slate-50">
+                <div className="flex items-center justify-between">
+                   <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Banner Status</span>
+                   <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" className="sr-only peer" checked={config.isActive} onChange={(e) => setConfig({...config, isActive: e.target.checked})} />
+                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                   </label>
+                </div>
+                <div className="h-px bg-slate-200 w-full" />
+                <div className="flex items-center justify-between">
+                   <div className="flex flex-col">
+                      <span className="text-xs font-black text-slate-900 uppercase tracking-widest">App-Wide Theme</span>
+                      <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tight mt-0.5">Apply festive theme colors to app</span>
+                   </div>
+                   <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" className="sr-only peer" checked={!!config.applyAppTheme} onChange={(e) => setConfig({...config, applyAppTheme: e.target.checked})} />
+                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                   </label>
+                </div>
              </div>
 
              {config.template !== "DEFAULT" && (
@@ -356,7 +524,16 @@ export const BannerManager = () => {
                         <div>
                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-white text-[9px] font-black uppercase tracking-widest mb-2 backdrop-blur-md border border-white/30 shadow-sm">
                               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse shadow-[0_0_8px_white]" />
-                              {config.template === "SALE" ? "EXCLUSIVE OFFER" : "SYSTEM NOTICE"}
+                              {config.template === "SALE" ? "EXCLUSIVE OFFER" : 
+                               config.template === "DIWALI" ? "FESTIVE CELEBRATION" :
+                               config.template === "INDEPENDENCE_DAY" || config.template === "REPUBLIC_DAY" ? "PATRIOTIC DAY" :
+                               config.template === "HOLI" ? "FESTIVAL OF COLORS" :
+                               config.template === "RAKHI" ? "RAKSHA BANDHAN" :
+                               config.template === "JANMASHTAMI" ? "JANMASHTAMI UTSAV" :
+                               config.template === "DUSSEHRA" ? "VIJAYADASHAMI" :
+                               config.template === "MUHARRAM" ? "MUHARRAM OBSERVANCE" :
+                               config.template === "EID" ? "EID CELEBRATION" :
+                               "SYSTEM NOTICE"}
                            </div>
                            <h1 className="text-3xl font-black text-white tracking-tight leading-tight drop-shadow-md">{config.title || "Banner Title"}</h1>
                            <p className="text-white/90 text-sm font-bold mt-1 drop-shadow-sm">{config.subtitle || "Banner description goes here."}</p>
