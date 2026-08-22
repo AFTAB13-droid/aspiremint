@@ -806,7 +806,15 @@ export default function RefundsPage() {
                    </button>
 
                    <div className="flex items-center gap-1.5 px-2 py-1 bg-indigo-50/20 rounded-2xl border border-indigo-100/50">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      {(() => {
+                          const rangeSize = 3;
+                          let start = Math.max(1, currentPage - 1);
+                          let end = Math.min(totalPages, start + rangeSize - 1);
+                          if (end - start + 1 < rangeSize) {
+                             start = Math.max(1, end - rangeSize + 1);
+                          }
+                          return Array.from({ length: Math.max(0, end - start + 1) }, (_, i) => start + i);
+                       })().map((page) => (
                        <button
                          key={page}
                          onClick={() => setCurrentPage(page)}
@@ -925,24 +933,32 @@ export default function RefundsPage() {
                  </button>
                  
                  <div className="flex items-center gap-1 px-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`relative min-w-[32px] h-8 rounded-full text-[9px] font-black transition-all duration-500 ${
-                          currentPage === page ? "text-white" : "text-slate-500"
-                        }`}
-                      >
-                        {currentPage === page && (
-                          <motion.div 
-                            layoutId="fixedBottomRefundPill"
-                            className="absolute inset-0 bg-blue-600 rounded-full z-0 shadow-lg shadow-blue-600/40"
-                          />
-                        )}
-                        <span className="relative z-10">{page < 10 ? `0${page}` : page}</span>
-                      </button>
-                    ))}
-                 </div>
+                     {(() => {
+                        const rangeSize = 3;
+                        let start = Math.max(1, currentPage - 1);
+                        let end = Math.min(totalPages, start + rangeSize - 1);
+                        if (end - start + 1 < rangeSize) {
+                           start = Math.max(1, end - rangeSize + 1);
+                        }
+                        return Array.from({ length: Math.max(0, end - start + 1) }, (_, i) => start + i);
+                     })().map((page) => (
+                       <button
+                         key={page}
+                         onClick={() => setCurrentPage(page)}
+                         className={`relative min-w-[32px] h-8 rounded-full text-[9px] font-black transition-all duration-500 ${
+                           currentPage === page ? "text-white" : "text-slate-500"
+                         }`}
+                       >
+                         {currentPage === page && (
+                           <motion.div 
+                             layoutId="fixedBottomRefundPill"
+                             className="absolute inset-0 bg-blue-600 rounded-full z-0 shadow-lg shadow-blue-600/40"
+                           />
+                         )}
+                         <span className="relative z-10">{page < 10 ? `0${page}` : page}</span>
+                       </button>
+                     ))}
+                  </div>
 
                  <button 
                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}

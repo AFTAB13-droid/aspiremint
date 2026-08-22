@@ -449,7 +449,15 @@ export function MobileActiveDeals({
                  </button>
                  
                  <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    {(() => {
+                        const rangeSize = 3;
+                        let start = Math.max(1, currentPage - 1);
+                        let end = Math.min(totalPages, start + rangeSize - 1);
+                        if (end - start + 1 < rangeSize) {
+                           start = Math.max(1, end - rangeSize + 1);
+                        }
+                        return Array.from({ length: Math.max(0, end - start + 1) }, (_, i) => start + i);
+                     })().map((page) => (
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}

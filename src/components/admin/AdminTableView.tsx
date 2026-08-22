@@ -811,7 +811,15 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
           </button>
 
           <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-50/50 rounded-2xl border border-slate-100">
-             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+             {(() => {
+                const rangeSize = 3;
+                let start = Math.max(1, currentPage - 1);
+                let end = Math.min(totalPages, start + rangeSize - 1);
+                if (end - start + 1 < rangeSize) {
+                   start = Math.max(1, end - rangeSize + 1);
+                }
+                return Array.from({ length: Math.max(0, end - start + 1) }, (_, i) => start + i);
+             })().map((page) => (
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
