@@ -7,7 +7,7 @@ import { ActiveDeal } from '@/modules/brand/deal.model';
 import { Brand } from '@/modules/brand/brand.model';
 import { CACHE_KEYS, invalidateDealsCache, getCache, setCache } from '@/lib/redis';
 
-export const parsePayoutValue = (val: any) => {
+const parsePayoutValue = (val: any) => {
   if (val === undefined || val === null || val === "" || String(val).trim().toUpperCase() === "N/A") {
     return "N/A";
   }
