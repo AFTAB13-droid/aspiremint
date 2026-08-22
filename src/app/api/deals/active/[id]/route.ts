@@ -6,6 +6,14 @@ import { ActiveDeal } from '@/modules/brand/deal.model';
 import { Brand } from '@/modules/brand/brand.model';
 import { invalidateDealsCache } from '@/lib/redis';
 
+export const parsePayoutValue = (val: any) => {
+  if (val === undefined || val === null || val === "" || String(val).trim().toUpperCase() === "N/A") {
+    return "N/A";
+  }
+  const num = Number(val);
+  return isNaN(num) ? "N/A" : num;
+};
+
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
@@ -44,22 +52,26 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       }
     }
 
-    let displayPayout = 0;
+    let displayPayout: any = "N/A";
     if (user.role === 'MEDIATOR') {
-      displayPayout = (deal as any).assignedMediators?.find((m: any) => m.mediatorId?.toString() === user.id)?.commission || (deal as any).commission || 0;
+      const medConfig = (deal as any).assignedMediators?.find((m: any) => m.mediatorId?.toString() === user.id);
+      displayPayout = medConfig ? medConfig.commission : (deal as any).commission;
     } else {
-      displayPayout = (deal as any).assignedMediators?.[0]?.commission || (deal as any).commission || 0;
+      displayPayout = (deal as any).assignedMediators?.[0]?.commission;
+      if (displayPayout === undefined || displayPayout === null) displayPayout = (deal as any).commission;
     }
     if (isJuhi) {
-      displayPayout = (deal as any).juhiCommission || 0;
+      displayPayout = (deal as any).juhiCommission;
     }
+
+    if (displayPayout === undefined || displayPayout === null) displayPayout = "N/A";
 
     const sanitizedDeal = {
       ...deal,
       commission: isAdmin ? (deal as any).commission : undefined,
       productImage: (deal as any).productImage || "",
       displayPayout: user.role === 'USER' ? undefined : displayPayout,
-      juhiCommission: (deal as any).juhiCommission || 0
+      juhiCommission: (deal as any).juhiCommission === undefined || (deal as any).juhiCommission === null ? "N/A" : (deal as any).juhiCommission
     };
 
     return NextResponse.json({ success: true, data: sanitizedDeal });
@@ -85,6 +97,22 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     // Handle Granular Stock Updates
     let finalBody: any = { ...body };
+
+    if (body.commission !== undefined) {
+      finalBody.commission = parsePayoutValue(body.commission);
+    }
+    if (body.juhiCommission !== undefined) {
+      finalBody.juhiCommission = parsePayoutValue(body.juhiCommission);
+    }
+    if (body.originalCommission !== undefined) {
+      finalBody.originalCommission = parsePayoutValue(body.originalCommission);
+    }
+    if (body.assignedMediators !== undefined && Array.isArray(body.assignedMediators)) {
+      finalBody.assignedMediators = body.assignedMediators.map((m: any) => ({
+        ...m,
+        commission: parsePayoutValue(m.commission)
+      }));
+    }
     
     if (body.reviewSlots !== undefined || body.ratingSlots !== undefined || body.onlyOrderSlots !== undefined) {
       const newReviewSlots = body.reviewSlots !== undefined ? parseInt(body.reviewSlots) : oldDeal.reviewSlots;
@@ -128,7 +156,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       const currentMediators = JSON.parse(JSON.stringify(oldDeal.assignedMediators));
       finalBody.assignedMediators = currentMediators.map((m: any) => ({
         ...m,
-        commission: body.commission
+        commission: parsePayoutValue(body.commission)
       }));
     }
 

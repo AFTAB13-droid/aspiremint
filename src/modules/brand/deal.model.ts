@@ -29,13 +29,13 @@ export interface IActiveDeal extends Document {
     commission: number;
     isAll?: boolean; // If true, applies to all
   }[];
-  juhiCommission: number; // Specific commission for Juhi
+  juhiCommission: number | string; // Specific commission for Juhi
   productImage?: string; // Optional image URL
   userRemarks?: string; // Notes for users
   mediatorRemarks?: string; // Notes for mediators
   remarks?: string; // Legacy/General notes
-  originalCommission: number; // Baseline commission/less for profit calculation
-  commission: number; // Standard Rate for other mediators
+  originalCommission: number | string; // Baseline commission/less for profit calculation
+  commission: number | string; // Standard Rate for other mediators
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -69,16 +69,16 @@ const ActiveDealSchema = new Schema<IActiveDeal>(
     assignedMediators: [
       {
         mediatorId: { type: Schema.Types.ObjectId, ref: "User" },
-        commission: { type: Number, default: 0 },
+        commission: { type: Schema.Types.Mixed, default: "N/A" },
       }
     ],
-    juhiCommission: { type: Number, default: 0 },
+    juhiCommission: { type: Schema.Types.Mixed, default: "N/A" },
     productImage: { type: String },
     userRemarks: { type: String, default: "" },
     mediatorRemarks: { type: String, default: "" },
     remarks: { type: String, default: "" },
-    originalCommission: { type: Number, default: 0 },
-    commission: { type: Number, default: 0 },
+    originalCommission: { type: Schema.Types.Mixed, default: "N/A" },
+    commission: { type: Schema.Types.Mixed, default: "N/A" },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

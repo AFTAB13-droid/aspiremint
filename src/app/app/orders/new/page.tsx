@@ -519,19 +519,21 @@ export default function NewOrderPage() {
                                      if (mediator) {
                                         handleInputChange({ target: { name: 'mediatorId', value: mediator._id } } as any);
                                         
-                                        // Auto-fill logic for Juhi
-                                        if (mediator.name.toLowerCase().includes("juhi") && (selectedDealDetails?.juhiCommission || 0) !== 0) {
-                                           setFormData(prev => ({ ...prev, lessAmount: selectedDealDetails.juhiCommission.toString() }));
-                                           toast.success(`Allocated Juhi's standard commission: ₹${selectedDealDetails.juhiCommission}`, { icon: "💰" });
-                                        } else {
-                                           // Reset for non-Juhi mediators or if Juhi has no pre-set commission
-                                           setFormData(prev => ({ ...prev, lessAmount: "" }));
-                                           if (mediator.name.toLowerCase().includes("juhi")) {
-                                              toast("Juhi's commission not pre-configured. Enter manually.", { icon: "✍️" });
-                                           } else {
-                                              toast(`Add commission manually for ${mediator.systemDisplayName || mediator.name}`, { icon: "✍️" });
-                                           }
-                                        }
+                                         // Auto-fill logic for Juhi
+                                         const juhiComm = selectedDealDetails?.juhiCommission;
+                                         const isConfigured = juhiComm !== undefined && juhiComm !== null && juhiComm !== "N/A";
+                                         if (mediator.name.toLowerCase().includes("juhi") && isConfigured) {
+                                            setFormData(prev => ({ ...prev, lessAmount: juhiComm.toString() }));
+                                            toast.success(`Allocated Juhi's standard commission: ₹${juhiComm}`, { icon: "💰" });
+                                         } else {
+                                            // Reset for non-Juhi mediators or if Juhi has no pre-set commission
+                                            setFormData(prev => ({ ...prev, lessAmount: "" }));
+                                            if (mediator.name.toLowerCase().includes("juhi")) {
+                                               toast("Juhi's commission not pre-configured. Enter manually.", { icon: "✍️" });
+                                            } else {
+                                               toast(`Add commission manually for ${mediator.systemDisplayName || mediator.name}`, { icon: "✍️" });
+                                            }
+                                         }
                                      }
                                   }}
                                   placeholder="SELECT MEDIATOR SPECIALIST *"

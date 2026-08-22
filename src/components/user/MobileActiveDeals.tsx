@@ -333,20 +333,28 @@ export function MobileActiveDeals({
                   {role !== 'USER' ? (
                     <div className="flex flex-col">
                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Amount</p>
-                      <p className={`text-base font-black tracking-tighter mt-1 ${deal.displayPayout >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                        {deal.displayPayout >= 0 ? '+' : '-'}₹{Math.abs(deal.displayPayout || 0)}
-                      </p>
+                      {deal.displayPayout === "N/A" ? (
+                        <p className="text-xs font-black text-indigo-600 mt-1">N/A</p>
+                      ) : Number(deal.displayPayout) === 0 ? (
+                        <p className="text-xs font-black text-emerald-600 mt-1">Full Refund</p>
+                      ) : (
+                        <p className={`text-base font-black tracking-tighter mt-1 ${Number(deal.displayPayout) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {Number(deal.displayPayout) >= 0 ? '+' : '-'}₹{Math.abs(Number(deal.displayPayout))}
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <div className="flex flex-col">
                       <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest leading-none">Comm./Less</p>
                       <div className="flex items-center gap-1.5 mt-1 bg-indigo-50/50 px-2 py-1 rounded-xl border border-indigo-100 shadow-sm self-start">
                         <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                        {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === 0 ? (
+                        {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === "N/A" ? (
                           <span className="text-xs font-black text-indigo-600">Ask Juhi</span>
+                        ) : Number(deal.juhiCommission) === 0 ? (
+                          <span className="text-xs font-black text-emerald-600">Full Refund</span>
                         ) : (
-                          <span className={`text-xs font-black ${deal.juhiCommission >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                            {deal.juhiCommission >= 0 ? '+' : '-'}₹{Math.abs(deal.juhiCommission)}
+                          <span className={`text-xs font-black ${Number(deal.juhiCommission) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {Number(deal.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(deal.juhiCommission))}
                           </span>
                         )}
                       </div>

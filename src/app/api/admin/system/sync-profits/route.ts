@@ -29,11 +29,11 @@ export async function GET(req: Request) {
 
       let profit = 0;
 
-      const originalRate = dealDoc.originalCommission || 0;
+      const originalRate = dealDoc.originalCommission === "N/A" || dealDoc.originalCommission === undefined || dealDoc.originalCommission === null ? 0 : Number(dealDoc.originalCommission);
 
       if (isJuhi) {
         // JUHI SPECIAL LOGIC: Juhi Rate vs Original Rate
-        const juhiRate = dealDoc.juhiCommission || 0;
+        const juhiRate = dealDoc.juhiCommission === "N/A" || dealDoc.juhiCommission === undefined || dealDoc.juhiCommission === null ? 0 : Number(dealDoc.juhiCommission);
         
         // Logic: If Less (negative), Profit = abs(Original) - abs(Juhi)
         // If Commission (positive), Profit = abs(Juhi) - abs(Original)
@@ -48,8 +48,8 @@ export async function GET(req: Request) {
         const userLess = Number((order.refundDetails as any)?.lessAmount || order.lessAmount || 0);
         const mediatorRate = (() => {
            const config = dealDoc.assignedMediators?.find((m: any) => m.mediatorId?.toString() === order.mediator?.toString());
-           if (config) return config.commission;
-           return dealDoc.commission || 0;
+           const rawComm = config ? config.commission : dealDoc.commission;
+           return rawComm === "N/A" || rawComm === undefined || rawComm === null ? 0 : Number(rawComm);
         })();
 
         // Logic: If Less (negative), Profit = abs(User) - abs(Admin)

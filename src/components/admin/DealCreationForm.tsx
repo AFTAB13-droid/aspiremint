@@ -61,13 +61,13 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
     submittedSlots: 0,
     dealType: "Original",
     reviewType: "REVIEW",
-    commission: 0,
-    juhiCommission: 0,
+    commission: "N/A",
+    juhiCommission: "N/A",
     productImage: "",
     userRemarks: "",
     mediatorRemarks: "",
     remarks: "",
-    originalCommission: 0,
+    originalCommission: "N/A",
   });
 
   const [selectedMediators, setSelectedMediators] = useState<string[]>([]);
@@ -192,16 +192,16 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
         submittedSlots: formData.submittedSlots,
         dealType: formData.dealType,
         reviewType: formData.reviewType,
-        commission: Number(formData.commission) || 0,
-        juhiCommission: Number(formData.juhiCommission) || 0,
+        commission: formData.commission,
+        juhiCommission: formData.juhiCommission,
         productImage: finalImageUrl,
         userRemarks: formData.userRemarks,
         mediatorRemarks: formData.mediatorRemarks,
         remarks: formData.remarks,
-        originalCommission: Number(formData.originalCommission) || 0,
+        originalCommission: formData.originalCommission,
         assignedMediators: selectAllMediators 
-          ? mediators.map(m => ({ mediatorId: m._id, commission: Number(formData.commission) || 0 }))
-          : selectedMediators.map(id => ({ mediatorId: id, commission: Number(formData.commission) || 0 })),
+          ? mediators.map(m => ({ mediatorId: m._id, commission: formData.commission }))
+          : selectedMediators.map(id => ({ mediatorId: id, commission: formData.commission })),
       };
 
       const res = await fetch("/api/deals/active", {
@@ -516,55 +516,121 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
              
              <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative z-10">
                 <div className="space-y-3">
-                   <label className={`text-[10px] font-black uppercase tracking-widest pl-1 ${Number(formData.originalCommission || 0) >= 0 ? "text-blue-400" : "text-rose-400"}`}>
-                     Brand Commission (₹{Number(formData.originalCommission || 0) >= 0 ? "+" : "-"})
+                   <label className={`text-[10px] font-black uppercase tracking-widest pl-1 ${
+                     formData.originalCommission === "N/A" || formData.originalCommission === "" || isNaN(Number(formData.originalCommission)) 
+                       ? "text-slate-400" 
+                       : Number(formData.originalCommission) >= 0 
+                         ? "text-blue-400" 
+                         : "text-rose-400"
+                   }`}>
+                     Brand Commission (₹{
+                       formData.originalCommission === "N/A" || formData.originalCommission === "" || isNaN(Number(formData.originalCommission)) 
+                         ? "N/A" 
+                         : Number(formData.originalCommission) >= 0 
+                           ? "+" 
+                           : "-"
+                     })
                    </label>
                    <div className="relative">
-                      <span className={`absolute left-6 top-1/2 -translate-y-1/2 font-black text-xl ${Number(formData.originalCommission || 0) >= 0 ? "text-blue-500/50" : "text-rose-500/50"}`}>₹</span>
+                      <span className={`absolute left-6 top-1/2 -translate-y-1/2 font-black text-xl ${
+                        formData.originalCommission === "N/A" || formData.originalCommission === "" || isNaN(Number(formData.originalCommission)) 
+                          ? "text-slate-500/50" 
+                          : Number(formData.originalCommission) >= 0 
+                            ? "text-blue-500/50" 
+                            : "text-rose-500/50"
+                      }`}>₹</span>
                       <input 
                         type="text" 
                         placeholder="Admin Baseline..." 
                         value={formData.originalCommission} 
                         onChange={(e) => setFormData({...formData, originalCommission: e.target.value})} 
                         className={`w-full h-[70px] pl-12 pr-6 rounded-2xl border-2 font-black text-xl outline-none transition-all placeholder:text-white/20 shadow-inner ${
-                          Number(formData.originalCommission || 0) >= 0 ? "bg-blue-500/10 border-blue-500/20 focus:bg-blue-500/20 focus:border-blue-400 text-blue-50" : "bg-rose-500/10 border-rose-500/20 focus:bg-rose-500/20 focus:border-rose-400 text-rose-50"
+                          formData.originalCommission === "N/A" || formData.originalCommission === "" || isNaN(Number(formData.originalCommission)) 
+                            ? "bg-slate-500/10 border-slate-500/20 focus:bg-slate-500/20 focus:border-slate-400 text-slate-50"
+                            : Number(formData.originalCommission) >= 0 
+                              ? "bg-blue-500/10 border-blue-500/20 focus:bg-blue-500/20 focus:border-blue-400 text-blue-50" 
+                              : "bg-rose-500/10 border-rose-500/20 focus:bg-rose-500/20 focus:border-rose-400 text-rose-50"
                         }`} 
                       />
                    </div>
                 </div>
 
                 <div className="space-y-3">
-                   <label className={`text-[10px] font-black uppercase tracking-widest pl-1 ${Number(formData.commission || 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                     Mediators Rate (₹{Number(formData.commission || 0) >= 0 ? "+" : "-"})
+                   <label className={`text-[10px] font-black uppercase tracking-widest pl-1 ${
+                     formData.commission === "N/A" || formData.commission === "" || isNaN(Number(formData.commission)) 
+                       ? "text-slate-400" 
+                       : Number(formData.commission) >= 0 
+                         ? "text-emerald-400" 
+                         : "text-rose-400"
+                   }`}>
+                     Mediators Rate (₹{
+                       formData.commission === "N/A" || formData.commission === "" || isNaN(Number(formData.commission)) 
+                         ? "N/A" 
+                         : Number(formData.commission) >= 0 
+                           ? "+" 
+                           : "-"
+                     })
                    </label>
                    <div className="relative">
-                      <span className={`absolute left-6 top-1/2 -translate-y-1/2 font-black text-xl ${Number(formData.commission || 0) >= 0 ? "text-emerald-500/50" : "text-rose-500/50"}`}>₹</span>
+                      <span className={`absolute left-6 top-1/2 -translate-y-1/2 font-black text-xl ${
+                        formData.commission === "N/A" || formData.commission === "" || isNaN(Number(formData.commission)) 
+                          ? "text-slate-500/50" 
+                          : Number(formData.commission) >= 0 
+                            ? "text-emerald-500/50" 
+                            : "text-rose-500/50"
+                      }`}>₹</span>
                       <input 
                         type="text" 
                         placeholder="e.g. 250 or -150" 
                         value={formData.commission} 
                         onChange={(e) => setFormData({...formData, commission: e.target.value})} 
                         className={`w-full h-[70px] pl-12 pr-6 rounded-2xl border-2 font-black text-xl outline-none transition-all placeholder:text-white/20 shadow-inner ${
-                          Number(formData.commission || 0) >= 0 ? "bg-emerald-500/10 border-emerald-500/20 focus:bg-emerald-500/20 focus:border-emerald-400 text-emerald-50" : "bg-rose-500/10 border-rose-500/20 focus:bg-rose-500/20 focus:border-rose-400 text-rose-50"
+                          formData.commission === "N/A" || formData.commission === "" || isNaN(Number(formData.commission)) 
+                            ? "bg-slate-500/10 border-slate-500/20 focus:bg-slate-500/20 focus:border-slate-400 text-slate-50"
+                            : Number(formData.commission) >= 0 
+                              ? "bg-emerald-500/10 border-emerald-500/20 focus:bg-emerald-500/20 focus:border-emerald-400 text-emerald-50" 
+                              : "bg-rose-500/10 border-rose-500/20 focus:bg-rose-500/20 focus:border-rose-400 text-rose-50"
                         }`} 
                       />
                    </div>
                 </div>
 
                 <div className="space-y-3">
-                   <label className={`text-[10px] font-black uppercase tracking-widest pl-1 flex items-center gap-2 ${Number(formData.juhiCommission || 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                     Juhi's Rate {juhiAmId ? `(${juhiAmId})` : ''} (₹{Number(formData.juhiCommission || 0) >= 0 ? "+" : "-"}) 
+                   <label className={`text-[10px] font-black uppercase tracking-widest pl-1 flex items-center gap-2 ${
+                     formData.juhiCommission === "N/A" || formData.juhiCommission === "" || isNaN(Number(formData.juhiCommission)) 
+                       ? "text-slate-400" 
+                       : Number(formData.juhiCommission) >= 0 
+                         ? "text-emerald-400" 
+                         : "text-rose-400"
+                   }`}>
+                     Juhi's Rate {juhiAmId ? `(${juhiAmId})` : ''} (₹{
+                       formData.juhiCommission === "N/A" || formData.juhiCommission === "" || isNaN(Number(formData.juhiCommission)) 
+                         ? "N/A" 
+                         : Number(formData.juhiCommission) >= 0 
+                           ? "+" 
+                           : "-"
+                     })
                      <span className="bg-indigo-500/30 text-white text-[7px] px-2 py-0.5 rounded-full border border-indigo-400/30">ENCRYPTED TIER</span>
                    </label>
                    <div className="relative">
-                      <span className={`absolute left-6 top-1/2 -translate-y-1/2 font-black text-xl ${Number(formData.juhiCommission || 0) >= 0 ? "text-emerald-500/50" : "text-rose-500/50"}`}>₹</span>
+                      <span className={`absolute left-6 top-1/2 -translate-y-1/2 font-black text-xl ${
+                        formData.juhiCommission === "N/A" || formData.juhiCommission === "" || isNaN(Number(formData.juhiCommission)) 
+                          ? "text-slate-500/50" 
+                          : Number(formData.juhiCommission) >= 0 
+                            ? "text-emerald-500/50" 
+                            : "text-rose-500/50"
+                      }`}>₹</span>
                       <input 
                         type="text" 
                         placeholder="e.g. 300 or -100" 
                         value={formData.juhiCommission} 
                         onChange={(e) => setFormData({...formData, juhiCommission: e.target.value})} 
                         className={`w-full h-[70px] pl-12 pr-6 rounded-2xl border-2 font-black text-xl outline-none transition-all placeholder:text-white/20 shadow-inner ${
-                          Number(formData.juhiCommission || 0) >= 0 ? "bg-emerald-500/10 border-emerald-500/20 focus:bg-emerald-500/20 focus:border-emerald-400 text-emerald-50" : "bg-rose-500/10 border-rose-500/20 focus:bg-rose-500/20 focus:border-rose-400 text-rose-50"
+                          formData.juhiCommission === "N/A" || formData.juhiCommission === "" || isNaN(Number(formData.juhiCommission)) 
+                            ? "bg-slate-500/10 border-slate-500/20 focus:bg-slate-500/20 focus:border-slate-400 text-slate-50"
+                            : Number(formData.juhiCommission) >= 0 
+                              ? "bg-emerald-500/10 border-emerald-500/20 focus:bg-emerald-500/20 focus:border-emerald-400 text-emerald-50" 
+                              : "bg-rose-500/10 border-rose-500/20 focus:bg-rose-500/20 focus:border-rose-400 text-rose-50"
                         }`} 
                       />
                    </div>

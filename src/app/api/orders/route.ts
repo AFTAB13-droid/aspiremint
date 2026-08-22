@@ -168,17 +168,17 @@ export async function POST(req: Request) {
         mediatorCommission: (() => {
            const medName = assignedMediator.name?.toLowerCase() || "";
            const isJuhi = medName.includes("juhi");
-           const originalRate = dealDoc.originalCommission || 0;
+           const originalRate = dealDoc.originalCommission === "N/A" || dealDoc.originalCommission === undefined || dealDoc.originalCommission === null ? 0 : Number(dealDoc.originalCommission);
            let profit = 0;
 
            if (isJuhi) {
-              const juhiRate = dealDoc.juhiCommission || 0;
+              const juhiRate = dealDoc.juhiCommission === "N/A" || dealDoc.juhiCommission === undefined || dealDoc.juhiCommission === null ? 0 : Number(dealDoc.juhiCommission);
               return Math.abs(juhiRate);
            } else {
               const mediatorRate = (() => {
                  const config = dealDoc.assignedMediators?.find((m: any) => m.mediatorId?.toString() === finalMediatorId.toString());
-                 if (config) return config.commission;
-                 return dealDoc.commission || 0;
+                 const rawComm = config ? config.commission : dealDoc.commission;
+                 return rawComm === "N/A" || rawComm === undefined || rawComm === null ? 0 : Number(rawComm);
               })();
               
               const userLess = Number(lessAmount || 0);
@@ -188,16 +188,19 @@ export async function POST(req: Request) {
            return profit;
         })(),
         adminProfit: (() => {
-            const originalRate = dealDoc.originalCommission || 0;
+            const originalRate = dealDoc.originalCommission === "N/A" || dealDoc.originalCommission === undefined || dealDoc.originalCommission === null ? 0 : Number(dealDoc.originalCommission);
             const medName = assignedMediator.name?.toLowerCase() || "";
             const isJuhi = medName.includes("juhi");
             
-            const mediatorRate = isJuhi 
-               ? (dealDoc.juhiCommission || 0)
-               : (() => {
-                  const config = dealDoc.assignedMediators?.find((m: any) => m.mediatorId?.toString() === finalMediatorId.toString());
-                  return config ? config.commission : (dealDoc.commission || 0);
-               })();
+            const mediatorRate = (() => {
+               const rawComm = isJuhi 
+                  ? dealDoc.juhiCommission
+                  : (() => {
+                     const config = dealDoc.assignedMediators?.find((m: any) => m.mediatorId?.toString() === finalMediatorId.toString());
+                     return config ? config.commission : dealDoc.commission;
+                  })();
+               return rawComm === "N/A" || rawComm === undefined || rawComm === null ? 0 : Number(rawComm);
+            })();
 
             // SUM ONLY if originalRate is positive and mediatorRate is negative
             if (originalRate > 0 && mediatorRate < 0) {

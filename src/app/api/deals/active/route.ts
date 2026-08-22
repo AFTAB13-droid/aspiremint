@@ -7,6 +7,14 @@ import { ActiveDeal } from '@/modules/brand/deal.model';
 import { Brand } from '@/modules/brand/brand.model';
 import { CACHE_KEYS, invalidateDealsCache, getCache, setCache } from '@/lib/redis';
 
+export const parsePayoutValue = (val: any) => {
+  if (val === undefined || val === null || val === "" || String(val).trim().toUpperCase() === "N/A") {
+    return "N/A";
+  }
+  const num = Number(val);
+  return isNaN(num) ? "N/A" : num;
+};
+
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -68,16 +76,21 @@ export async function GET(req: Request) {
         return true;
       })
       .map((deal: any) => {
-        let displayPayout = 0;
+        let displayPayout: any = "N/A";
         if (user.role === 'MEDIATOR') {
-          displayPayout = deal.assignedMediators?.find((m: any) => m.mediatorId?.toString() === user.id)?.commission || deal.commission || 0;
+          const medConfig = deal.assignedMediators?.find((m: any) => m.mediatorId?.toString() === user.id);
+          displayPayout = medConfig ? medConfig.commission : deal.commission;
         } else {
-          displayPayout = deal.assignedMediators?.[0]?.commission || deal.commission || 0;
+          displayPayout = deal.assignedMediators?.[0]?.commission;
+          if (displayPayout === undefined || displayPayout === null) displayPayout = deal.commission;
         }
         
         if (isJuhi) {
-          displayPayout = deal.juhiCommission || 0;
+          displayPayout = deal.juhiCommission;
         }
+
+        // Keep raw values or default to N/A
+        if (displayPayout === undefined || displayPayout === null) displayPayout = "N/A";
         
         // Final object depends on role
         return { 
@@ -86,7 +99,7 @@ export async function GET(req: Request) {
           productImage: deal.productImage || "",
           displayPayout: user.role === 'USER' ? undefined : displayPayout,
           // Always include juhiCommission to enable mediator auto-filling in the order form
-          juhiCommission: deal.juhiCommission || 0
+          juhiCommission: deal.juhiCommission === undefined || deal.juhiCommission === null ? "N/A" : deal.juhiCommission
         };
       });
 
@@ -165,6 +178,17 @@ export async function POST(req: Request) {
 
     if (!isUnique) return NextResponse.json({ success: false, message: 'Failed to generate unique product code. Please try again.' }, { status: 500 });
 
+    const parsedJuhi = parsePayoutValue(juhiCommission);
+    const parsedCommission = parsePayoutValue(body.commission);
+    const parsedOriginal = parsePayoutValue(body.originalCommission);
+
+    const parsedAssignedMediators = Array.isArray(assignedMediators)
+      ? assignedMediators.map((m: any) => ({
+          mediatorId: m.mediatorId,
+          commission: parsePayoutValue(m.commission)
+        }))
+      : [];
+
     // 3. Create the Active Deal
     const deal = await ActiveDeal.create({
       brandName,
@@ -184,10 +208,10 @@ export async function POST(req: Request) {
       remainingSubmitted: subSlots,
       dealType,
       reviewType,
-      assignedMediators,
-      juhiCommission: juhiCommission || 0,
-      commission: body.commission || 0,
-      originalCommission: body.originalCommission || 0,
+      assignedMediators: parsedAssignedMediators,
+      juhiCommission: parsedJuhi,
+      commission: parsedCommission,
+      originalCommission: parsedOriginal,
       productImage,
       userRemarks,
       mediatorRemarks,

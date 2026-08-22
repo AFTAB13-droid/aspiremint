@@ -211,14 +211,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
               
               const medName = assignedMediator.name?.toLowerCase() || "";
               const isJuhi = medName.includes("juhi");
-              const originalRate = dealDoc.originalCommission || 0;
+              const originalRate = dealDoc.originalCommission === "N/A" || dealDoc.originalCommission === undefined || dealDoc.originalCommission === null ? 0 : Number(dealDoc.originalCommission);
               
-              const mediatorRate = isJuhi 
-                ? (dealDoc.juhiCommission || 0)
-                : (() => {
-                   const config = dealDoc.assignedMediators?.find((m: any) => m.mediatorId?.toString() === order.mediator?.toString());
-                   return config ? config.commission : (dealDoc.commission || 0);
-                })();
+              const mediatorRate = (() => {
+                 const rawComm = isJuhi 
+                   ? dealDoc.juhiCommission
+                   : (() => {
+                      const config = dealDoc.assignedMediators?.find((m: any) => m.mediatorId?.toString() === order.mediator?.toString());
+                      return config ? config.commission : dealDoc.commission;
+                   })();
+                 return rawComm === "N/A" || rawComm === undefined || rawComm === null ? 0 : Number(rawComm);
+              })();
 
               // Admin Profit Recalculation
               if (originalRate > 0 && mediatorRate < 0) {
@@ -283,18 +286,21 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
                   
                   const medName = mediator?.name?.toLowerCase() || "";
                   const isJuhi = medName.includes("juhi");
-                  const originalRate = dealDoc.originalCommission || 0;
+                  const originalRate = dealDoc.originalCommission === "N/A" || dealDoc.originalCommission === undefined || dealDoc.originalCommission === null ? 0 : Number(dealDoc.originalCommission);
                   
-                  const mediatorRate = isJuhi 
-                     ? (dealDoc.juhiCommission || 0)
-                     : (() => {
-                      const config = dealDoc.assignedMediators?.find((m: any) => {
-                         const mId = m.mediatorId?._id?.toString() || m.mediatorId?.toString();
-                         const oMedId = order.mediator?._id?.toString() || order.mediator?.toString();
-                         return mId === oMedId;
-                      });
-                      return config ? config.commission : (dealDoc.commission || 0);
-                     })();
+                  const mediatorRate = (() => {
+                     const rawComm = isJuhi 
+                        ? dealDoc.juhiCommission
+                        : (() => {
+                         const config = dealDoc.assignedMediators?.find((m: any) => {
+                            const mId = m.mediatorId?._id?.toString() || m.mediatorId?.toString();
+                            const oMedId = order.mediator?._id?.toString() || order.mediator?.toString();
+                            return mId === oMedId;
+                         });
+                         return config ? config.commission : dealDoc.commission;
+                        })();
+                     return rawComm === "N/A" || rawComm === undefined || rawComm === null ? 0 : Number(rawComm);
+                  })();
 
                   // NEW UNIFIED ADMIN PROFIT LOGIC
                   let calculatedAdminProfit = 0;

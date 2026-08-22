@@ -503,11 +503,13 @@ export default function MobileBuyerDashboard({
                            <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Comm/Less</p>
                            <div className="flex items-center gap-1 bg-indigo-50/50 px-1.5 py-0.5 rounded border border-indigo-100 shadow-xs">
                               <span className="h-1 w-1 rounded-full bg-indigo-500 animate-pulse" />
-                              {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === 0 ? (
+                              {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === "N/A" ? (
                                  <span className="text-[9px] font-black text-indigo-600">Ask Juhi</span>
+                              ) : Number(deal.juhiCommission) === 0 ? (
+                                 <span className="text-[9px] font-black text-emerald-600">Full Refund</span>
                               ) : (
-                                 <span className={`text-[9px] font-black ${deal.juhiCommission >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                    {deal.juhiCommission >= 0 ? '+' : '-'}₹{Math.abs(deal.juhiCommission)}
+                                 <span className={`text-[9px] font-black ${Number(deal.juhiCommission) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                    {Number(deal.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(deal.juhiCommission))}
                                  </span>
                               )}
                            </div>

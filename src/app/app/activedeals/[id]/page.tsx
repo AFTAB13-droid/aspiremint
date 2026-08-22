@@ -473,11 +473,13 @@ export default function SingleDealDetailPage() {
               </div>
               <div className="text-right bg-white px-4 py-2 rounded-2xl border border-indigo-100 shadow-sm relative z-10 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
-                {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === 0 ? (
+                {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === "N/A" ? (
                   <span className="text-sm font-black text-indigo-600">Ask Juhi</span>
+                ) : Number(deal.juhiCommission) === 0 ? (
+                  <span className="text-sm font-black text-emerald-600">Full Refund</span>
                 ) : (
-                  <span className={`text-base font-black ${deal.juhiCommission >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {deal.juhiCommission >= 0 ? '+' : '-'}₹{Math.abs(deal.juhiCommission)}
+                  <span className={`text-base font-black ${Number(deal.juhiCommission) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {Number(deal.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(deal.juhiCommission))}
                   </span>
                 )}
               </div>
