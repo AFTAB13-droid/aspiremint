@@ -458,38 +458,7 @@ export function ActiveDealsTable({
                       )}
                    </div>
                 </td>
-                {role !== 'USER' ? (
-                  <td className="px-6 py-6 text-center">
-                     {deal.displayPayout !== undefined && deal.displayPayout !== null ? (
-                        <div className="flex flex-col items-center">
-                           <div className="flex items-center gap-1.5">
-                              {deal.displayPayout === "N/A" ? (
-                                 <span className="text-[11px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100">N/A</span>
-                              ) : Number(deal.displayPayout) === 0 ? (
-                                 <span className="text-[11px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">Full Refund</span>
-                              ) : (
-                                 <span className={`text-[11px] font-black transition-colors ${Number(deal.displayPayout) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                   {Number(deal.displayPayout) >= 0 ? '+' : '-'}₹{Math.abs(Number(deal.displayPayout))}
-                                 </span>
-                              )}
-                           </div>
-                           <div className="flex flex-col items-center mt-1">
-                              <span className="text-[8px] font-black uppercase tracking-wider text-slate-400">
-                                 {deal.displayPayout === "N/A" ? 'Unconfigured' : Number(deal.displayPayout) === 0 ? 'Full Refund' : Number(deal.displayPayout) >= 0 ? 'Price + Comm.' : 'Price - Less'}
-                              </span>
-                              {role === 'ADMIN' && deal.juhiCommission !== undefined && (
-                                 <span className="text-[7px] font-bold text-indigo-400 uppercase mt-0.5 px-1.5 py-0.5 bg-indigo-50 rounded-md">
-                                    Juhi's Less: {deal.juhiCommission === "N/A" || deal.juhiCommission === null ? "Ask Juhi" : Number(deal.juhiCommission) === 0 ? "Full Refund" : `₹${deal.juhiCommission}`}
-                                 </span>
-                              )}
-                           </div>
-                        </div>
-                     ) : (
-                        <span className="text-[10px] font-black text-slate-200 uppercase tracking-widest italic">Protected</span>
-                     )}
-                  </td>
-                ) : (
-                  <td className="px-6 py-6 text-center">
+                <td className="px-6 py-6 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <div className="flex items-center gap-1.5 bg-indigo-50/50 px-3 py-1.5 rounded-2xl border border-indigo-100 shadow-sm relative overflow-hidden group">
                         <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-pulse" />
@@ -504,8 +473,7 @@ export function ActiveDealsTable({
                         )}
                       </div>
                     </div>
-                  </td>
-                )}
+                </td>
                 <td className="px-6 py-6 text-center">
                    {deal.productLink ? (
                       <div className="flex flex-col items-center gap-1">
