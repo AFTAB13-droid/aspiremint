@@ -237,7 +237,7 @@ export function ActiveDealsTable({
               {role !== 'USER' ? (
                 <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Amount</th>
               ) : (
-                <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Juhi's Commission/Less</th>
+                <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Commission/Less</th>
               )}
               <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Product Link</th>
               {!isAdm && <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Remarks</th>}

@@ -339,7 +339,7 @@ export function MobileActiveDeals({
                     </div>
                   ) : (
                     <div className="flex flex-col">
-                      <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest leading-none">Juhi's Comm./Less</p>
+                      <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest leading-none">Comm./Less</p>
                       <div className="flex items-center gap-1.5 mt-1 bg-indigo-50/50 px-2 py-1 rounded-xl border border-indigo-100 shadow-sm self-start">
                         <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
                         {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === 0 ? (
