@@ -38,6 +38,37 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
   const [dateFilter, setDateFilter] = useState("");
   const [sortBy, setSortBy] = useState("Most Recent");
   
+  const [statusFilter, setStatusFilter] = useState("All Statuses");
+  const [orderToEdit, setOrderToEdit] = useState<any | null>(null);
+  const [showEditOrderModal, setShowEditOrderModal] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    userOrderId: "",
+    reviewName: "",
+    amount: "",
+    lessAmount: "",
+    productCode: "",
+    brandName: ""
+  });
+
+  const statusFilterMap = useMemo(() => ({
+    "All Statuses": "All Statuses",
+    "Refund Form Pending": "REFUND_FORM_PENDING",
+    "Under Verification": "UNDER_VERIFICATION",
+    "Refund Form Submitted": "REFUND_FORM_SUBMITTED",
+    "Refund Approved": "REFUND_APPROVED",
+    "Refund Rejected": "REFUND_REJECTED",
+    "Pending Approval": "PENDING_APPROVAL",
+    "Approved": "APPROVED",
+    "Active Escrow": "ACTIVE_ESCROW",
+    "Escrow Payment Pending": "ESCROW_PAYMENT_PENDING",
+    "Completed": "COMPLETED",
+    "Refunded": "REFUNDED",
+    "Cancelled": "CANCELLED",
+    "Rejected": "REJECTED",
+    "Dispute Raised": "DISPUTE_RAISED"
+  } as { [key: string]: string }), []);
+  const statusOptions = useMemo(() => Object.keys(statusFilterMap), [statusFilterMap]);
+  
   // States for Modals and Actions
   const [mediators, setMediators] = useState<any[]>([]);
   const [reassignOrderId, setReassignOrderId] = useState<string | null>(null);
@@ -263,6 +294,40 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
     finally { setIsUpdating(false); }
   };
 
+  const handleEditOrderSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orderToEdit) return;
+    const loadingId = toast.loading("Saving changes...");
+    setIsUpdating(true);
+    try {
+      const res = await fetch(`/api/orders/${orderToEdit._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          isGlobalEdit: true,
+          userOrderId: editFormData.userOrderId,
+          reviewName: editFormData.reviewName,
+          amount: Number(editFormData.amount),
+          lessAmount: Number(editFormData.lessAmount),
+          productCode: editFormData.productCode,
+          brandName: editFormData.brandName
+        })
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success("Order updated successfully", { id: loadingId });
+        setShowEditOrderModal(false);
+        window.location.reload();
+      } else {
+        throw new Error(json.message);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update order", { id: loadingId });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'REFUND_FORM_PENDING': return 'bg-amber-100/50 text-amber-700 border-amber-200';
@@ -324,7 +389,9 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
          const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
          matchesDate = orderDate === dateFilter;
       }
-      return matchesSearch && matchesBrand && matchesPlatform && matchesDate;
+      const targetStatus = statusFilterMap[statusFilter];
+      const matchesStatus = statusFilter === "All Statuses" || order.status === targetStatus;
+      return matchesSearch && matchesBrand && matchesPlatform && matchesDate && matchesStatus;
     });
     if (sortBy === "Most Recent") {
        result = [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -332,7 +399,7 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
        result = [...result].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     }
     return result;
-  }, [orders, searchQuery, brandFilter, platformFilter, dateFilter, sortBy]);
+  }, [orders, searchQuery, brandFilter, platformFilter, dateFilter, sortBy, statusFilter, statusFilterMap]);
 
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
   const paginatedOrders = useMemo(() => {
@@ -348,8 +415,8 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-[32px] p-5 shadow-sm border border-slate-100 flex flex-col gap-4">
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
-           <div className="relative col-span-1 md:col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4 items-center">
+           <div className="relative col-span-1 sm:col-span-2">
               <input 
                 type="text" 
                 placeholder="Search Buyer, ID or Brand..." 
@@ -361,6 +428,7 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
            </div>
             <CustomDropdown options={uniqueBrands} value={brandFilter} onChange={setBrandFilter} placeholder="All Brands" />
             <CustomDropdown options={["All Platforms", ...marketplaces.map(m => m.name)].concat(marketplaces.length === 0 ? ["Amazon", "Flipkart", "Meesho", "Snapdeal", "Myntra", "Shopsy", "Nykaa", "Blinkit"] : [])} value={platformFilter} onChange={setPlatformFilter} placeholder="All Platforms" />
+            <CustomDropdown options={statusOptions} value={statusFilter} onChange={setStatusFilter} placeholder="All Statuses" />
             <div className="relative col-span-1">
                <input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-[10px] font-bold uppercase tracking-widest outline-none focus:bg-white focus:shadow-md transition-all custom-date-input" />
                <svg className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -720,6 +788,26 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
                        <button onClick={() => onViewDetails(order._id)} className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-all border border-slate-200/50" title="View Details">
                           <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                        </button>
+                       {hasManagementAccess && (
+                          <button 
+                             onClick={() => {
+                               setOrderToEdit(order);
+                               setEditFormData({
+                                 userOrderId: order.userOrderId || "",
+                                 reviewName: order.reviewName || "",
+                                 amount: String(order.amount || ""),
+                                 lessAmount: String(order.lessAmount || ""),
+                                 productCode: order.productCode || "",
+                                 brandName: order.brandName || ""
+                               });
+                               setShowEditOrderModal(true);
+                             }}
+                             className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 hover:text-indigo-600 transition-all border border-slate-200/50" 
+                             title="Edit Order Details"
+                          >
+                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                          </button>
+                       )}
                        {hasManagementAccess && order.status === 'UNDER_VERIFICATION' && (
                           <button 
                              onClick={() => { setActionConfirmOrderId(order._id); setIsRejecting(false); setRejectionNote(""); }}
@@ -1325,6 +1413,128 @@ export function AdminTableView({ orders, onViewDetails, activeTab }: AdminTableV
                </motion.div>
             </div>
          )}
+      </AnimatePresence>
+
+      {/* Edit Order Details Modal */}
+      <AnimatePresence>
+        {showEditOrderModal && orderToEdit && (
+          <div className="fixed inset-0 z-[250] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-6">
+            <motion.div 
+               initial={{ scale: 0.9, opacity: 0, y: 20 }}
+               animate={{ scale: 1, opacity: 1, y: 0 }}
+               exit={{ scale: 0.9, opacity: 0, y: 20 }}
+               className="w-full max-w-xl bg-white rounded-[40px] p-10 shadow-3xl relative overflow-hidden"
+            >
+               <div className="absolute top-0 right-0 h-40 w-40 bg-indigo-500/10 blur-[80px] rounded-full -mr-20 -mt-20" />
+               
+               <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-6">
+                     <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center border border-indigo-100 shadow-sm">
+                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                        </div>
+                        <div>
+                           <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Edit Order Details</h3>
+                           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Ref: {orderToEdit.aspireOrderId}</p>
+                        </div>
+                     </div>
+                     <button onClick={() => { setShowEditOrderModal(false); setOrderToEdit(null); }} className="h-9 w-9 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center hover:bg-slate-100 transition-all">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                     </button>
+                  </div>
+
+                  <form onSubmit={handleEditOrderSubmit} className="space-y-4">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                           <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block ml-1">Order ID</label>
+                           <input 
+                              type="text"
+                              value={editFormData.userOrderId}
+                              onChange={(e) => setEditFormData({ ...editFormData, userOrderId: e.target.value })}
+                              placeholder="Merchant/User Order ID"
+                              className="w-full h-11 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-semibold outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all"
+                              required
+                           />
+                        </div>
+                        <div>
+                           <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block ml-1">Reviewer Name</label>
+                           <input 
+                              type="text"
+                              value={editFormData.reviewName}
+                              onChange={(e) => setEditFormData({ ...editFormData, reviewName: e.target.value })}
+                              placeholder="Amazon Profile Name"
+                              className="w-full h-11 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-semibold outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all"
+                           />
+                        </div>
+                        <div>
+                           <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block ml-1">Order Amount (₹)</label>
+                           <input 
+                              type="number"
+                              step="any"
+                              value={editFormData.amount}
+                              onChange={(e) => setEditFormData({ ...editFormData, amount: e.target.value })}
+                              placeholder="Order total value"
+                              className="w-full h-11 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-semibold outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all"
+                              required
+                           />
+                        </div>
+                        <div>
+                           <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block ml-1">Less Amount (₹)</label>
+                           <input 
+                              type="number"
+                              step="any"
+                              value={editFormData.lessAmount}
+                              onChange={(e) => setEditFormData({ ...editFormData, lessAmount: e.target.value })}
+                              placeholder="User/Admin discount less"
+                              className="w-full h-11 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-semibold outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all"
+                              required
+                           />
+                        </div>
+                        <div>
+                           <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block ml-1">Product Code</label>
+                           <input 
+                              type="text"
+                              value={editFormData.productCode}
+                              onChange={(e) => setEditFormData({ ...editFormData, productCode: e.target.value })}
+                              placeholder="Product ASIN/Code"
+                              className="w-full h-11 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-semibold outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all"
+                              required
+                           />
+                        </div>
+                        <div>
+                           <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block ml-1">Brand Name</label>
+                           <input 
+                              type="text"
+                              value={editFormData.brandName}
+                              onChange={(e) => setEditFormData({ ...editFormData, brandName: e.target.value })}
+                              placeholder="Brand code or name"
+                              className="w-full h-11 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-semibold outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all"
+                              required
+                           />
+                        </div>
+                     </div>
+
+                     <div className="pt-4 border-t border-slate-100 flex gap-3">
+                        <button 
+                           type="button"
+                           onClick={() => { setShowEditOrderModal(false); setOrderToEdit(null); }}
+                           className="flex-1 h-12 bg-slate-100 text-slate-500 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all"
+                        >
+                           Discard
+                        </button>
+                        <button 
+                           type="submit"
+                           disabled={isUpdating}
+                           className="flex-[2] h-12 bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50"
+                        >
+                           {isUpdating ? "Saving Changes..." : "Save Order Parameters"}
+                        </button>
+                     </div>
+                  </form>
+               </div>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
     </div>
   );

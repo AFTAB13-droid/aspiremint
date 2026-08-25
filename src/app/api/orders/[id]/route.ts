@@ -251,6 +251,98 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       }
       // ------------------------------------------------------
 
+      // --- ADMIN GLOBAL ORDER EDIT WORKFLOW ---
+      if ((role === "ADMIN" || role === "SUBADMIN") && body.isGlobalEdit) {
+         const changes: string[] = [];
+         
+         if (body.userOrderId !== undefined && body.userOrderId !== order.userOrderId) {
+            changes.push(`Order ID: "${order.userOrderId || 'N/A'}" ➔ "${body.userOrderId}"`);
+            updatePayload.userOrderId = body.userOrderId;
+         }
+         if (body.reviewName !== undefined && body.reviewName !== order.reviewName) {
+            changes.push(`Reviewer Name: "${order.reviewName || 'N/A'}" ➔ "${body.reviewName}"`);
+            updatePayload.reviewName = body.reviewName;
+         }
+         if (body.amount !== undefined && Number(body.amount) !== order.amount) {
+            changes.push(`Amount: ₹${order.amount || 0} ➔ ₹${body.amount}`);
+            updatePayload.amount = Number(body.amount);
+         }
+         if (body.lessAmount !== undefined && Number(body.lessAmount) !== order.lessAmount) {
+            changes.push(`Less Amount: -₹${order.lessAmount || 0} ➔ -₹${body.lessAmount}`);
+            updatePayload.lessAmount = Number(body.lessAmount);
+         }
+         if (body.productCode !== undefined && body.productCode !== order.productCode) {
+            changes.push(`Product Code: "${order.productCode || 'N/A'}" ➔ "${body.productCode}"`);
+            updatePayload.productCode = body.productCode;
+         }
+         if (body.brandName !== undefined && body.brandName !== order.brandName) {
+            changes.push(`Brand Name: "${order.brandName || 'N/A'}" ➔ "${body.brandName}"`);
+            updatePayload.brandName = body.brandName;
+         }
+
+         if (changes.length > 0) {
+            // Update expected payout
+            const finalAmount = body.amount !== undefined ? Number(body.amount) : (order.amount || 0);
+            const finalLess = body.lessAmount !== undefined ? Number(body.lessAmount) : (order.lessAmount || 0);
+            updatePayload["refundDetails.expectedPayout"] = finalAmount + finalLess;
+
+            // Recalculate Profit & Commission using active deal rates
+            const finalProductCode = body.productCode !== undefined ? body.productCode : order.productCode;
+            const dealDoc = await ActiveDeal.findOne({ productCode: finalProductCode }).session(mongoSession);
+            if (dealDoc) {
+                const mediator = await (await import('@/modules/user/user.model')).User.findById(order.mediator).session(mongoSession);
+                const assignedMediator = mediator || { name: "Specialist" };
+                const medName = assignedMediator.name?.toLowerCase() || "";
+                const isJuhi = medName.includes("juhi");
+                const originalRate = dealDoc.originalCommission === "N/A" || dealDoc.originalCommission === undefined || dealDoc.originalCommission === null ? 0 : Number(dealDoc.originalCommission);
+                
+                const mediatorRate = (() => {
+                   const rawComm = isJuhi 
+                      ? dealDoc.juhiCommission
+                      : (() => {
+                         const config = dealDoc.assignedMediators?.find((m: any) => m.mediatorId?.toString() === order.mediator?.toString());
+                         return config ? config.commission : dealDoc.commission;
+                      })();
+                   return rawComm === "N/A" || rawComm === undefined || rawComm === null ? 0 : Number(rawComm);
+                })();
+
+                let calculatedAdminProfit = 0;
+                if (originalRate > 0 && mediatorRate < 0) {
+                   calculatedAdminProfit = Math.abs(originalRate) + Math.abs(mediatorRate);
+                } else {
+                   calculatedAdminProfit = Math.abs(Math.abs(originalRate) - Math.abs(mediatorRate));
+                }
+                updatePayload.adminProfit = calculatedAdminProfit;
+
+                if (isJuhi) {
+                   updatePayload.mediatorCommission = Math.abs(mediatorRate);
+                } else {
+                   updatePayload.mediatorCommission = Math.abs(Math.abs(finalLess) - Math.abs(mediatorRate));
+                }
+            }
+
+            // Create notification for the buyer
+            await Notification.create([{
+               recipient: order.buyer,
+               type: NotificationType.ORDER_STATUS_CHANGED,
+               title: "Order Details Updated",
+               message: `Your order details for ${order.aspireOrderId} (${updatePayload.brandName || order.brandName}) have been updated: ${changes.join("; ")}.`,
+               metadata: { orderId: order.aspireOrderId, brand: updatePayload.brandName || order.brandName }
+            }], { session: mongoSession });
+
+            // Create activity item
+            const activity = {
+               action: "ORDER_DETAILS_EDITED",
+               message: `Order details updated by administration: ${changes.join("; ")}.`,
+               performedBy: session.user.id,
+               performedByName: role === "SUBADMIN" ? `SubAdmin ${session.user.name}` : session.user.name,
+               timestamp: new Date()
+            };
+            if (!updatePayload.$push) updatePayload.$push = {};
+            updatePayload.$push.activities = activity;
+         }
+      }
+
       else if (role === "USER") {
         const orderBuyerId = order.buyer?._id?.toString() || order.buyer?.toString();
         if (orderBuyerId !== session.user.id) {
