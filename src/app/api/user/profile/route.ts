@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { User } from '@/modules/user/user.model';
+import { Order } from '@/modules/order/order.model';
 import connectToDatabase from '@/lib/db';
 import { getOtp, deleteOtp } from '@/services/otpService';
 
@@ -19,7 +20,18 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: user });
+    const userObj = user.toObject() as any;
+    if (user.isTerminated) {
+      const totalOrdersCount = await Order.countDocuments({ buyer: user._id });
+      const cancelledOrdersCount = await Order.countDocuments({ buyer: user._id, status: 'CANCELLED' });
+      userObj.cancellationStats = {
+        totalOrders: totalOrdersCount,
+        cancelledOrders: cancelledOrdersCount,
+        cancelRate: totalOrdersCount > 0 ? (cancelledOrdersCount / totalOrdersCount) * 100 : 0
+      };
+    }
+
+    return NextResponse.json({ success: true, data: userObj });
   } catch (error) {
     console.error('Profile API GET Error:', error);
     return NextResponse.json({ success: false, message: 'Internal Server Error' }, { status: 500 });

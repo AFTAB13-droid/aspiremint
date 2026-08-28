@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { usePathname, redirect } from "next/navigation";
+import Link from "next/link";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { OnboardingModal } from "@/components/common/OnboardingModal";
@@ -78,6 +79,7 @@ export default function DashboardLayout({
         setMobileOpen={setMobileOpen} 
         isCollapsed={isDesktopCollapsed}
         setCollapsed={setDesktopCollapsed}
+        isBanned={!!profileData?.isTerminated}
       />
       
       {/* Main Content Area */}
@@ -137,6 +139,60 @@ export default function DashboardLayout({
           </div>
         </main>
       </div>
+
+      {profileData?.isTerminated && !(pathname === "/app/settings" || pathname === "/app/support") && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4">
+          <div className="bg-white rounded-[40px] w-full max-w-xl p-8 lg:p-10 border border-slate-100 shadow-2xl relative overflow-hidden text-center flex flex-col items-center">
+            {/* Background design accents */}
+            <div className="absolute top-0 left-0 w-32 h-32 bg-rose-500/5 blur-2xl rounded-full" />
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-red-500/5 blur-2xl rounded-full" />
+
+            {/* Warning Icon */}
+            <div className="h-20 w-20 rounded-[28px] bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 mb-6 animate-pulse">
+              <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+
+            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-4">Account Suspended</h2>
+            
+            <div className="bg-slate-50 border border-slate-100 rounded-[24px] p-6 w-full text-slate-600 font-bold text-sm mb-8 leading-relaxed">
+              {profileData?.banReason === 'CANCELLATION' || !profileData?.banReason ? (
+                <span>
+                  You have been banned due to your{" "}
+                  <span className="text-rose-600 font-black">
+                    {profileData?.cancellationStats?.cancelRate?.toFixed(1) || "0.0"}%
+                  </span>{" "}
+                  cancellation rate and{" "}
+                  <span className="text-rose-600 font-black">
+                    {profileData?.cancellationStats?.cancelledOrders || 0}
+                  </span>{" "}
+                  cancelled orders. Please contact the administration team.
+                </span>
+              ) : (
+                <span>
+                  {profileData?.banCustomNote || "Your account has been suspended by the administration team."}
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full">
+              <Link href="/app/support" className="w-full">
+                <button className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2">
+                  <span>Contact Admin</span>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                </button>
+              </Link>
+              <button 
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                className="w-full h-14 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

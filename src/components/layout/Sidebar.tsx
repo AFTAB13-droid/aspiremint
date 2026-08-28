@@ -215,6 +215,7 @@ interface SidebarProps {
   setMobileOpen: (open: boolean) => void;
   isCollapsed?: boolean;
   setCollapsed?: (collapsed: boolean) => void;
+  isBanned?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -222,7 +223,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isMobileOpen,
   setMobileOpen,
   isCollapsed = false,
-  setCollapsed
+  setCollapsed,
+  isBanned = false
 }) => {
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -239,7 +241,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }, [isMobileOpen]);
 
   // Filter links by user role
-  const filteredLinks = navLinks.filter(link => link.roles.includes(userRole));
+  let filteredLinks = navLinks.filter(link => link.roles.includes(userRole));
+  if (isBanned) {
+    filteredLinks = filteredLinks.filter(link => ["Support", "Support Hub"].includes(link.name));
+  }
   const isAdm = userRole === "ADMIN";
 
   // Group links for mobile "App-like" sections

@@ -32,6 +32,52 @@ export default function AnalyticsPage() {
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<any>(null);
 
+  // Ban Modal States
+  const [banModalOpen, setBanModalOpen] = useState(false);
+  const [banUserId, setBanUserId] = useState<string | null>(null);
+  const [banReasonType, setBanReasonType] = useState<'CANCELLATION' | 'CUSTOM'>('CANCELLATION');
+  const [banCustomNote, setBanCustomNote] = useState('');
+
+  // User Search States
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+
+  // Debounced search for users
+  useEffect(() => {
+    if (!userSearchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const delayDebounce = setTimeout(async () => {
+      setIsSearchingUsers(true);
+      try {
+        const res = await fetch(`/api/users?limit=10&search=${encodeURIComponent(userSearchQuery)}`);
+        const json = await res.json();
+        if (json.success && json.data) {
+          const mapped = json.data.map((u: any) => {
+            return {
+              _id: u._id,
+              name: u.name,
+              totalOrders: u.totalCompletedOrders || 0,
+              cancelRate: 0, 
+              risk: u.isTerminated ? 'BANNED' : 'NORMAL',
+              isTerminated: u.isTerminated || false,
+              aspireMintId: u.aspireMintId
+            };
+          });
+          setSearchResults(mapped);
+        }
+      } catch (err) {
+        console.error("Search failed:", err);
+      } finally {
+        setIsSearchingUsers(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(delayDebounce);
+  }, [userSearchQuery]);
+
   const months = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
@@ -105,13 +151,39 @@ export default function AnalyticsPage() {
     }, 1500);
   };
 
-  const handleUserAction = async (userId: string, action: 'RESTRICT' | 'BAN' | 'RESTORE') => {
+  const handleUserAction = (userId: string, action: 'RESTRICT' | 'BAN' | 'RESTORE') => {
+    if (action === 'BAN') {
+      setBanUserId(userId);
+      setBanReasonType('CANCELLATION');
+      setBanCustomNote('');
+      setBanModalOpen(true);
+    } else {
+      executeUserAction(userId, action);
+    }
+  };
+
+  const confirmBanUser = async () => {
+    if (!banUserId) return;
+    setBanModalOpen(false);
+    await executeUserAction(banUserId, 'BAN', banReasonType, banCustomNote);
+    setBanUserId(null);
+    setBanCustomNote('');
+  };
+
+  const executeUserAction = async (userId: string, action: 'RESTRICT' | 'BAN' | 'RESTORE', banReason?: string, banCustomNote?: string) => {
     const loadingId = toast.loading("Updating user status...");
     try {
       const body: any = {};
       if (action === 'RESTRICT') body.isActive = false;
-      if (action === 'BAN') body.isTerminated = true;
-      if (action === 'RESTORE') { body.isActive = true; body.isTerminated = false; }
+      if (action === 'BAN') {
+        body.isTerminated = true;
+        body.banReason = banReason;
+        body.banCustomNote = banCustomNote;
+      }
+      if (action === 'RESTORE') { 
+        body.isActive = true; 
+        body.isTerminated = false; 
+      }
 
       const res = await fetch(`/api/users/${userId}`, {
         method: "PATCH",
@@ -122,6 +194,9 @@ export default function AnalyticsPage() {
       if (json.success) {
         toast.success("User updated successfully", { id: loadingId });
         fetchAnalytics(false);
+        if (userSearchQuery.trim()) {
+          setSearchResults(prev => prev.map(u => u._id === userId ? { ...u, isTerminated: action === 'BAN', risk: action === 'BAN' ? 'BANNED' : 'NORMAL' } : u));
+        }
       } else {
         toast.error(json.message, { id: loadingId });
       }
@@ -208,10 +283,24 @@ export default function AnalyticsPage() {
                 </div>
 
                 <div className="bg-white rounded-[40px] p-8 shadow-2xl shadow-slate-200/40 border border-slate-50">
-                  <div className="flex items-center justify-between mb-8">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
                     <div>
                       <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight italic flex items-center gap-3">ORDER RISK INDICATOR</h3>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">High cancellation threshold analysis</p>
+                    </div>
+                    {/* User Search Input */}
+                    <div className="relative w-full sm:max-w-xs z-10">
+                      <input 
+                        type="text"
+                        placeholder="Search User to Ban/Restore..."
+                        value={userSearchQuery}
+                        onChange={(e) => setUserSearchQuery(e.target.value)}
+                        className="w-full h-10 bg-slate-50 border border-slate-100 rounded-xl pl-9 pr-9 text-[10px] font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-slate-300"
+                      />
+                      <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
+                      {isSearchingUsers && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                      )}
                     </div>
                   </div>
                   <div className="overflow-x-auto">
@@ -220,29 +309,47 @@ export default function AnalyticsPage() {
                         <tr className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100">
                           <th className="pb-4 pl-4">USER IDENTITY</th>
                           <th className="pb-4">TOTAL ORDERS</th>
-                          <th className="pb-4">CANCEL RATE</th>
+                          <th className="pb-4">CANCEL RATE / ID</th>
                           <th className="pb-4">RISK STATUS</th>
                           <th className="pb-4 pr-4 text-right">ACTIONS</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50">
-                        {data.userRiskData.slice(0, 8).map((user: any) => (
+                        {(userSearchQuery.trim() ? searchResults : data.userRiskData.slice(0, 8)).map((user: any) => (
                           <tr key={user._id} className="hover:bg-slate-50/50 transition-all">
-                            <td className="py-5 pl-4 font-black text-xs text-slate-900 uppercase">{user.name}</td>
+                            <td className="py-5 pl-4 font-black text-xs text-slate-900 uppercase">
+                              <div>{user.name}</div>
+                              {user.aspireMintId && <div className="text-[8px] text-slate-400 font-bold uppercase mt-0.5">{user.aspireMintId}</div>}
+                            </td>
                             <td className="py-5 text-xs font-black text-slate-500">{user.totalOrders}</td>
                             <td className="py-5">
-                              <div className="flex items-center gap-3">
-                                <div className="w-20 bg-slate-100 h-1 rounded-full overflow-hidden">
-                                  <div className={`h-full ${user.risk === 'HIGH' ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${user.cancelRate}%` }} />
+                              {userSearchQuery.trim() ? (
+                                <span className="text-[10px] font-black text-slate-400">{user.aspireMintId || 'N/A'}</span>
+                              ) : (
+                                <div className="flex items-center gap-3">
+                                  <div className="w-20 bg-slate-100 h-1 rounded-full overflow-hidden">
+                                    <div className={`h-full ${user.risk === 'HIGH' ? 'bg-rose-500' : 'bg-emerald-500'}`} style={{ width: `${user.cancelRate}%` }} />
+                                  </div>
+                                  <span className="text-[10px] font-black text-slate-400">{user.cancelRate.toFixed(1)}%</span>
                                 </div>
-                                <span className="text-[10px] font-black text-slate-400">{user.cancelRate.toFixed(1)}%</span>
-                              </div>
+                              )}
                             </td>
                             <td className="py-5">
-                               <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase ${user.risk === 'HIGH' ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500'}`}>{user.risk}</span>
+                               <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase ${
+                                 (user.risk === 'HIGH' || user.risk === 'BANNED' || user.isTerminated) 
+                                   ? 'bg-rose-50 text-rose-500' 
+                                   : 'bg-emerald-50 text-emerald-500'
+                               }`}>{user.isTerminated ? 'BANNED' : user.risk}</span>
                             </td>
                             <td className="py-5 pr-4 text-right">
-                               <button onClick={() => handleUserAction(user._id, user.isTerminated ? 'RESTORE' : 'BAN')} className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all ${user.isTerminated ? 'bg-emerald-500 text-white shadow-lg' : 'bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white'}`}>
+                               <button 
+                                 onClick={() => handleUserAction(user._id, user.isTerminated ? 'RESTORE' : 'BAN')} 
+                                 className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all ${
+                                   user.isTerminated 
+                                     ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' 
+                                     : 'bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white'
+                                 }`}
+                               >
                                  {user.isTerminated ? 'RESTORE' : 'BAN USER'}
                                </button>
                             </td>
@@ -680,6 +787,76 @@ export default function AnalyticsPage() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Ban Reason Modal */}
+      {banModalOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[32px] w-full max-w-md p-6 border border-slate-100 shadow-2xl relative overflow-hidden">
+            <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight mb-2">Ban User Reason</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">Select a pre-configured reason or input a custom notice</p>
+            
+            <div className="space-y-4">
+              <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer hover:bg-slate-100/50 transition-all">
+                <input 
+                  type="radio" 
+                  name="banReasonType" 
+                  checked={banReasonType === 'CANCELLATION'} 
+                  onChange={() => setBanReasonType('CANCELLATION')}
+                  className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                />
+                <div className="flex flex-col">
+                  <span className="text-xs font-black text-slate-800 uppercase tracking-tight">High Cancellation Rate</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Banned due to high cancelled order ratio</span>
+                </div>
+              </label>
+              
+              <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer hover:bg-slate-100/50 transition-all">
+                <input 
+                  type="radio" 
+                  name="banReasonType" 
+                  checked={banReasonType === 'CUSTOM'} 
+                  onChange={() => setBanReasonType('CUSTOM')}
+                  className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                />
+                <div className="flex flex-col">
+                  <span className="text-xs font-black text-slate-800 uppercase tracking-tight">Custom Notice</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Specify a custom explanation note</span>
+                </div>
+              </label>
+
+              {banReasonType === 'CUSTOM' && (
+                <div className="space-y-2 mt-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Custom Notice Message</label>
+                  <textarea 
+                    value={banCustomNote}
+                    onChange={(e) => setBanCustomNote(e.target.value)}
+                    placeholder="e.g. Your account has been suspended due to policy violations."
+                    className="w-full h-24 p-4 bg-slate-50 border border-slate-100 focus:bg-white rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-indigo-50"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-8">
+              <button 
+                onClick={() => {
+                  setBanModalOpen(false);
+                  setBanUserId(null);
+                }}
+                className="px-5 py-3 border border-slate-100 bg-white hover:bg-slate-50 text-slate-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmBanUser}
+                className="px-5 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-md shadow-rose-600/20"
+              >
+                Confirm Ban
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

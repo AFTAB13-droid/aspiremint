@@ -108,7 +108,7 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { isApproved, name, systemDisplayName, mobile, role, isActive, isTerminated, isCampaignPaused } = body;
+    const { isApproved, name, systemDisplayName, mobile, role, isActive, isTerminated, isCampaignPaused, banReason, banCustomNote } = body;
 
     await connectToDatabase();
 
@@ -117,8 +117,8 @@ export async function PATCH(
       return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
     }
 
-    // Prevent updates on terminated users unless we are specifically un-terminating them (future extension)
-    if (user.isTerminated) {
+    // Prevent updates on terminated users unless we are specifically un-terminating them
+    if (user.isTerminated && isTerminated !== false) {
         return NextResponse.json({ success: false, message: 'Terminated identity cannot be modified.' }, { status: 400 });
     }
 
@@ -140,7 +140,15 @@ export async function PATCH(
     if (typeof isCampaignPaused === 'boolean') user.isCampaignPaused = isCampaignPaused;
     if (typeof isTerminated === 'boolean') {
       user.isTerminated = isTerminated;
-      if (isTerminated) user.terminatedAt = new Date();
+      if (isTerminated) {
+        user.terminatedAt = new Date();
+        if (banReason) user.banReason = banReason;
+        if (banCustomNote) user.banCustomNote = banCustomNote;
+      } else {
+        user.terminatedAt = undefined;
+        user.banReason = undefined;
+        user.banCustomNote = undefined;
+      }
     }
     if (name) user.name = name;
     if (systemDisplayName !== undefined) user.systemDisplayName = systemDisplayName;

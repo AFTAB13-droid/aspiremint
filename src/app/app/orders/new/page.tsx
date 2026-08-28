@@ -8,6 +8,55 @@ import toast from "react-hot-toast";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
+interface PlatformFormat {
+  regex: RegExp;
+  placeholder: string;
+  example: string;
+}
+
+const MARKETPLACE_FORMATS: Record<string, PlatformFormat> = {
+  amazon: {
+    regex: /^\d{3}-\d{7}-\d{7}$/,
+    placeholder: "e.g. 123-1234567-1234567",
+    example: "403-1234567-1234567 (3 digits, hyphen, 7 digits, hyphen, 7 digits)"
+  },
+  flipkart: {
+    regex: /^(OD|FKN|FLK)\d{16,20}$/i,
+    placeholder: "e.g. OD331247563507838100",
+    example: "OD331247563507838100 (OD, FKN or FLK followed by 16 to 20 digits)"
+  },
+  shopsy: {
+    regex: /^(OD|FKN|FLK)\d{16,20}$/i,
+    placeholder: "e.g. OD331247563507838100",
+    example: "OD331247563507838100 (OD, FKN or FLK followed by 16 to 20 digits)"
+  },
+  meesho: {
+    regex: /^\d{18}(_\d+)?$/,
+    placeholder: "e.g. 112457707658966016",
+    example: "112457707658966016 or 112457707658966016_1 (18 digits optionally followed by _suffix)"
+  },
+  myntra: {
+    regex: /^\d{7}-\d{7}-\d{7}$/,
+    placeholder: "e.g. 1135096-4526223-9168401",
+    example: "1135096-4526223-9168401 (7 digits, hyphen, 7 digits, hyphen, 7 digits)"
+  },
+  snapdeal: {
+    regex: /^\d{10,11}$/,
+    placeholder: "e.g. 8522246724",
+    example: "8522246724 (10 or 11 digits)"
+  },
+  nykaa: {
+    regex: /^(NYK-\d{9}-\d{7}-\d{1}|NYKL\d{8})$/i,
+    placeholder: "e.g. NYK-220393409-9585463-1 or NYKL10143824",
+    example: "NYK-220393409-9585463-1 or NYKL10143824"
+  },
+  blinkit: {
+    regex: /^\d{9,10}$/,
+    placeholder: "e.g. 389698573",
+    example: "389698573 (9 or 10 digits)"
+  }
+};
+
 export default function NewOrderPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -22,6 +71,8 @@ export default function NewOrderPage() {
   const [uploadPreview, setUploadPreview] = useState<string | null>(null);
   const [idExists, setIdExists] = useState(false);
   const [checkingId, setCheckingId] = useState(false);
+  const [isFormatValid, setIsFormatValid] = useState(true);
+  const [formatErrorMessage, setFormatErrorMessage] = useState('');
 
   const [brands, setBrands] = useState<any[]>([]);
   const [config, setConfig] = useState<any>(null);
@@ -244,6 +295,33 @@ export default function NewOrderPage() {
     return () => clearTimeout(timeout);
   }, [formData.userOrderId]);
 
+  // Real-time Order ID format check based on deal marketplace platform
+  useEffect(() => {
+    const orderId = formData.userOrderId?.trim() || "";
+    if (!orderId) {
+      setIsFormatValid(true);
+      setFormatErrorMessage('');
+      return;
+    }
+
+    const platform = selectedDealDetails?.marketplace?.toLowerCase() || "";
+    const formatRule = MARKETPLACE_FORMATS[platform];
+    if (!formatRule) {
+      // No specific pattern found for this marketplace, default to true
+      setIsFormatValid(true);
+      setFormatErrorMessage('');
+      return;
+    }
+
+    const isValid = formatRule.regex.test(orderId);
+    setIsFormatValid(isValid);
+    if (!isValid) {
+      setFormatErrorMessage(`Format warning: Please match the correct ${selectedDealDetails.marketplace} order ID structure. Expected: ${formatRule.placeholder}`);
+    } else {
+      setFormatErrorMessage('');
+    }
+  }, [formData.userOrderId, selectedDealDetails]);
+
   const calculatedPayout = useMemo(() => {
       const amt = Number(formData.amount);
       const less = Number(formData.lessAmount) || 0;
@@ -335,6 +413,7 @@ export default function NewOrderPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     if (e) e.preventDefault();
     if (isUploading) return toast.error("Asset upload in progress");
+    if (!isFormatValid) return toast.error(formatErrorMessage || "Invalid Order ID format");
     if (idExists) return toast.error("Please provide a unique Order ID");
     if (checkingId) return toast.error("Verifying Order ID...");
     if (!formData.mediatorId) return toast.error("Please select a Mediator Specialist");
@@ -575,7 +654,7 @@ export default function NewOrderPage() {
                                  name="userOrderId" type="text" required={isFieldRequired('userOrderId')} value={formData.userOrderId} onChange={handleInputChange}
                                  placeholder={config.userOrderId.placeholder}
                                  className={`w-full h-16 rounded-[24px] bg-slate-50 border px-6 font-bold text-slate-800 outline-none transition-all ${
-                                    idExists ? "border-rose-400 bg-rose-50/30 ring-4 ring-rose-500/10" : 
+                                    idExists || !isFormatValid ? "border-rose-400 bg-rose-50/30 ring-4 ring-rose-500/10" : 
                                     checkingId ? "border-blue-200" : "border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600"
                                  }`}
                               />
@@ -584,6 +663,12 @@ export default function NewOrderPage() {
                                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mt-2 px-4 flex items-center gap-2">
                                        <svg className="w-3.5 h-3.5 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                                        <span className="text-[10px] font-black uppercase tracking-tight text-rose-500">Warning: Pls double check your order id, its already existing in our registry.</span>
+                                    </motion.div>
+                                 )}
+                                 {!isFormatValid && formatErrorMessage && (
+                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mt-2 px-4 flex items-start gap-2">
+                                       <svg className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                                       <span className="text-[9px] font-black uppercase tracking-tight text-rose-500 leading-snug">{formatErrorMessage}</span>
                                     </motion.div>
                                  )}
                               </AnimatePresence>

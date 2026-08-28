@@ -32,6 +32,8 @@ export interface IUser extends Document {
   isApproved: boolean;
   isTerminated: boolean;
   terminatedAt?: Date;
+  banReason?: string;
+  banCustomNote?: string;
   refundPayers: {
     name: string;
     detail?: string;
@@ -97,6 +99,8 @@ const UserSchema = new Schema<IUser>(
     isApproved: { type: Boolean, default: true },
     isTerminated: { type: Boolean, default: false },
     terminatedAt: { type: Date },
+    banReason: { type: String },
+    banCustomNote: { type: String },
     refundPayers: [
       {
         name: { type: String, required: true },
