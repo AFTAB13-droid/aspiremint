@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Bell, X, Zap, ShieldCheck, Info, Package, Clock, AlertTriangle, Trash2, CheckCheck, Inbox, Eye, ArrowLeft, Trash
+  Bell, X, Zap, ShieldCheck, Info, Package, Clock, AlertTriangle, Trash2, CheckCheck, Inbox, Eye, ArrowLeft, Trash, Trophy
 } from "lucide-react";
 import { useMotionValue } from "framer-motion";
 import { formatTimeAgo } from "@/utils/formatTimeAgo";
@@ -27,6 +27,11 @@ interface DashboardClientProps {
     previousRefundAmount?: number;
     previousRefundFetched?: boolean;
     mobile?: string;
+    leaderboardBadge?: {
+      rank: number;
+      month: string;
+      active: boolean;
+    };
   };
   stats: {
     active: number;
@@ -428,8 +433,11 @@ export default function DashboardClient({ user, stats, recentOrders }: Dashboard
                                  // Define beautiful card gradients based on notification type
                                  const isInvalidated = note.type === "ORDER_INVALIDATED";
                                  const isApproved = note.type === "ORDER_APPROVED";
+                                 const isLeaderboard = note.metadata?.isGoldLeaderboardReward === true;
                                  
-                                 const cardStyles = isInvalidated
+                                 const cardStyles = isLeaderboard
+                                    ? "bg-gradient-to-br from-amber-50 to-amber-100/70 border-amber-300 border-l-4 border-l-amber-500 hover:border-l-amber-600 hover:shadow-amber-200/50 animate-pulse"
+                                    : isInvalidated
                                     ? "bg-gradient-to-br from-rose-50/70 to-red-50/50 border-rose-100/80 border-l-4 border-l-rose-500 hover:border-l-rose-600 hover:shadow-rose-100/30"
                                     : isApproved
                                     ? "bg-gradient-to-br from-emerald-50/70 to-green-50/50 border-emerald-100/80 border-l-4 border-l-emerald-500 hover:border-l-emerald-600 hover:shadow-emerald-100/30"
@@ -454,12 +462,14 @@ export default function DashboardClient({ user, stats, recentOrders }: Dashboard
                                     >
                                        {/* Type Icon indicator */}
                                        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm
-                                          ${isInvalidated ? "bg-rose-500 text-white" : 
+                                          ${isLeaderboard ? "bg-amber-500 text-white animate-bounce" :
+                                            isInvalidated ? "bg-rose-500 text-white" : 
                                             isApproved ? "bg-emerald-500 text-white" : 
                                             "bg-indigo-500 text-white"
                                           }
                                        `}>
-                                          {isInvalidated ? <AlertTriangle className="w-4 h-4 animate-bounce" /> : 
+                                          {isLeaderboard ? <Trophy className="w-4 h-4" /> :
+                                           isInvalidated ? <AlertTriangle className="w-4 h-4 animate-bounce" /> : 
                                            isApproved ? <ShieldCheck className="w-4 h-4" /> : 
                                            <Zap className="w-4 h-4" />}
                                        </div>

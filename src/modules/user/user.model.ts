@@ -58,6 +58,11 @@ export interface IUser extends Document {
   previousRefundAmount?: number;
   fcmTokens?: string[];
   isCampaignPaused?: boolean;
+  leaderboardBadge?: {
+    rank: number;
+    month: string;
+    active: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -122,6 +127,11 @@ const UserSchema = new Schema<IUser>(
     previousRefundFetched: { type: Boolean, default: false },
     previousRefundAmount: { type: Number, default: 0 },
     isCampaignPaused: { type: Boolean, default: false },
+    leaderboardBadge: {
+      rank: { type: Number },
+      month: { type: String },
+      active: { type: Boolean, default: false }
+    },
   },
   { timestamps: true }
 );

@@ -158,6 +158,16 @@ const navLinks: NavLink[] = [
     )
   },
   {
+    name: "Leaderboard",
+    href: "/app/admin/leaderboard",
+    roles: ["ADMIN"],
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.286L13 21l-2.286-6.714L5 12l5.714-2.286L13 3z" />
+      </svg>
+    )
+  },
+  {
     name: "Live Analytics",
     href: "/app/mediators/analytics",
     roles: ["MEDIATOR"],

@@ -16,7 +16,7 @@ import {
   TrendingUp, Package, RefreshCw, MoreVertical, Search, Filter, 
   ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, XCircle, ChevronRight,
   Bell, X, Zap, ShieldCheck, Info, Sparkles, AlertCircle, Megaphone, User as UserIcon, Gift,
-  Flag, Flame, Palette, Sword, Music, Star, Moon, ShoppingBag
+  Flag, Flame, Palette, Sword, Music, Star, Moon, ShoppingBag, Trophy
 } from "lucide-react";
 import { useMotionValue, useTransform, useSpring } from "framer-motion";
 
@@ -29,6 +29,11 @@ interface BuyerDashboardProps {
     previousRefundAmount?: number;
     previousRefundFetched?: boolean;
     mobile?: string;
+    leaderboardBadge?: {
+      rank: number;
+      month: string;
+      active: boolean;
+    };
   };
   stats: {
     active: number;
@@ -392,16 +397,24 @@ export default function BuyerDashboard({
                      <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                   <div>
-                     <div className="flex items-center gap-3">
+                     <div className="flex flex-wrap items-center gap-3">
                         <h1 className="text-2xl font-black text-slate-900 tracking-tight">
                            {getGreeting()}, <span className="text-indigo-600">{user.name?.split(" ")[0]}</span>
                         </h1>
-                        <UserBadge 
-                           ordersCount={user.totalCompletedOrders || 0} 
-                           showIcon={true} 
-                           showProgression={true} 
-                           className="scale-110" 
-                        />
+                        <div className="flex items-center gap-2">
+                           <UserBadge 
+                              ordersCount={user.totalCompletedOrders || 0} 
+                              showIcon={true} 
+                              showProgression={true} 
+                              className="scale-110" 
+                           />
+                           {user.leaderboardBadge?.active && (
+                             <div className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white rounded-full text-[9px] font-black uppercase tracking-widest animate-pulse border border-amber-400 shadow-md shadow-amber-500/20" title={`Crowned Rank #${user.leaderboardBadge.rank} Buyer in ${user.leaderboardBadge.month}!`}>
+                               <Trophy className="w-3.5 h-3.5" />
+                               <span>Leaderboard Rank #{user.leaderboardBadge.rank}</span>
+                             </div>
+                           )}
+                        </div>
                      </div>
                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
                         <ShieldCheck className="w-3 h-3 text-indigo-600" />

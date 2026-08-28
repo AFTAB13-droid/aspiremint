@@ -35,6 +35,11 @@ interface BuyerDashboardProps {
     previousRefundAmount?: number;
     previousRefundFetched?: boolean;
     mobile?: string;
+    leaderboardBadge?: {
+      rank: number;
+      month: string;
+      active: boolean;
+    };
   };
   stats: {
     active: number;
@@ -326,12 +331,17 @@ export default function MobileBuyerDashboard({
              </div>
              <div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Good {getGreeting()}</p>
-                <div className="flex items-center gap-2">
-                   <h1 className="text-xl font-black text-slate-900 tracking-tight">{user.name?.split(" ")[0]}</h1>
-                   {user.totalCompletedOrders && user.totalCompletedOrders > 5 && (
-                      <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                   )}
-                </div>
+                 <div className="flex items-center gap-2">
+                    <h1 className="text-xl font-black text-slate-900 tracking-tight">{user.name?.split(" ")[0]}</h1>
+                    {user.totalCompletedOrders && user.totalCompletedOrders > 5 && (
+                       <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                    )}
+                    {user.leaderboardBadge?.active && (
+                       <span className="text-[8px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 px-1.5 py-0.5 border border-amber-200 rounded-md animate-pulse">
+                         🏆 Rank #{user.leaderboardBadge.rank}
+                       </span>
+                    )}
+                 </div>
              </div>
           </div>
         </motion.div>

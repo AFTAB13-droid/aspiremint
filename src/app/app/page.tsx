@@ -238,7 +238,8 @@ export default async function DashboardPage() {
         globalRank,
         previousRefundAmount: fullUser?.previousRefundAmount || 0,
         previousRefundFetched: fullUser?.previousRefundFetched || false,
-        mobile: fullUser?.mobile || ""
+        mobile: fullUser?.mobile || "",
+        leaderboardBadge: fullUser?.leaderboardBadge
       }} 
       stats={JSON.parse(JSON.stringify(stats))} 
       recentOrders={JSON.parse(JSON.stringify(recentOrders))} 
