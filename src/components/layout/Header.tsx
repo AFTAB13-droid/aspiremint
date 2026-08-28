@@ -29,6 +29,21 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user }) => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const isBadgeActive = user?.leaderboardBadge?.active;
+  const rank = user?.leaderboardBadge?.rank;
+
+  // Header background gradients according to reward rank
+  let headerBgClass = "bg-white/80 border-b-2 border-blue-200/60";
+  if (isBadgeActive) {
+    if (rank === 1) {
+      headerBgClass = "bg-gradient-to-r from-amber-50/90 via-amber-100/30 to-yellow-50/80 border-b-2 border-amber-300/60";
+    } else if (rank === 2) {
+      headerBgClass = "bg-gradient-to-r from-slate-100/90 via-white to-slate-200/60 border-b-2 border-slate-300/60";
+    } else if (rank === 3) {
+      headerBgClass = "bg-gradient-to-r from-amber-50/40 via-white to-orange-50/50 border-b-2 border-orange-200/40";
+    }
+  }
+
   // Map route to title for native-app feel on mobile
   const getPageTitle = () => {
     if (pathname.includes("/app/activedeals")) return "Active Deals";
@@ -70,13 +85,29 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user }) => {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 flex h-20 w-full items-center justify-between bg-white/80 backdrop-blur-3xl border-b-2 border-blue-200/60 px-6 lg:px-10 relative overflow-hidden transition-all duration-300">
+    <header className={`sticky top-0 z-30 flex h-20 w-full items-center justify-between backdrop-blur-3xl px-6 lg:px-10 relative overflow-hidden transition-all duration-300 ${headerBgClass}`}>
       {/* Advanced Floral & Line Aesthetic Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-50">
-        {/* Soft Blue Base Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-r from-sky-50/50 via-white to-blue-50/50" />
+        {/* Soft Base Gradient */}
+        <div className={`absolute inset-0 bg-gradient-to-r ${
+           isBadgeActive 
+              ? rank === 1 
+                 ? "from-amber-100/30 via-white to-yellow-100/20" 
+                 : rank === 2
+                 ? "from-slate-100/30 via-white to-slate-200/20"
+                 : "from-amber-100/10 via-white to-orange-100/10"
+              : "from-sky-50/50 via-white to-blue-50/50"
+        }`} />
         
-        <svg className="absolute inset-0 w-full h-full text-blue-500" viewBox="0 0 1200 80" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+        <svg className={`absolute inset-0 w-full h-full ${
+           isBadgeActive 
+              ? rank === 1 
+                 ? "text-amber-500" 
+                 : rank === 2
+                 ? "text-slate-400"
+                 : "text-orange-400"
+              : "text-blue-500"
+        }`} viewBox="0 0 1200 80" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
           {/* Flowing Horizontal Lines */}
           <path d="M-100 40C200 70 400 10 700 40C1000 70 1300 40 1300 40" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.25">
              <animate attributeName="d" values="M-100 40C200 70 400 10 700 40C1000 70 1300 40 1300 40;M-100 40C200 10 400 70 700 40C1000 10 1300 40 1300 40;M-100 40C200 70 400 10 700 40C1000 70 1300 40 1300 40" dur="15s" repeatCount="indefinite" />

@@ -136,6 +136,7 @@ export default function SettingsPage() {
       twoFactorEnabled: false,
       loginHistory: [],
     },
+    leaderboardBadge: null as any
   });
   const [passwordData, setPasswordData] = useState({
     oldPassword: "",
@@ -186,6 +187,7 @@ export default function SettingsPage() {
             previousRefundFetched: json.data.previousRefundFetched || false,
             previousRefundAmount: json.data.previousRefundAmount || 0,
             securitySettings: json.data.securitySettings || { twoFactorEnabled: false, loginHistory: [] },
+            leaderboardBadge: json.data.leaderboardBadge || null,
           };
           setFormData(fetchedData);
           setOriginalData(fetchedData);
@@ -536,7 +538,20 @@ export default function SettingsPage() {
                                 <h3 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">Identity Registry</h3>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Manage your public and private credentials</p>
                              </div>
-                             <User className={`w-8 h-8 opacity-20 ${isAdm ? "text-indigo-600" : "text-blue-600"}`} />
+                             <div className="flex items-center gap-3">
+                                {formData.leaderboardBadge?.active && (
+                                   <div className={`flex items-center gap-1.5 px-3 py-1.5 text-white rounded-xl text-[9px] font-black uppercase tracking-widest animate-bounce shadow-md ${
+                                      formData.leaderboardBadge.rank === 1
+                                         ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600'
+                                         : formData.leaderboardBadge.rank === 2
+                                         ? 'bg-gradient-to-r from-slate-400 via-slate-500 to-slate-600'
+                                         : 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700'
+                                   }`}>
+                                      🏆 Rank #{formData.leaderboardBadge.rank} Winner
+                                   </div>
+                                )}
+                                <User className={`w-8 h-8 opacity-20 ${isAdm ? "text-indigo-600" : "text-blue-600"}`} />
+                             </div>
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">

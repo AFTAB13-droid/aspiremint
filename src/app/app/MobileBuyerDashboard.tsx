@@ -328,7 +328,11 @@ export default function MobileBuyerDashboard({
           <div className="flex items-center gap-3">
              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-black shadow-lg ${
                 user.leaderboardBadge?.active
-                   ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 ring-2 ring-amber-300 ring-offset-1 animate-pulse'
+                   ? user.leaderboardBadge.rank === 1
+                      ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 ring-2 ring-amber-300 ring-offset-1 animate-pulse'
+                      : user.leaderboardBadge.rank === 2
+                      ? 'bg-gradient-to-br from-slate-400 via-slate-500 to-slate-600 ring-2 ring-slate-300 ring-offset-1 animate-pulse'
+                      : 'bg-gradient-to-br from-amber-600 via-orange-600 to-amber-700 ring-2 ring-orange-300 ring-offset-1 animate-pulse'
                    : 'bg-gradient-to-br from-blue-600 to-indigo-600'
              }`}>
                 {user.name?.[0] || 'U'}
@@ -343,7 +347,13 @@ export default function MobileBuyerDashboard({
                        <ShieldCheck className="w-4 h-4 text-emerald-500" />
                     )}
                     {user.leaderboardBadge?.active && (
-                       <span className="text-[8px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 px-1.5 py-0.5 border border-amber-200 rounded-md animate-pulse">
+                       <span className={`text-[8px] font-black uppercase tracking-widest text-white px-1.5 py-0.5 border rounded-md animate-pulse ${
+                          user.leaderboardBadge.rank === 1
+                             ? 'bg-gradient-to-r from-amber-500 to-orange-500 border-amber-400 shadow-sm'
+                             : user.leaderboardBadge.rank === 2
+                             ? 'bg-gradient-to-r from-slate-400 to-slate-600 border-slate-300 shadow-sm'
+                             : 'bg-gradient-to-r from-amber-600 to-orange-600 border-orange-400 shadow-sm'
+                       }`}>
                          🏆 Rank #{user.leaderboardBadge.rank}
                        </span>
                     )}

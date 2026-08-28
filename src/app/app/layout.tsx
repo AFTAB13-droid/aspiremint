@@ -40,10 +40,6 @@ export default function DashboardLayout({
         const profileJson = await profileRes.json();
         if (profileJson.success && profileJson.data) {
           setProfileData(profileJson.data);
-          if (profileJson.data.leaderboardBadge?.active) {
-            setThemeClass(`${globalTheme} theme-champion`.trim());
-            return;
-          }
         }
         setThemeClass(globalTheme);
       } catch (err) {

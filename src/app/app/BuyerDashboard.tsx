@@ -400,7 +400,11 @@ export default function BuyerDashboard({
                <div className="flex items-center gap-6 relative z-10">
                   <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-black shadow-2xl relative overflow-hidden group-hover:scale-105 transition-transform ${
                       user.leaderboardBadge?.active 
-                         ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 ring-4 ring-amber-300 ring-offset-2 animate-pulse'
+                         ? user.leaderboardBadge.rank === 1
+                            ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 ring-4 ring-amber-300 ring-offset-2 animate-pulse'
+                            : user.leaderboardBadge.rank === 2
+                            ? 'bg-gradient-to-br from-slate-400 via-slate-500 to-slate-600 ring-4 ring-slate-300 ring-offset-2 animate-pulse'
+                            : 'bg-gradient-to-br from-amber-600 via-orange-600 to-amber-700 ring-4 ring-orange-300 ring-offset-2 animate-pulse'
                          : 'bg-gradient-to-br from-slate-900 to-slate-800'
                    }`}>
                      {user.name?.[0] || 'U'}
@@ -422,7 +426,13 @@ export default function BuyerDashboard({
                               className="scale-110" 
                            />
                            {user.leaderboardBadge?.active && (
-                             <div className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white rounded-full text-[9px] font-black uppercase tracking-widest animate-pulse border border-amber-400 shadow-md shadow-amber-500/20" title={`Crowned Rank #${user.leaderboardBadge.rank} Buyer in ${user.leaderboardBadge.month}!`}>
+                             <div className={`flex items-center gap-1.5 px-3 py-1 text-white rounded-full text-[9px] font-black uppercase tracking-widest animate-pulse border shadow-md ${
+                                 user.leaderboardBadge.rank === 1
+                                    ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 border-amber-400 shadow-amber-500/20'
+                                    : user.leaderboardBadge.rank === 2
+                                    ? 'bg-gradient-to-r from-slate-400 via-slate-500 to-slate-600 border-slate-300 shadow-slate-500/20'
+                                    : 'bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 border-orange-400 shadow-orange-500/20'
+                              }`} title={`Crowned Rank #${user.leaderboardBadge.rank} Buyer in ${user.leaderboardBadge.month}!`}>
                                <Trophy className="w-3.5 h-3.5" />
                                <span>Leaderboard Rank #{user.leaderboardBadge.rank}</span>
                              </div>
