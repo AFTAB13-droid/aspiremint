@@ -21,15 +21,16 @@ interface HeaderProps {
       active: boolean;
     };
   };
+  isFestiveActive?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user }) => {
+export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveActive }) => {
   const isAdm = user?.role === "ADMIN";
   const pathname = usePathname();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const isBadgeActive = user?.leaderboardBadge?.active;
+  const isBadgeActive = user?.leaderboardBadge?.active && !isFestiveActive;
   const rank = user?.leaderboardBadge?.rank;
 
   // Header background gradients according to reward rank

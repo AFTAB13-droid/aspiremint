@@ -102,6 +102,7 @@ export default function DashboardLayout({
               totalCompletedOrders: (session.user as any).totalCompletedOrders,
               leaderboardBadge: profileData?.leaderboardBadge
             }} 
+            isFestiveActive={!!themeClass}
           />
         ) : (
           /* Desktop Header remains visible on transaction pages */
@@ -115,6 +116,7 @@ export default function DashboardLayout({
                 totalCompletedOrders: (session.user as any).totalCompletedOrders,
                 leaderboardBadge: profileData?.leaderboardBadge
               }} 
+              isFestiveActive={!!themeClass}
             />
           </div>
         )}

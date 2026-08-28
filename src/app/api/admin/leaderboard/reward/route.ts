@@ -27,6 +27,35 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
     }
 
+    // Check if the user already has an active badge for this rank and month
+    const isCurrentlyRewarded = user.leaderboardBadge?.active && 
+                                user.leaderboardBadge?.month === String(month) && 
+                                user.leaderboardBadge?.rank === Number(rank);
+
+    if (isCurrentlyRewarded) {
+      // Toggle off / Unreward
+      user.leaderboardBadge = {
+        rank: Number(rank),
+        month: String(month),
+        active: false
+      };
+      await user.save();
+
+      // Create a notification for the removal of the badge
+      await Notification.create({
+        recipient: user._id,
+        type: NotificationType.SYSTEM,
+        title: "Leaderboard Badge Deactivated",
+        message: `Your Rank #${rank} Buyer reward badge for ${month} has been deactivated by the administrator.`,
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Leaderboard reward deactivated successfully',
+        data: user.leaderboardBadge
+      });
+    }
+
     // Set user's leaderboardBadge details
     user.leaderboardBadge = {
       rank: Number(rank),

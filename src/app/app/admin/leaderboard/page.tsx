@@ -185,8 +185,14 @@ export default function LeaderboardAdminPage() {
                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Total Orders</span>
                           <span className="text-2xl font-black text-amber-700">{data.leaderboard[0].totalOrders} Orders</span>
                         </div>
-                        {data.leaderboard[0].leaderboardBadge?.active && data.leaderboard[0].leaderboardBadge?.rank === 1 ? (
-                          <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 border border-emerald-100 rounded-md uppercase tracking-widest animate-pulse">Badge Active</span>
+                        {data.leaderboard[0].leaderboardBadge?.active && data.leaderboard[0].leaderboardBadge?.rank === 1 && data.leaderboard[0].leaderboardBadge?.month === selectedMonth ? (
+                          <button
+                            onClick={() => handleIssueReward(data.leaderboard[0]._id, 1)}
+                            disabled={isUpdating}
+                            className="px-4 py-2 bg-rose-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-700 transition-all shadow-md shadow-rose-600/20 active:scale-95"
+                          >
+                            Unreward
+                          </button>
                         ) : (
                           <button
                             onClick={() => handleIssueReward(data.leaderboard[0]._id, 1)}
@@ -219,8 +225,14 @@ export default function LeaderboardAdminPage() {
                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Total Orders</span>
                           <span className="text-2xl font-black text-slate-700">{data.leaderboard[1].totalOrders} Orders</span>
                         </div>
-                        {data.leaderboard[1].leaderboardBadge?.active && data.leaderboard[1].leaderboardBadge?.rank === 2 ? (
-                          <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 border border-emerald-100 rounded-md uppercase tracking-widest animate-pulse">Badge Active</span>
+                        {data.leaderboard[1].leaderboardBadge?.active && data.leaderboard[1].leaderboardBadge?.rank === 2 && data.leaderboard[1].leaderboardBadge?.month === selectedMonth ? (
+                          <button
+                            onClick={() => handleIssueReward(data.leaderboard[1]._id, 2)}
+                            disabled={isUpdating}
+                            className="px-4 py-2 bg-rose-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-700 transition-all shadow-md shadow-rose-600/20 active:scale-95"
+                          >
+                            Unreward
+                          </button>
                         ) : (
                           <button
                             onClick={() => handleIssueReward(data.leaderboard[1]._id, 2)}
@@ -253,8 +265,14 @@ export default function LeaderboardAdminPage() {
                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Total Orders</span>
                           <span className="text-2xl font-black text-amber-800">{data.leaderboard[2].totalOrders} Orders</span>
                         </div>
-                        {data.leaderboard[2].leaderboardBadge?.active && data.leaderboard[2].leaderboardBadge?.rank === 3 ? (
-                          <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 border border-emerald-100 rounded-md uppercase tracking-widest animate-pulse">Badge Active</span>
+                        {data.leaderboard[2].leaderboardBadge?.active && data.leaderboard[2].leaderboardBadge?.rank === 3 && data.leaderboard[2].leaderboardBadge?.month === selectedMonth ? (
+                          <button
+                            onClick={() => handleIssueReward(data.leaderboard[2]._id, 3)}
+                            disabled={isUpdating}
+                            className="px-4 py-2 bg-rose-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-700 transition-all shadow-md shadow-rose-600/20 active:scale-95"
+                          >
+                            Unreward
+                          </button>
                         ) : (
                           <button
                             onClick={() => handleIssueReward(data.leaderboard[2]._id, 3)}
@@ -337,23 +355,24 @@ export default function LeaderboardAdminPage() {
                               <div className="flex items-center justify-center gap-2">
                                 {/* Reward button for top 3 */}
                                 {globalRank <= 3 && (
-                                  <button
-                                    onClick={() => handleIssueReward(u._id, globalRank)}
-                                    disabled={isUpdating || u.leaderboardBadge?.active && u.leaderboardBadge?.rank === globalRank}
-                                    className="px-3 py-1.5 bg-indigo-600 text-white text-[8px] font-black rounded-lg uppercase tracking-widest hover:bg-indigo-700 transition-all disabled:opacity-50"
-                                  >
-                                    Reward
-                                  </button>
+                                  u.leaderboardBadge?.active && u.leaderboardBadge?.rank === globalRank && u.leaderboardBadge?.month === selectedMonth ? (
+                                    <button
+                                      onClick={() => handleIssueReward(u._id, globalRank)}
+                                      disabled={isUpdating}
+                                      className="px-3 py-1.5 bg-rose-600 text-white text-[8px] font-black rounded-lg uppercase tracking-widest hover:bg-rose-700 transition-all active:scale-95"
+                                    >
+                                      Unreward
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleIssueReward(u._id, globalRank)}
+                                      disabled={isUpdating}
+                                      className="px-3 py-1.5 bg-indigo-600 text-white text-[8px] font-black rounded-lg uppercase tracking-widest hover:bg-indigo-700 transition-all active:scale-95"
+                                    >
+                                      Reward
+                                    </button>
+                                  )
                                 )}
-                                {/* Test button for all users */}
-                                <button
-                                  onClick={() => handleIssueReward(u._id, 1, true)}
-                                  disabled={isUpdating}
-                                  className="px-3 py-1.5 bg-slate-900 text-white text-[8px] font-black rounded-lg uppercase tracking-widest hover:bg-black transition-all"
-                                  title="Test golden animated notification and badge updates on this profile"
-                                >
-                                  Test
-                                </button>
                               </div>
                             </td>
                           </tr>
