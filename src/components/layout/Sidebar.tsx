@@ -250,7 +250,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     { 
       title: "Management", 
-      links: filteredLinks.filter(l => ["User Directory", "Mediators Hub", "Live Analytics", "Resolution Hub", "SOP Guidelines"].includes(l.name)) 
+      links: filteredLinks.filter(l => ["User Directory", "Mediators Hub", "Live Analytics", "Resolution Hub", "SOP Guidelines", "Leaderboard"].includes(l.name)) 
     }
   ].filter(s => s.links.length > 0);
 
