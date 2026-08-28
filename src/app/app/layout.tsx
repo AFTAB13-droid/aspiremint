@@ -19,30 +19,41 @@ export default function DashboardLayout({
   const [isMobileOpen, setMobileOpen] = useState(false);
   const [isDesktopCollapsed, setDesktopCollapsed] = useState(true);
   const [themeClass, setThemeClass] = useState("");
+  const [profileData, setProfileData] = useState<any>(null);
 
   React.useEffect(() => {
     (window as any).setMobileOpen = setMobileOpen;
 
-    const fetchTheme = async () => {
+    const fetchThemeAndProfile = async () => {
       try {
+        let globalTheme = "";
         const res = await fetch("/api/config/banner");
         const json = await res.json();
         if (json.success && json.data) {
           const config = json.data;
           if (config.isActive && config.applyAppTheme && config.template !== "DEFAULT") {
-            setThemeClass(`theme-${config.template.toLowerCase()}`);
-          } else {
-            setThemeClass("");
+            globalTheme = `theme-${config.template.toLowerCase()}`;
           }
         }
+
+        const profileRes = await fetch("/api/user/profile");
+        const profileJson = await profileRes.json();
+        if (profileJson.success && profileJson.data) {
+          setProfileData(profileJson.data);
+          if (profileJson.data.leaderboardBadge?.active) {
+            setThemeClass(`${globalTheme} theme-champion`.trim());
+            return;
+          }
+        }
+        setThemeClass(globalTheme);
       } catch (err) {
-        console.error("Failed to fetch global banner theme:", err);
+        console.error("Failed to fetch global theme or profile:", err);
       }
     };
-    fetchTheme();
+    fetchThemeAndProfile();
 
     const handleRefresh = () => {
-      fetchTheme();
+      fetchThemeAndProfile();
     };
     window.addEventListener("FCM_REFRESH_DATA", handleRefresh);
     window.addEventListener("REFRESH_BANNER_THEME", handleRefresh);
@@ -92,7 +103,8 @@ export default function DashboardLayout({
               name: session.user.name,
               email: session.user.email,
               role: role,
-              totalCompletedOrders: (session.user as any).totalCompletedOrders
+              totalCompletedOrders: (session.user as any).totalCompletedOrders,
+              leaderboardBadge: profileData?.leaderboardBadge
             }} 
           />
         ) : (
@@ -104,7 +116,8 @@ export default function DashboardLayout({
                 name: session.user.name,
                 email: session.user.email,
                 role: role,
-                totalCompletedOrders: (session.user as any).totalCompletedOrders
+                totalCompletedOrders: (session.user as any).totalCompletedOrders,
+                leaderboardBadge: profileData?.leaderboardBadge
               }} 
             />
           </div>

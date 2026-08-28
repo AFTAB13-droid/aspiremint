@@ -284,7 +284,13 @@ export default function BuyerDashboard({
       <motion.div 
          initial={{ opacity: 0, x: -20 }}
          animate={{ opacity: 1, x: 0 }}
-         className={`px-2 flex flex-col sm:flex-row items-center justify-between gap-6 backdrop-blur-3xl p-6 rounded-[32px] shadow-sm group hover:shadow-xl transition-all relative overflow-hidden ${isBannerValid ? 'border-none' : 'bg-[#eef2ff] border border-indigo-100/50'}`}
+         className={`px-2 flex flex-col sm:flex-row items-center justify-between gap-6 backdrop-blur-3xl p-6 rounded-[32px] shadow-sm group hover:shadow-xl transition-all relative overflow-hidden ${
+            isBannerValid 
+               ? 'border-none' 
+               : user.leaderboardBadge?.active
+               ? 'bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-amber-600/10 border border-amber-300/50 shadow-md shadow-amber-500/5'
+               : 'bg-[#eef2ff] border border-indigo-100/50'
+         }`}
          style={{
             background: isBannerValid
                ? `linear-gradient(135deg, var(--tw-gradient-stops))`
@@ -392,14 +398,21 @@ export default function BuyerDashboard({
          ) : (
             <>
                <div className="flex items-center gap-6 relative z-10">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center text-white text-2xl font-black shadow-2xl relative overflow-hidden group-hover:scale-105 transition-transform">
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-black shadow-2xl relative overflow-hidden group-hover:scale-105 transition-transform ${
+                      user.leaderboardBadge?.active 
+                         ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 ring-4 ring-amber-300 ring-offset-2 animate-pulse'
+                         : 'bg-gradient-to-br from-slate-900 to-slate-800'
+                   }`}>
                      {user.name?.[0] || 'U'}
                      <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                   <div>
                      <div className="flex flex-wrap items-center gap-3">
                         <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-                           {getGreeting()}, <span className="text-indigo-600">{user.name?.split(" ")[0]}</span>
+                           {user.leaderboardBadge?.active 
+                               ? `👑 Rank #${user.leaderboardBadge.rank} Champion, ` 
+                               : `${getGreeting()}, `}
+                           <span className="text-indigo-600">{user.name?.split(" ")[0]}</span>
                         </h1>
                         <div className="flex items-center gap-2">
                            <UserBadge 

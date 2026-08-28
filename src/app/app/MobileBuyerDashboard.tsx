@@ -326,11 +326,17 @@ export default function MobileBuyerDashboard({
           className="flex items-center justify-between px-4 pt-4 pb-2"
         >
           <div className="flex items-center gap-3">
-             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-lg font-black shadow-lg">
+             <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-black shadow-lg ${
+                user.leaderboardBadge?.active
+                   ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 ring-2 ring-amber-300 ring-offset-1 animate-pulse'
+                   : 'bg-gradient-to-br from-blue-600 to-indigo-600'
+             }`}>
                 {user.name?.[0] || 'U'}
              </div>
              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Good {getGreeting()}</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  {user.leaderboardBadge?.active ? "👑 Leaderboard Champion" : `Good ${getGreeting()}`}
+                </p>
                  <div className="flex items-center gap-2">
                     <h1 className="text-xl font-black text-slate-900 tracking-tight">{user.name?.split(" ")[0]}</h1>
                     {user.totalCompletedOrders && user.totalCompletedOrders > 5 && (

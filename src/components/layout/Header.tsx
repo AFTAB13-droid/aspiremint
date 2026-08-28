@@ -15,6 +15,11 @@ interface HeaderProps {
     email?: string | null;
     role?: string;
     totalCompletedOrders?: number;
+    leaderboardBadge?: {
+      rank: number;
+      month: string;
+      active: boolean;
+    };
   };
 }
 
@@ -134,8 +139,13 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user }) => {
                 AspireMint
               </span>
               {/* Mobile shows contextual title */}
-              <span className={`lg:hidden bg-gradient-to-r bg-clip-text text-transparent from-blue-700 to-indigo-600`}>
+              <span className={`lg:hidden flex items-center gap-1.5 bg-gradient-to-r bg-clip-text text-transparent from-blue-700 to-indigo-600`}>
                 {getPageTitle()}
+                {user?.leaderboardBadge?.active && (
+                  <span className="text-[9px] font-black uppercase bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white px-2 py-0.5 rounded-full border border-amber-300 shadow-sm animate-pulse ml-1 shrink-0">
+                    🏆 Rank #{user.leaderboardBadge.rank}
+                  </span>
+                )}
               </span>
             </h2>
           </div>
@@ -192,6 +202,11 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user }) => {
             <div className="hidden text-left lg:block">
               <div className="flex items-center gap-2.5">
                 <p className="text-[15px] font-black text-slate-900 leading-none transition-colors group-hover:text-blue-600">{user?.name}</p>
+                {user?.leaderboardBadge?.active && (
+                  <span className="text-[9px] font-black px-1.5 py-0.5 bg-amber-500 text-white rounded-md uppercase tracking-tight animate-bounce" title="Monthly Leaderboard Winner!">
+                    🏆 #{user.leaderboardBadge.rank}
+                  </span>
+                )}
                 {user?.totalCompletedOrders !== undefined && (
                   <UserBadge ordersCount={user.totalCompletedOrders} showIcon={false} showInfoIcon={false} className="scale-90 origin-left" />
                 )}

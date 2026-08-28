@@ -289,3 +289,47 @@ body {
   background-color: #1e293b !important;
 }
 
+/* --- 10. LEADERBOARD CHAMPION THEME (Golden Sparkle & Elite Amber) --- */
+.theme-champion {
+  --color-background: #fffdf5 !important;
+  --color-primary: #d97706 !important;
+  --color-primary-hover: #b45309 !important;
+}
+.theme-champion::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  background: linear-gradient(to right, #fbbf24, #f59e0b, #d97706, #f59e0b, #fbbf24);
+  z-index: 9999;
+  pointer-events: none;
+}
+.theme-champion .bg-blue-600, 
+.theme-champion .bg-indigo-600 {
+  background-image: linear-gradient(to right, #d97706, #fbbf24) !important;
+  background-color: #d97706 !important;
+}
+.theme-champion .text-blue-600, 
+.theme-champion .text-indigo-600 {
+  color: #d97706 !important;
+}
+.theme-champion .hover\:bg-blue-700:hover, 
+.theme-champion .hover\:bg-indigo-700:hover {
+  background-image: linear-gradient(to right, #b45309, #d97706) !important;
+  background-color: #b45309 !important;
+}
+.theme-champion .border-blue-600, 
+.theme-champion .border-indigo-600 {
+  border-color: #fbbf24 !important;
+}
+.theme-champion .bg-white {
+  box-shadow: 0 10px 30px -10px rgba(217, 119, 6, 0.15) !important;
+  border-color: #fef3c7 !important;
+}
+.theme-champion .bg-white:hover {
+  box-shadow: 0 15px 35px -8px rgba(217, 119, 6, 0.25) !important;
+  border-color: #fde68a !important;
+}
+
