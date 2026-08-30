@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       const user = await User.findOne({ email: email.toLowerCase() });
       if (user && user.webauthnCredentials) {
         allowCredentials = user.webauthnCredentials.map((cred) => ({
-          id: cred.credentialID,
+          id: Buffer.from(cred.credentialID, "base64url"),
           type: "public-key" as const,
           transports: cred.transports as any[],
         }));
