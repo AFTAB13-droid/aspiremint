@@ -136,7 +136,8 @@ export default function SettingsPage() {
       twoFactorEnabled: false,
       loginHistory: [],
     },
-    leaderboardBadge: null as any
+    leaderboardBadge: null as any,
+    webauthnCredentials: [] as any[]
   });
   const [passwordData, setPasswordData] = useState({
     oldPassword: "",
@@ -165,42 +166,84 @@ export default function SettingsPage() {
     return () => clearTimeout(timer);
   }, [resendCountdown]);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await fetch("/api/user/profile");
-        const json = await res.json();
-        if (json.success && json.data) {
-          const pd = json.data.paymentDetails || {};
-          const fetchedData = {
-            name: json.data.name || "",
-            email: json.data.email || "",
-            mobile: json.data.mobile || "",
-            upiId: pd.upiId || "",
-            aspireMintId: json.data.aspireMintId || "",
-            bankName: pd.bankName || "",
-            accountHolder: pd.accountHolder || "",
-            accountNumber: pd.accountNumber || "",
-            ifscCode: pd.ifscCode || "",
-            branchName: pd.branchName || "",
-            bankDetails: pd.bankDetails || "",
-            previousRefundFetched: json.data.previousRefundFetched || false,
-            previousRefundAmount: json.data.previousRefundAmount || 0,
-            securitySettings: json.data.securitySettings || { twoFactorEnabled: false, loginHistory: [] },
-            leaderboardBadge: json.data.leaderboardBadge || null,
-          };
-          setFormData(fetchedData);
-          setOriginalData(fetchedData);
-          setTotalCompletedOrders(json.data.totalCompletedOrders || 0);
-        }
-      } catch (err) {
-        toast.error("Failed to load profile details");
-      } finally {
-        setLoading(false);
+  const fetchProfile = async () => {
+    try {
+      const res = await fetch("/api/user/profile");
+      const json = await res.json();
+      if (json.success && json.data) {
+        const pd = json.data.paymentDetails || {};
+        const fetchedData = {
+          name: json.data.name || "",
+          email: json.data.email || "",
+          mobile: json.data.mobile || "",
+          upiId: pd.upiId || "",
+          aspireMintId: json.data.aspireMintId || "",
+          bankName: pd.bankName || "",
+          accountHolder: pd.accountHolder || "",
+          accountNumber: pd.accountNumber || "",
+          ifscCode: pd.ifscCode || "",
+          branchName: pd.branchName || "",
+          bankDetails: pd.bankDetails || "",
+          previousRefundFetched: json.data.previousRefundFetched || false,
+          previousRefundAmount: json.data.previousRefundAmount || 0,
+          securitySettings: json.data.securitySettings || { twoFactorEnabled: false, loginHistory: [] },
+          leaderboardBadge: json.data.leaderboardBadge || null,
+          webauthnCredentials: json.data.webauthnCredentials || [],
+        };
+        setFormData(fetchedData);
+        setOriginalData(fetchedData);
+        setTotalCompletedOrders(json.data.totalCompletedOrders || 0);
       }
-    };
+    } catch (err) {
+      toast.error("Failed to load profile details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchProfile();
   }, []);
+
+  const [isRegisteringBiometrics, setIsRegisteringBiometrics] = useState(false);
+
+  const handleRegisterPasskey = async () => {
+    setIsRegisteringBiometrics(true);
+    const loadingId = toast.loading("Initiating device passkey registration...");
+    try {
+      const { startRegistration } = await import("@simplewebauthn/browser");
+
+      // 1. Fetch registration options from our API
+      const optionsRes = await fetch("/api/auth/webauthn/register");
+      const optionsJson = await optionsRes.json();
+      if (!optionsJson.success || !optionsJson.data) {
+        throw new Error(optionsJson.message || "Failed to fetch registration configuration options.");
+      }
+
+      // 2. Start browser WebAuthn registration
+      const registrationResponse = await startRegistration(optionsJson.data);
+
+      // 3. Post verification payload back to server
+      const verifyRes = await fetch("/api/auth/webauthn/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(registrationResponse),
+      });
+      const verifyJson = await verifyRes.json();
+
+      if (verifyJson.success) {
+        toast.success("Touch / Face ID Biometrics Registered Successfully!", { id: loadingId });
+        fetchProfile();
+      } else {
+        throw new Error(verifyJson.message || "Credential verification failed.");
+      }
+    } catch (err: any) {
+      console.error("Passkey registration error:", err);
+      toast.error(err.message || "Device passkey registration failed or cancelled.", { id: loadingId });
+    } finally {
+      setIsRegisteringBiometrics(false);
+    }
+  };
 
   const handleTabChange = (tabId: string) => {
     if (originalData) {
@@ -813,15 +856,55 @@ export default function SettingsPage() {
                                    </div>
                                 </div>
                                 <button 
-                                  type="button"
-                                  onClick={() => setIsPasswordModalOpen(true)}
-                                  className={`w-full md:w-auto px-12 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-2xl transition-all active:scale-95 ${
-                                    isAdm ? "bg-indigo-600 shadow-indigo-600/20 hover:bg-indigo-700" : "bg-blue-600 shadow-blue-600/20 hover:bg-blue-700"
-                                  }`}
-                                >
-                                  Update Password
-                                </button>
-                             </div>
+                                   type="button"
+                                   onClick={() => setIsPasswordModalOpen(true)}
+                                   className={`w-full md:w-auto px-12 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-2xl transition-all active:scale-95 ${
+                                     isAdm ? "bg-indigo-600 shadow-indigo-600/20 hover:bg-indigo-700" : "bg-blue-600 shadow-blue-600/20 hover:bg-blue-700"
+                                   }`}
+                                 >
+                                   Update Password
+                                 </button>
+                              </div>
+
+                              {/* Biometric Access Card */}
+                              <div className={`p-10 rounded-[40px] border flex flex-col md:flex-row items-center justify-between gap-8 shadow-sm ${
+                                isAdm 
+                                  ? "bg-indigo-50/50 border-indigo-100/50" 
+                                  : "bg-blue-50/50 border-blue-100/50"
+                              }`}>
+                                 <div className="flex items-center gap-6">
+                                    <div className={`h-16 w-16 rounded-[24px] flex items-center justify-center shadow-2xl ${isAdm ? "bg-indigo-600 text-white" : "bg-blue-600 text-white"}`}>
+                                       <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 009 11c0-1.18-.91-2.164-2.09-2.201a5.122 5.122 0 00-4.756 5.11 9.96 9.96 0 00.322 2.501M12 11c0-3.517 1.009-6.799 2.753-9.571m3.44 2.04l-.054.09A13.916 13.916 0 0015 11c0 1.18.91 2.164 2.09 2.201a5.122 5.122 0 004.756-5.11 9.96 9.96 0 00-.322-2.501M12 21c-2.907 0-5.525-1.125-7.5-2.965m15 0A14.902 14.902 0 0112 21z" />
+                                       </svg>
+                                    </div>
+                                    <div>
+                                       <h4 className="text-lg font-black uppercase tracking-tight text-slate-900 flex items-center gap-3">
+                                          <span>Biometric Access</span>
+                                          {formData.webauthnCredentials && formData.webauthnCredentials.length > 0 && (
+                                             <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[8px] font-black uppercase tracking-wider">
+                                                Active Device
+                                             </span>
+                                          )}
+                                       </h4>
+                                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                          {formData.webauthnCredentials && formData.webauthnCredentials.length > 0 
+                                             ? `Device registered (${formData.webauthnCredentials.length} active passkey). Ready for quick sign-in.`
+                                             : "Register this browser/device for passwordless quick logins."}
+                                       </p>
+                                    </div>
+                                 </div>
+                                 <button 
+                                   type="button"
+                                   disabled={isRegisteringBiometrics}
+                                   onClick={handleRegisterPasskey}
+                                   className={`w-full md:w-auto px-12 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-2xl transition-all active:scale-95 disabled:opacity-50 ${
+                                     isAdm ? "bg-indigo-600 shadow-indigo-600/20 hover:bg-indigo-700" : "bg-blue-600 shadow-blue-600/20 hover:bg-blue-700"
+                                   }`}
+                                 >
+                                   {isRegisteringBiometrics ? "Registering..." : "Register Touch/Face ID"}
+                                 </button>
+                              </div>
 
                              {/* Activity Log Section */}
                              <div className="space-y-6">

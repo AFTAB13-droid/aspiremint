@@ -65,6 +65,12 @@ export interface IUser extends Document {
     month: string;
     active: boolean;
   };
+  webauthnCredentials?: {
+    credentialID: string;
+    publicKey: string;
+    counter: number;
+    transports?: string[];
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -136,6 +142,14 @@ const UserSchema = new Schema<IUser>(
       month: { type: String },
       active: { type: Boolean, default: false }
     },
+    webauthnCredentials: [
+      {
+        credentialID: { type: String, required: true },
+        publicKey: { type: String, required: true },
+        counter: { type: Number, required: true },
+        transports: { type: [String], default: [] }
+      }
+    ]
   },
   { timestamps: true }
 );

@@ -15,6 +15,18 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
 
+  const [email, setEmail] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [isBiometricLoading, setIsBiometricLoading] = useState(false);
+
+  React.useEffect(() => {
+    const savedEmail = localStorage.getItem("remembered_email");
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
   React.useEffect(() => {
     const checkScreen = () => setIsLargeScreen(window.innerWidth >= 1024);
     checkScreen();
@@ -40,16 +52,22 @@ export default function LoginPage() {
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
+    const emailVal = formData.get("email") as string;
     const password = formData.get("password") as string;
 
     try {
-      const res = await signIn("credentials", { email, password, redirect: false });
+      const res = await signIn("credentials", { email: emailVal, password, redirect: false });
 
       if (res?.error) {
         toast.error(res.error);
         setIsLoading(false);
       } else {
+        if (rememberMe) {
+          localStorage.setItem("remembered_email", emailVal);
+        } else {
+          localStorage.removeItem("remembered_email");
+        }
+
         toast.success("Authentication Successful");
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("onboarding_dismissed");
@@ -60,6 +78,73 @@ export default function LoginPage() {
     } catch (error) {
       toast.error("System connection failure");
       setIsLoading(false);
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    if (!email.trim()) {
+      return toast.error("Please enter your Email ID first to scan biometrics");
+    }
+
+    setIsBiometricLoading(true);
+    const loadingId = toast.loading("Checking registered credentials...");
+    try {
+      const { startAuthentication } = await import("@simplewebauthn/browser");
+
+      // 1. Get authentication challenge options
+      const optionsRes = await fetch(`/api/auth/webauthn/login?email=${encodeURIComponent(email.toLowerCase().trim())}`);
+      const optionsJson = await optionsRes.json();
+      if (!optionsJson.success || !optionsJson.data) {
+        throw new Error(optionsJson.message || "No biometric credentials found. Please register device in settings first.");
+      }
+
+      toast.loading("Scanning Touch ID / Face ID...", { id: loadingId });
+
+      // 2. Browser biometric scanning challenge assertion
+      const authenticationResponse = await startAuthentication(optionsJson.data);
+
+      toast.loading("Verifying signature credentials...", { id: loadingId });
+
+      // 3. Post assertion payload back to verification api
+      const verifyRes = await fetch("/api/auth/webauthn/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(authenticationResponse),
+      });
+      const verifyJson = await verifyRes.json();
+
+      if (!verifyJson.success || !verifyJson.token) {
+        throw new Error(verifyJson.message || "Credential verification failed.");
+      }
+
+      // 4. Authenticate session bypass
+      const nextAuthRes = await signIn("credentials", {
+        email: verifyJson.email,
+        webauthnToken: verifyJson.token,
+        redirect: false
+      });
+
+      if (nextAuthRes?.error) {
+        throw new Error(nextAuthRes.error);
+      }
+
+      if (rememberMe) {
+        localStorage.setItem("remembered_email", email);
+      } else {
+        localStorage.removeItem("remembered_email");
+      }
+
+      toast.success("Welcome back! Authentication Successful", { id: loadingId });
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("onboarding_dismissed");
+      }
+      router.replace("/app");
+      router.refresh();
+    } catch (err: any) {
+      console.error("Biometric login failed:", err);
+      toast.error(err.message || "Device authentication failed or cancelled.", { id: loadingId });
+    } finally {
+      setIsBiometricLoading(false);
     }
   };
 
@@ -154,6 +239,8 @@ export default function LoginPage() {
                 name="email" 
                 placeholder="root@aspiremint.com" 
                 required 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full h-16 pl-14 pr-6 bg-slate-50/50 border-none focus:bg-white rounded-[24px] shadow-inner font-bold text-sm transition-all focus:ring-8 focus:ring-blue-500/5 outline-none placeholder:text-slate-300"
               />
             </div>
@@ -185,15 +272,51 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* Remember Me Checkbox */}
+          <div className="flex items-center gap-3 px-1 relative z-10">
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <input 
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4.5 h-4.5 rounded-lg border-slate-200 text-blue-600 focus:ring-blue-500/10 cursor-pointer"
+              />
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                Remember email for quick OTP logins
+              </span>
+            </label>
+          </div>
+
           <div className="pt-4 relative z-10">
             <button 
               type="submit" 
-              disabled={isLoading}
+              disabled={isLoading || isBiometricLoading}
               className="w-full h-16 bg-slate-900 text-white rounded-[24px] font-black uppercase tracking-[0.3em] text-[11px] shadow-3xl shadow-slate-900/20 active:scale-95 transition-all flex items-center justify-center gap-4 group/btn overflow-hidden relative"
             >
                <div className="absolute inset-0 bg-blue-600 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500" />
                <span className="relative z-10">{isLoading ? "AUTHENTICATING..." : "SIGN IN TO PORTAL"}</span>
                {!isLoading && <ArrowRight className="w-4 h-4 relative z-10 group-hover/btn:translate-x-2 transition-transform" />}
+            </button>
+          </div>
+
+          {/* Biometric Bypass Button */}
+          <div className="pt-2 relative z-10 flex flex-col items-center">
+            <div className="flex items-center w-full gap-4 mb-4">
+              <div className="h-px bg-slate-100/50 flex-1" />
+              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">or bypass with</span>
+              <div className="h-px bg-slate-100/50 flex-1" />
+            </div>
+
+            <button 
+              type="button"
+              disabled={isLoading || isBiometricLoading}
+              onClick={handleBiometricLogin}
+              className="w-full h-16 bg-white hover:bg-slate-50 border border-slate-100 rounded-[24px] text-slate-700 font-black uppercase tracking-[0.2em] text-[10px] shadow-sm flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+            >
+              <svg className="w-5 h-5 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 009 11c0-1.18-.91-2.164-2.09-2.201a5.122 5.122 0 00-4.756 5.11 9.96 9.96 0 00.322 2.501M12 11c0-3.517 1.009-6.799 2.753-9.571m3.44 2.04l-.054.09A13.916 13.916 0 0015 11c0 1.18.91 2.164 2.09 2.201a5.122 5.122 0 004.756-5.11 9.96 9.96 0 00-.322-2.501M12 21c-2.907 0-5.525-1.125-7.5-2.965m15 0A14.902 14.902 0 0112 21z" />
+              </svg>
+              <span>{isBiometricLoading ? "SCANNING BIOMETRIC..." : "TOUCH / FACE ID QUICK LOGIN"}</span>
             </button>
           </div>
         </form>

@@ -47,54 +47,68 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        webauthnToken: { label: "WebAuthn Token", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.email) {
           throw new Error("Invalid credentials");
         }
 
         const normalizedEmail = credentials.email.toLowerCase().trim();
-
-        // --- PARALLELIZE NETWORK HOPS: Check lockout and connect to MongoDB simultaneously ---
-        const lockKey = `login_lock:${normalizedEmail}`;
-        const attemptsKey = `login_attempts:${normalizedEmail}`;
-
-        const [isLocked] = await Promise.all([
-          getOtp(lockKey),
-          connectToDatabase(),
-        ]);
-
-        if (isLocked) {
-          throw new Error("Account temporarily locked due to too many failed attempts. Try again in 15 minute(s).");
-        }
-        // -------------------------------------------------------------------------------------
+        await connectToDatabase();
 
         const user = await User.findOne({ email: normalizedEmail });
-
         if (!user) {
-          // Increment failed attempts even for non-existent emails (prevent enumeration)
-          await checkRateLimit(attemptsKey, 5, 900);
           throw new Error("Invalid credentials");
         }
 
-        // @ts-ignore - comparePassword is added via Mongoose schema methods
-        const isValid = await user.comparePassword(credentials.password);
+        if (credentials.webauthnToken) {
+          // --- WebAuthn Passkey bypass validation ---
+          const expectedOTP = `WEBAUTHN:${credentials.webauthnToken}`;
+          if (
+            user.resetPasswordOTP !== expectedOTP ||
+            !user.resetPasswordExpires ||
+            user.resetPasswordExpires < new Date()
+          ) {
+            throw new Error("Biometric session expired. Please scan again.");
+          }
 
-        if (!isValid) {
-          // Increment failed attempts and lock if threshold exceeded
-          const { allowed } = await checkRateLimit(attemptsKey, 4, 900);
-          if (!allowed) {
-            await storeOtp(lockKey, "1", 900); // Lock for 15 minutes
-            deleteOtp(attemptsKey).catch(() => {});
+          // Consume the short-lived biometric bypass token
+          user.resetPasswordOTP = undefined;
+          user.resetPasswordExpires = undefined;
+          await user.save();
+        } else {
+          // --- Standard password authorization ---
+          if (!credentials.password) {
+            throw new Error("Invalid credentials");
+          }
+
+          const lockKey = `login_lock:${normalizedEmail}`;
+          const attemptsKey = `login_attempts:${normalizedEmail}`;
+
+          const isLocked = await getOtp(lockKey);
+          if (isLocked) {
             throw new Error("Account temporarily locked due to too many failed attempts. Try again in 15 minute(s).");
           }
-          throw new Error("Invalid credentials");
-        }
 
-        // --- Login success: clear brute-force counters ---
-        deleteOtp(attemptsKey).catch(() => {});
-        deleteOtp(lockKey).catch(() => {});
-        // -------------------------------------------------
+          // @ts-ignore - comparePassword is added via Mongoose schema methods
+          const isValid = await user.comparePassword(credentials.password);
+
+          if (!isValid) {
+            // Increment failed attempts and lock if threshold exceeded
+            const { allowed } = await checkRateLimit(attemptsKey, 4, 900);
+            if (!allowed) {
+              await storeOtp(lockKey, "1", 900); // Lock for 15 minutes
+              deleteOtp(attemptsKey).catch(() => {});
+              throw new Error("Account temporarily locked due to too many failed attempts. Try again in 15 minute(s).");
+            }
+            throw new Error("Invalid credentials");
+          }
+
+          // Clear brute-force counters on success
+          deleteOtp(attemptsKey).catch(() => {});
+          deleteOtp(lockKey).catch(() => {});
+        }
 
         if (!user.isActive) {
           throw new Error("Account is inactive");
