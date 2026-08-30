@@ -51,9 +51,9 @@ const MARKETPLACE_FORMATS: Record<string, PlatformFormat> = {
     example: "NYK-220393409-9585463-1 or NYKL10143824"
   },
   blinkit: {
-    regex: /^ORD-?\d{8,10}$/i,
-    placeholder: "e.g. ORD700706538",
-    example: "ORD700706538 (ORD followed by 8 to 10 digits)"
+    regex: /^ORD\d{11}$/i,
+    placeholder: "e.g. ORD12345678901",
+    example: "ORD12345678901 (ORD followed by exactly 11 digits)"
   }
 };
 
