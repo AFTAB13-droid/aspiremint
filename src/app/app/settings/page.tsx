@@ -1257,6 +1257,38 @@ export default function SettingsPage() {
                             <ChevronRight className="w-4 h-4 text-slate-400" />
                           </button>
 
+                          {/* Biometric Access Button */}
+                          <button 
+                            type="button" 
+                            disabled={isRegisteringBiometrics}
+                            onClick={handleRegisterPasskey}
+                            className="w-full bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between active:bg-slate-50 transition-all disabled:opacity-50"
+                          >
+                            <div className="flex items-center gap-3">
+                               <div className={`h-9 w-9 rounded-xl flex items-center justify-center text-white ${isAdm ? "bg-indigo-600" : "bg-blue-600"}`}>
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 009 11c0-1.18-.91-2.164-2.09-2.201a5.122 5.122 0 00-4.756 5.11 9.96 9.96 0 00.322 2.501M12 11c0-3.517 1.009-6.799 2.753-9.571m3.44 2.04l-.054.09A13.916 13.916 0 0015 11c0 1.18.91 2.164 2.09 2.201a5.122 5.122 0 004.756-5.11 9.96 9.96 0 00-.322-2.501M12 21c-2.907 0-5.525-1.125-7.5-2.965m15 0A14.902 14.902 0 0112 21z" />
+                                  </svg>
+                               </div>
+                               <div className="text-left">
+                                  <h4 className="text-xs font-black uppercase tracking-tight text-slate-800 flex items-center gap-2">
+                                     <span>Biometric Access</span>
+                                     {formData.webauthnCredentials && formData.webauthnCredentials.length > 0 && (
+                                        <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[6px] font-black uppercase tracking-wider">
+                                           Active
+                                        </span>
+                                     )}
+                                  </h4>
+                                  <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                                     {formData.webauthnCredentials && formData.webauthnCredentials.length > 0
+                                        ? `Registered device (${formData.webauthnCredentials.length} active key)`
+                                        : "Register Touch/Face ID quick sign-in"}
+                                  </p>
+                                </div>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-slate-400" />
+                          </button>
+
                           <div className="space-y-3">
                              <div className="flex items-center gap-2 px-1">
                                 <Activity className="w-3.5 h-3.5 text-slate-400" />
