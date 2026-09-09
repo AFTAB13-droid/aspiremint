@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg-woman2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#5b21b6"/>
+    </linearGradient>
+    <linearGradient id="skin-woman2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fed7aa"/>
+      <stop offset="100%" stop-color="#fdba74"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="url(#bg-woman2)"/>
+  <path d="M26 116 C28 92, 42 80, 60 80 C78 80, 92 92, 94 116 Z" fill="#2e1065"/>
+  <path d="M48 80 C52 94, 68 94, 72 80 Z" fill="#c084fc"/>
+  <rect x="52" y="68" width="16" height="15" rx="4" fill="url(#skin-woman2)"/>
+  <circle cx="39" cy="56" r="6" fill="#fed7aa"/>
+  <circle cx="81" cy="56" r="6" fill="#fed7aa"/>
+  <ellipse cx="60" cy="55" rx="19" ry="22" fill="url(#skin-woman2)"/>
+  <path d="M34 46 C34 28, 50 24, 60 24 C70 24, 86 28, 86 46 C86 64, 82 72, 80 74 C78 58, 76 40, 70 38 C60 36, 52 38, 44 42 C40 44, 40 64, 40 74 C38 72, 34 64, 34 46 Z" fill="#3b0764"/>
+  <circle cx="51" cy="55" r="6.5" stroke="#a855f7" stroke-width="2" fill="rgba(255,255,255,0.3)"/>
+  <circle cx="69" cy="55" r="6.5" stroke="#a855f7" stroke-width="2" fill="rgba(255,255,255,0.3)"/>
+  <line x1="57.5" y1="55" x2="62.5" y2="55" stroke="#a855f7" stroke-width="2"/>
+  <circle cx="51" cy="55" r="2.2" fill="#1e1b4b"/>
+  <circle cx="69" cy="55" r="2.2" fill="#1e1b4b"/>
+  <path d="M54 68 Q60 74 66 68" stroke="#1e1b4b" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+</svg>

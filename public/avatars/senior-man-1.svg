@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg-sm1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="skin-sm1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffedd5"/>
+      <stop offset="100%" stop-color="#fed7aa"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="url(#bg-sm1)"/>
+  <path d="M24 116 C26 90, 42 78, 60 78 C78 78, 94 90, 96 116 Z" fill="#334155"/>
+  <polygon points="50,78 60,94 70,78 64,116 56,116" fill="#f1f5f9"/>
+  <rect x="52" y="68" width="16" height="15" rx="4" fill="url(#skin-sm1)"/>
+  <circle cx="39" cy="55" r="6" fill="#ffedd5"/>
+  <circle cx="81" cy="55" r="6" fill="#ffedd5"/>
+  <ellipse cx="60" cy="54" rx="20" ry="23" fill="url(#skin-sm1)"/>
+  <path d="M40 56 C40 80, 48 85, 60 85 C72 85, 80 80, 80 56 C80 68, 74 76, 60 76 C46 76, 40 68, 40 56 Z" fill="#cbd5e1"/>
+  <path d="M38 46 C38 28, 56 24, 70 26 C82 28, 84 38, 82 50 C76 38, 68 34, 58 34 C46 34, 40 40, 38 46 Z" fill="#cbd5e1"/>
+  <circle cx="51" cy="53" r="6" stroke="#94a3b8" stroke-width="1.8" fill="rgba(255,255,255,0.3)"/>
+  <circle cx="69" cy="53" r="6" stroke="#94a3b8" stroke-width="1.8" fill="rgba(255,255,255,0.3)"/>
+  <line x1="57" y1="53" x2="63" y2="53" stroke="#94a3b8" stroke-width="1.8"/>
+  <circle cx="51" cy="53" r="2" fill="#0f172a"/>
+  <circle cx="69" cy="53" r="2" fill="#0f172a"/>
+  <path d="M54 67 Q60 72 66 67" stroke="#475569" stroke-width="2" stroke-linecap="round" fill="none"/>
+</svg>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
+import { getUserAvatar } from "@/data/avatars";
 
 interface UserDossierModalProps {
   user: any;
@@ -133,8 +134,12 @@ export function UserDossierModal({ user, onClose, onUpdate }: UserDossierModalPr
            <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-black/10 blur-[60px] rounded-full -ml-20 -mb-20 pointer-events-none" />
 
            <div className="flex items-center gap-8 relative z-10">
-              <div className={`h-24 w-24 rounded-[32px] bg-white/20 backdrop-blur-xl flex items-center justify-center text-4xl font-black shadow-inner border border-white/30 relative shrink-0 transition-all ${isInactiveDanger ? 'ring-4 ring-rose-500 animate-pulse' : ''} ${isTerminated ? 'grayscale' : ''}`}>
-                 {user.name?.charAt(0)}
+              <div className={`h-24 w-24 rounded-[32px] bg-white/20 backdrop-blur-xl flex items-center justify-center text-4xl font-black shadow-inner border border-white/30 relative shrink-0 transition-all overflow-hidden p-1 ${isInactiveDanger ? 'ring-4 ring-rose-500 animate-pulse' : ''} ${isTerminated ? 'grayscale' : ''}`}>
+                 <img 
+                   src={getUserAvatar(user.avatar || user.profileImage, user.name)} 
+                   alt={user.name} 
+                   className="w-full h-full object-cover rounded-[24px]"
+                 />
                  {isTerminated && (
                     <div className="absolute -bottom-2 -right-2 bg-rose-600 text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full border-2 border-slate-900 shadow-xl">TERMINATED</div>
                  )}

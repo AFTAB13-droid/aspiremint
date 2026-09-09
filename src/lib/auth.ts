@@ -152,6 +152,8 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
+          avatar: user.avatar || user.profileImage || "",
+          image: user.avatar || user.profileImage || "",
           isProfileComplete: user.isProfileComplete || false,
           totalCompletedOrders: user.totalCompletedOrders || 0,
           mfaPending: isMfaPending,
@@ -164,6 +166,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.avatar = (user as any).avatar;
+        token.image = (user as any).image;
         token.isProfileComplete = user.isProfileComplete;
         token.totalCompletedOrders = user.totalCompletedOrders;
         token.mfaPending = (user as any).mfaPending;
@@ -179,6 +183,8 @@ export const authOptions: NextAuthOptions = {
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        (session.user as any).avatar = (token.avatar as string) || (token.image as string) || "";
+        session.user.image = (token.avatar as string) || (token.image as string) || "";
         session.user.isProfileComplete = token.isProfileComplete as boolean;
         session.user.totalCompletedOrders = token.totalCompletedOrders as number;
         session.user.mfaPending = token.mfaPending as boolean;

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { UserBadge } from "@/components/ui/UserBadge";
 import { BannerConfig } from "@/components/admin/BannerManager";
 import { usePusher } from "@/hooks/usePusher";
+import { getUserAvatar } from "@/data/avatars";
 import toast from "react-hot-toast";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -24,6 +25,8 @@ interface BuyerDashboardProps {
   user: {
     name?: string | null;
     role: string;
+    avatar?: string | null;
+    image?: string | null;
     totalCompletedOrders?: number;
     globalRank?: number;
     previousRefundAmount?: number;
@@ -407,8 +410,12 @@ export default function BuyerDashboard({
                             : 'bg-gradient-to-br from-amber-600 via-orange-600 to-amber-700 ring-4 ring-orange-300 ring-offset-2 animate-pulse'
                          : 'bg-gradient-to-br from-slate-900 to-slate-800'
                    }`}>
-                     {user.name?.[0] || 'U'}
-                     <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <img 
+                        src={getUserAvatar(user.avatar || user.image, user.name)} 
+                        alt={user.name || "User"} 
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                   </div>
                   <div>
                      <div className="flex flex-wrap items-center gap-3">

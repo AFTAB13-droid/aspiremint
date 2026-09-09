@@ -8,6 +8,7 @@ import { signOut, useSession } from "next-auth/react";
 import { Logo } from "@/components/common/Logo";
 import { UserBadge } from "@/components/ui/UserBadge";
 import { InstallPWA } from "@/components/ui/InstallPWA";
+import { getUserAvatar } from "@/data/avatars";
 
 interface NavLink {
   name: string;
@@ -270,11 +271,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex items-center gap-4">
               <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-200 to-indigo-200 p-0.5 shadow-md">
                 <div className="h-full w-full rounded-full bg-white flex items-center justify-center text-xl font-black text-slate-900 border-2 border-white overflow-hidden shadow-inner uppercase">
-                   {session?.user?.image ? (
-                     <img src={session.user.image} alt="" className="w-full h-full object-cover" />
-                   ) : (
-                     session?.user?.name?.charAt(0) || "U"
-                   )}
+                   <img 
+                     src={getUserAvatar((session?.user as any)?.avatar || session?.user?.image, session?.user?.name)} 
+                     alt="" 
+                     className="w-full h-full object-cover" 
+                   />
                 </div>
               </div>
               <div className="flex flex-col">
@@ -438,8 +439,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
            <div className={`relative overflow-hidden p-5 rounded-[28px] border border-blue-100/30 shadow-sm transition-all bg-gradient-to-br ${isAdm ? "from-indigo-600 to-indigo-700" : "from-blue-600 to-blue-700"} text-white`}>
               <div className="absolute top-0 right-0 h-24 w-24 bg-white/10 blur-2xl rounded-full -mr-12 -mt-12" />
               <div className="flex items-center gap-4 relative z-10">
-                 <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl font-black shadow-inner border border-white/20">
-                    {session?.user?.name?.charAt(0) || "U"}
+                 <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl font-black shadow-inner border border-white/20 overflow-hidden shrink-0">
+                    <img 
+                      src={getUserAvatar((session?.user as any)?.avatar || session?.user?.image, session?.user?.name)} 
+                      alt="" 
+                      className="w-full h-full object-cover" 
+                    />
                  </div>
                  <div className="overflow-hidden">
                     <p className="text-[15px] font-black leading-none truncate">{session?.user?.name || "Guest"}</p>

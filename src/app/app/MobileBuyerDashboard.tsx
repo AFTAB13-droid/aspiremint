@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { UserBadge } from "@/components/ui/UserBadge";
 import { BannerConfig } from "@/components/admin/BannerManager";
 import { usePusher } from "@/hooks/usePusher";
+import { getUserAvatar } from "@/data/avatars";
 import toast from "react-hot-toast";
 import { 
   TrendingUp, Package, RefreshCw, Clock, CheckCircle2, ChevronRight, X,
@@ -30,6 +31,8 @@ interface BuyerDashboardProps {
   user: {
     name?: string | null;
     role: string;
+    avatar?: string | null;
+    image?: string | null;
     totalCompletedOrders?: number;
     globalRank?: number;
     previousRefundAmount?: number;
@@ -326,7 +329,7 @@ export default function MobileBuyerDashboard({
           className="flex items-center justify-between px-4 pt-4 pb-2"
         >
           <div className="flex items-center gap-3">
-             <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-black shadow-lg ${
+             <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-black shadow-lg overflow-hidden shrink-0 ${
                 user.leaderboardBadge?.active
                    ? user.leaderboardBadge.rank === 1
                       ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 ring-2 ring-amber-300 ring-offset-1 animate-pulse'
@@ -335,7 +338,11 @@ export default function MobileBuyerDashboard({
                       : 'bg-gradient-to-br from-amber-600 via-orange-600 to-amber-700 ring-2 ring-orange-300 ring-offset-1 animate-pulse'
                    : 'bg-gradient-to-br from-blue-600 to-indigo-600'
              }`}>
-                {user.name?.[0] || 'U'}
+                <img 
+                  src={getUserAvatar(user.avatar || user.image, user.name)} 
+                  alt={user.name || "User"} 
+                  className="w-full h-full object-cover rounded-full"
+                />
              </div>
              <div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">

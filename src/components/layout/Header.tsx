@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Logo } from "@/components/common/Logo";
 import { NotificationSidebar } from "./NotificationSidebar";
 import { UserBadge } from "@/components/ui/UserBadge";
+import { getUserAvatar } from "@/data/avatars";
 
 interface HeaderProps {
   setMobileOpen: (open: boolean) => void;
@@ -14,6 +15,8 @@ interface HeaderProps {
     name?: string | null;
     email?: string | null;
     role?: string;
+    avatar?: string | null;
+    image?: string | null;
     totalCompletedOrders?: number;
     leaderboardBadge?: {
       rank: number;
@@ -228,8 +231,12 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
             whileHover={{ scale: 1.02, x: 2 }}
             className={`flex items-center gap-3 cursor-pointer group bg-white/80 hover:bg-white p-1.5 pr-5 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all ${isAdm ? "hover:border-indigo-200" : "hover:border-blue-200"}`}
           >
-            <div className={`h-[42px] w-[42px] overflow-hidden rounded-2xl border-2 border-white bg-gradient-to-br object-cover flex items-center justify-center font-black shadow-sm group-hover:shadow-md transition-all ${isAdm ? "from-indigo-100 to-indigo-200 text-indigo-700" : "from-blue-100 to-blue-200 text-blue-700"}`}>
-              {user?.name?.charAt(0) || "U"}
+            <div className={`h-[42px] w-[42px] overflow-hidden rounded-2xl border-2 border-white bg-slate-100 object-cover flex items-center justify-center font-black shadow-sm group-hover:shadow-md transition-all shrink-0`}>
+              <img 
+                src={getUserAvatar(user?.avatar || user?.image, user?.name)} 
+                alt={user?.name || "User"} 
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="hidden text-left lg:block">
               <div className="flex items-center gap-2.5">

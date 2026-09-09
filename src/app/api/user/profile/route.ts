@@ -46,7 +46,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { name, mobile, upiId, bankName, accountHolder, accountNumber, ifscCode, branchName, bankDetails, otp } = body;
+    const { name, mobile, upiId, bankName, accountHolder, accountNumber, ifscCode, branchName, bankDetails, otp, avatar } = body;
 
     const hasPaymentChanges = upiId !== undefined || 
                              bankName !== undefined || 
@@ -85,6 +85,10 @@ export async function PUT(req: Request) {
     const updatePayload: any = {};
     if (name) updatePayload.name = name;
     if (mobile) updatePayload.mobile = mobile;
+    if (avatar !== undefined) {
+      updatePayload.avatar = avatar;
+      updatePayload.profileImage = avatar;
+    }
     
     // Payment Details patching
     if (upiId !== undefined) updatePayload['paymentDetails.upiId'] = upiId;

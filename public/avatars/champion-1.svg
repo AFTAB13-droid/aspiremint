@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg-champ1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="50%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+    <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="skin-champ1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffedd5"/>
+      <stop offset="100%" stop-color="#fed7aa"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="url(#bg-champ1)"/>
+  <circle cx="60" cy="60" r="52" stroke="url(#gold-grad)" stroke-width="2" fill="none" opacity="0.5" stroke-dasharray="6,4"/>
+  <path d="M26 116 C28 90, 42 80, 60 80 C78 80, 92 90, 94 116 Z" fill="#064e3b"/>
+  <polygon points="50,80 60,96 70,80 65,116 55,116" fill="url(#gold-grad)"/>
+  <rect x="52" y="68" width="16" height="15" rx="4" fill="url(#skin-champ1)"/>
+  <ellipse cx="60" cy="55" rx="19" ry="22" fill="url(#skin-champ1)"/>
+  <path d="M38 48 C36 30, 52 26, 64 26 C76 26, 84 32, 82 48 C78 38, 70 36, 60 36 C48 36, 42 42, 38 48 Z" fill="#0f172a"/>
+  <polygon points="46,30 52,38 60,26 68,38 74,30 72,42 48,42" fill="url(#gold-grad)"/>
+  <circle cx="52" cy="54" r="2.8" fill="#064e3b"/>
+  <circle cx="68" cy="54" r="2.8" fill="#064e3b"/>
+  <circle cx="53" cy="53" r="0.8" fill="#ffffff"/>
+  <circle cx="69" cy="53" r="0.8" fill="#ffffff"/>
+  <path d="M48 48 Q53 45 57 48" stroke="#064e3b" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M72 48 Q67 45 63 48" stroke="#064e3b" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M53 66 Q60 73 67 66" stroke="#064e3b" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+</svg>

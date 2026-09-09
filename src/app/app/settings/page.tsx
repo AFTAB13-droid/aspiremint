@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { 
   Lock, Activity, Shield, User, CreditCard, ChevronRight, 
   MapPin, Mail, Phone, Globe, Smartphone, Monitor, Info,
-  CheckCircle2, AlertCircle, RefreshCw, LogOut, Key
+  CheckCircle2, AlertCircle, RefreshCw, LogOut, Key, Sparkles
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
@@ -13,6 +13,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { UserBadge } from "@/components/ui/UserBadge";
+import { AvatarPickerModal } from "@/components/ui/AvatarPickerModal";
+import { getUserAvatar } from "@/data/avatars";
 
 function getDeviceInfo(deviceString: string) {
   if (!deviceString) return { name: "Legacy Device", isMobile: false };
@@ -122,6 +124,7 @@ export default function SettingsPage() {
     name: "",
     email: "",
     mobile: "",
+    avatar: "",
     upiId: "",
     aspireMintId: "",
     bankName: "",
@@ -139,6 +142,7 @@ export default function SettingsPage() {
     leaderboardBadge: null as any,
     webauthnCredentials: [] as any[]
   });
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [passwordData, setPasswordData] = useState({
     oldPassword: "",
     newPassword: "",
@@ -176,6 +180,7 @@ export default function SettingsPage() {
           name: json.data.name || "",
           email: json.data.email || "",
           mobile: json.data.mobile || "",
+          avatar: json.data.avatar || json.data.profileImage || "",
           upiId: pd.upiId || "",
           aspireMintId: json.data.aspireMintId || "",
           bankName: pd.bankName || "",
@@ -198,6 +203,26 @@ export default function SettingsPage() {
       toast.error("Failed to load profile details");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveAvatar = async (newAvatarPath: string) => {
+    setFormData(prev => ({ ...prev, avatar: newAvatarPath }));
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatar: newAvatarPath }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message);
+
+      toast.success("Avatar updated successfully!");
+      setOriginalData((prev: any) => ({ ...prev, avatar: newAvatarPath }));
+      await update({ avatar: newAvatarPath, image: newAvatarPath });
+      window.dispatchEvent(new Event("FCM_REFRESH_DATA"));
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update avatar");
     }
   };
 
@@ -356,6 +381,7 @@ export default function SettingsPage() {
         payload = {
           name: formData.name,
           mobile: formData.mobile,
+          avatar: formData.avatar,
         };
       } else if (activeTab === "payments") {
         payload = {
@@ -383,9 +409,8 @@ export default function SettingsPage() {
       setShowPaymentOtp(false);
       setPaymentOtp("");
       
-      if (session?.user?.name !== formData.name) {
-        await update({ name: formData.name, isProfileComplete: true });
-      }
+      await update({ name: formData.name, avatar: formData.avatar, image: formData.avatar, isProfileComplete: true });
+      window.dispatchEvent(new Event("FCM_REFRESH_DATA"));
 
     } catch (err: any) {
       toast.error(err.message || "Could not save settings");
@@ -533,11 +558,26 @@ export default function SettingsPage() {
                    <div className={`absolute top-0 right-0 -mr-20 -mt-20 h-64 w-64 rounded-full blur-[100px] opacity-20 transition-transform group-hover:scale-125 ${isAdm ? "bg-indigo-500" : "bg-blue-500"}`} />
                    
                    <div className="relative z-10 flex flex-col items-center text-center">
-                      <div className="mb-8 relative">
-                         <div className={`absolute inset-0 blur-2xl opacity-20 rounded-full ${isAdm ? "bg-indigo-600" : "bg-blue-600"}`} />
-                         <div className="relative">
-                           <UserBadge ordersCount={totalCompletedOrders} align="center" />
+                      <div className="mb-6 relative group">
+                         <div className={`absolute inset-0 blur-2xl opacity-25 rounded-full ${isAdm ? "bg-indigo-600" : "bg-blue-600"}`} />
+                         <div className="relative w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-white/30 to-white/10 shadow-2xl backdrop-blur-md">
+                           <img 
+                             src={getUserAvatar(formData.avatar, formData.name)} 
+                             alt={formData.name}
+                             className="w-full h-full rounded-full object-cover bg-slate-900/50 shadow-inner"
+                           />
+                           <button
+                             type="button"
+                             onClick={() => setIsAvatarModalOpen(true)}
+                             className="absolute bottom-0 right-0 p-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg transition-transform active:scale-95 group-hover:scale-110"
+                             title="Change Avatar Persona"
+                           >
+                             <Sparkles className="w-4 h-4" />
+                           </button>
                          </div>
+                      </div>
+                      <div className="mb-4">
+                        <UserBadge ordersCount={totalCompletedOrders} align="center" />
                       </div>
                       <h2 className="text-3xl font-black text-white tracking-tighter mb-1 uppercase">{formData.name}</h2>
                       <p className={`text-[10px] font-black uppercase tracking-[0.4em] mb-10 ${isAdm ? "text-indigo-300/80" : "text-blue-300/80"}`}>{formData.aspireMintId}</p>
@@ -595,6 +635,36 @@ export default function SettingsPage() {
                                 )}
                                 <User className={`w-8 h-8 opacity-20 ${isAdm ? "text-indigo-600" : "text-blue-600"}`} />
                              </div>
+                          </div>
+
+                          {/* Avatar Persona Card */}
+                          <div className="p-6 rounded-[32px] bg-gradient-to-r from-indigo-50/70 via-blue-50/50 to-slate-50 border border-indigo-100/70 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-sm">
+                             <div className="flex items-center gap-5">
+                                <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-white shadow-md border border-slate-100 shrink-0 p-1">
+                                   <img 
+                                     src={getUserAvatar(formData.avatar, formData.name)} 
+                                     alt="Avatar" 
+                                     className="w-full h-full object-cover rounded-xl"
+                                   />
+                                </div>
+                                <div>
+                                   <div className="flex items-center gap-2">
+                                      <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Profile Avatar Persona</h4>
+                                      <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[8px] font-black uppercase tracking-wider">Ready-Made Catalog</span>
+                                   </div>
+                                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                                      Select from 20 curated avatars for youth, women, men & seniors
+                                   </p>
+                                </div>
+                             </div>
+                             <button
+                               type="button"
+                               onClick={() => setIsAvatarModalOpen(true)}
+                               className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                             >
+                                <Sparkles className="w-4 h-4" />
+                                Choose Avatar
+                             </button>
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
@@ -1004,9 +1074,23 @@ export default function SettingsPage() {
         <div className="px-4 py-4 space-y-4">
            {/* Compact Profile Summary Row */}
            <div className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm flex items-center gap-3">
-              <div className={`shrink-0 h-10 w-10 rounded-xl bg-gradient-to-tr from-slate-900 to-slate-800 flex items-center justify-center text-white font-black text-sm shadow-md border border-white`}>
-                 {formData.name ? formData.name.charAt(0).toUpperCase() : "U"}
-              </div>
+              <button 
+                type="button" 
+                onClick={() => setIsAvatarModalOpen(true)}
+                className="relative shrink-0 group text-left"
+                title="Tap to change avatar"
+              >
+                <div className="h-11 w-11 rounded-xl overflow-hidden bg-slate-100 shadow-md border border-slate-200/80 p-0.5">
+                   <img 
+                     src={getUserAvatar(formData.avatar, formData.name)} 
+                     alt={formData.name}
+                     className="w-full h-full object-cover rounded-lg"
+                   />
+                </div>
+                <div className="absolute -bottom-1 -right-1 bg-indigo-600 text-white rounded-full p-1 shadow">
+                   <Sparkles className="w-2.5 h-2.5" />
+                </div>
+              </button>
               <div className="min-w-0 flex-1">
                  <h2 className="text-xs font-black text-slate-900 truncate uppercase tracking-tight">{formData.name || "User Registry"}</h2>
                  <p className="text-[8.5px] font-bold text-slate-400 truncate uppercase mt-0.5">{formData.aspireMintId || "Unassigned Profile"}</p>
@@ -1048,6 +1132,31 @@ export default function SettingsPage() {
                     {/* PROFILE VIEW */}
                     {activeTab === "profile" && (
                        <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-3.5">
+                          {/* Mobile Avatar Persona Card */}
+                          <div className="p-3 rounded-xl bg-indigo-50/60 border border-indigo-100 flex items-center justify-between gap-3">
+                             <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-10 h-10 rounded-lg overflow-hidden bg-white shadow-sm border border-slate-100 shrink-0 p-0.5">
+                                   <img 
+                                     src={getUserAvatar(formData.avatar, formData.name)} 
+                                     alt="Avatar" 
+                                     className="w-full h-full object-cover rounded-md"
+                                   />
+                                </div>
+                                <div className="min-w-0">
+                                   <h4 className="text-[10px] font-black text-indigo-900 uppercase truncate">Avatar Persona</h4>
+                                   <p className="text-[8px] font-bold text-indigo-500/80 uppercase truncate">20 Avatars Available</p>
+                                </div>
+                             </div>
+                             <button
+                               type="button"
+                               onClick={() => setIsAvatarModalOpen(true)}
+                               className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-[8px] font-black uppercase tracking-wider shrink-0 active:scale-95 flex items-center gap-1 shadow-sm"
+                             >
+                                <Sparkles className="w-3 h-3" />
+                                Change
+                             </button>
+                          </div>
+
                           <div className="space-y-3">
                              <div className="space-y-1">
                                 <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Registry Name</label>
@@ -1456,6 +1565,13 @@ export default function SettingsPage() {
           </div>
         )}
       </AnimatePresence>
+
+      <AvatarPickerModal 
+        isOpen={isAvatarModalOpen} 
+        onClose={() => setIsAvatarModalOpen(false)} 
+        currentAvatar={formData.avatar} 
+        onSelect={handleSaveAvatar} 
+      />
     </div>
   );
 }

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg-champ2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="50%" stop-color="#b45309"/>
+      <stop offset="100%" stop-color="#78350f"/>
+    </linearGradient>
+    <linearGradient id="gold-bright" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#fef08a"/>
+      <stop offset="100%" stop-color="#facc15"/>
+    </linearGradient>
+    <linearGradient id="skin-champ2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="100%" stop-color="#fcd34d"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="url(#bg-champ2)"/>
+  <path d="M26 116 C28 90, 42 78, 60 78 C78 78, 92 90, 94 116 Z" fill="#451a03"/>
+  <path d="M46 78 C52 96, 68 96, 74 78 Z" fill="url(#gold-bright)"/>
+  <rect x="52" y="68" width="16" height="15" rx="4" fill="url(#skin-champ2)"/>
+  <ellipse cx="60" cy="55" rx="19" ry="22" fill="url(#skin-champ2)"/>
+  <path d="M36 48 C36 28, 52 22, 64 24 C80 26, 86 38, 86 52 C80 38, 72 34, 60 34 C48 34, 40 40, 36 48 Z" fill="#292524"/>
+  <polygon points="36,60 38,58 40,60 38,62" fill="url(#gold-bright)"/>
+  <polygon points="84,60 82,58 80,60 82,62" fill="url(#gold-bright)"/>
+  <circle cx="52" cy="54" r="2.8" fill="#292524"/>
+  <circle cx="68" cy="54" r="2.8" fill="#292524"/>
+  <circle cx="53" cy="53" r="0.8" fill="#ffffff"/>
+  <circle cx="69" cy="53" r="0.8" fill="#ffffff"/>
+  <path d="M53 66 Q60 74 67 66" stroke="#991b1b" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+</svg>

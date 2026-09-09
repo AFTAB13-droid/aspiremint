@@ -234,6 +234,7 @@ export default async function DashboardPage() {
       user={{ 
         name: session.user.name, 
         role, 
+        avatar: fullUser?.avatar || fullUser?.profileImage || (session.user as any)?.avatar || session.user.image || "",
         totalCompletedOrders: completedCount, 
         globalRank,
         previousRefundAmount: fullUser?.previousRefundAmount || 0,

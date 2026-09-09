@@ -101,6 +101,7 @@ export default function DashboardLayout({
               name: session.user.name,
               email: session.user.email,
               role: role,
+              avatar: profileData?.avatar || profileData?.profileImage || (session.user as any)?.avatar || session.user.image || "",
               totalCompletedOrders: (session.user as any).totalCompletedOrders,
               leaderboardBadge: profileData?.leaderboardBadge
             }} 
@@ -115,6 +116,7 @@ export default function DashboardLayout({
                 name: session.user.name,
                 email: session.user.email,
                 role: role,
+                avatar: profileData?.avatar || profileData?.profileImage || (session.user as any)?.avatar || session.user.image || "",
                 totalCompletedOrders: (session.user as any).totalCompletedOrders,
                 leaderboardBadge: profileData?.leaderboardBadge
               }} 

@@ -22,6 +22,8 @@ interface DashboardClientProps {
   user: {
     name?: string | null;
     role: string;
+    avatar?: string | null;
+    image?: string | null;
     totalCompletedOrders?: number;
     globalRank?: number;
     previousRefundAmount?: number;

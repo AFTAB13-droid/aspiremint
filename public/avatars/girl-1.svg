@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg-girl1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#be185d"/>
+    </linearGradient>
+    <linearGradient id="skin-girl1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="100%" stop-color="#fcd34d"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="url(#bg-girl1)"/>
+  <path d="M72 36 C86 28, 96 42, 92 62 C88 74, 82 72, 80 64 Z" fill="#312e81"/>
+  <ellipse cx="74" cy="38" rx="5" ry="4" fill="#f43f5e"/>
+  <path d="M26 116 C28 92, 42 82, 60 82 C78 82, 92 92, 94 116 Z" fill="#0284c7"/>
+  <path d="M48 94 C54 100, 66 100, 72 94 L68 116 L52 116 Z" fill="#fef08a"/>
+  <rect x="52" y="70" width="16" height="15" rx="4" fill="url(#skin-girl1)"/>
+  <circle cx="40" cy="57" r="5.5" fill="#fde68a"/>
+  <circle cx="80" cy="57" r="5.5" fill="#fde68a"/>
+  <ellipse cx="60" cy="56" rx="19" ry="21" fill="url(#skin-girl1)"/>
+  <path d="M38 52 C38 32, 54 28, 64 30 C76 32, 82 40, 82 54 C76 44, 68 40, 60 40 C48 40, 42 46, 38 52 Z" fill="#312e81"/>
+  <circle cx="52" cy="56" r="2.8" fill="#1e1b4b"/>
+  <circle cx="68" cy="56" r="2.8" fill="#1e1b4b"/>
+  <circle cx="53" cy="55" r="1" fill="#ffffff"/>
+  <circle cx="69" cy="55" r="1" fill="#ffffff"/>
+  <circle cx="47" cy="62" r="3.5" fill="#fb7185" opacity="0.6"/>
+  <circle cx="73" cy="62" r="3.5" fill="#fb7185" opacity="0.6"/>
+  <path d="M54 66 Q60 73 66 66" stroke="#1e1b4b" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+</svg>

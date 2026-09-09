@@ -11,6 +11,7 @@ import { UserHistoryModal } from "@/components/admin/UserHistoryModal";
 import { StaffCreationModal } from "@/components/admin/StaffCreationModal";
 import { BroadcastModal } from "@/components/admin/BroadcastModal";
 import { ShieldCheck, Megaphone } from "lucide-react";
+import { getUserAvatar } from "@/data/avatars";
 
 export default function AdminUserDirectory() {
   const { data: session } = useSession();
@@ -214,8 +215,12 @@ export default function AdminUserDirectory() {
                      </td>
                      <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
-                           <div className={`h-12 w-12 rounded-2xl flex items-center justify-center text-lg font-black text-white uppercase shadow-md ${user.role === 'ADMIN' ? 'bg-indigo-600' : user.role === 'SUBADMIN' ? 'bg-sky-500' : user.role === 'MEDIATOR' ? 'bg-purple-600' : 'bg-blue-600'}`}>
-                              {user.name.charAt(0)}
+                           <div className={`h-12 w-12 rounded-2xl flex items-center justify-center text-lg font-black text-white uppercase shadow-md overflow-hidden shrink-0 border border-slate-100 ${user.role === 'ADMIN' ? 'bg-indigo-600' : user.role === 'SUBADMIN' ? 'bg-sky-500' : user.role === 'MEDIATOR' ? 'bg-purple-600' : 'bg-blue-600'}`}>
+                              <img 
+                                src={getUserAvatar(user.avatar || user.profileImage, user.name)} 
+                                alt={user.name} 
+                                className="w-full h-full object-cover" 
+                              />
                            </div>
                            <div>
                               <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{user.name}</p>
@@ -277,8 +282,12 @@ export default function AdminUserDirectory() {
                
                <div className="flex items-start justify-between mb-6 relative z-10">
                   <div className="flex items-center gap-4">
-                     <div className={`h-12 w-12 rounded-2xl flex items-center justify-center text-lg font-black text-white uppercase shadow-md shrink-0 ${user.role === 'ADMIN' ? 'bg-indigo-600' : user.role === 'MEDIATOR' ? 'bg-purple-600' : 'bg-blue-600'}`}>
-                        {user.name.charAt(0)}
+                     <div className={`h-12 w-12 rounded-2xl flex items-center justify-center text-lg font-black text-white uppercase shadow-md shrink-0 overflow-hidden border border-slate-100 ${user.role === 'ADMIN' ? 'bg-indigo-600' : user.role === 'MEDIATOR' ? 'bg-purple-600' : 'bg-blue-600'}`}>
+                        <img 
+                          src={getUserAvatar(user.avatar || user.profileImage, user.name)} 
+                          alt={user.name} 
+                          className="w-full h-full object-cover" 
+                        />
                      </div>
                      <div className="overflow-hidden">
                         <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight truncate leading-tight">{user.name}</h3>

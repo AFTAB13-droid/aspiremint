@@ -19,6 +19,7 @@ export interface IUser extends Document {
   referralId: string;
   isProfileComplete: boolean;
   profileImage?: string;
+  avatar?: string;
   paymentDetails?: {
     upiId?: string;
     bankName?: string;
@@ -101,6 +102,7 @@ const UserSchema = new Schema<IUser>(
     },
     isProfileComplete: { type: Boolean, default: false },
     profileImage: { type: String, default: "" },
+    avatar: { type: String, default: "" },
     isActive: { type: Boolean, default: true },
     isApproved: { type: Boolean, default: true },
     isTerminated: { type: Boolean, default: false },
