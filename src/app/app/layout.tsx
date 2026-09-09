@@ -52,11 +52,25 @@ export default function DashboardLayout({
     const handleRefresh = () => {
       fetchThemeAndProfile();
     };
+    const handleAvatarUpdate = (e: any) => {
+      const updatedAvatar = e.detail?.avatar;
+      if (updatedAvatar) {
+        setProfileData((prev: any) => ({
+          ...prev,
+          avatar: updatedAvatar,
+          profileImage: updatedAvatar
+        }));
+      }
+      fetchThemeAndProfile();
+    };
+
     window.addEventListener("FCM_REFRESH_DATA", handleRefresh);
     window.addEventListener("REFRESH_BANNER_THEME", handleRefresh);
+    window.addEventListener("PROFILE_AVATAR_UPDATED", handleAvatarUpdate);
     return () => {
       window.removeEventListener("FCM_REFRESH_DATA", handleRefresh);
       window.removeEventListener("REFRESH_BANNER_THEME", handleRefresh);
+      window.removeEventListener("PROFILE_AVATAR_UPDATED", handleAvatarUpdate);
     };
   }, []);
 
@@ -80,6 +94,8 @@ export default function DashboardLayout({
         isCollapsed={isDesktopCollapsed}
         setCollapsed={setDesktopCollapsed}
         isBanned={!!profileData?.isTerminated}
+        userAvatar={profileData?.avatar || profileData?.profileImage || (session.user as any)?.avatar || session.user?.image || ""}
+        userName={profileData?.name || session.user?.name || ""}
       />
       
       {/* Main Content Area */}

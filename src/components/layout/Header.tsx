@@ -81,11 +81,23 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
     }
   };
 
+  const [avatarOverride, setAvatarOverride] = useState<string | null>(null);
+
   useEffect(() => {
     fetchUnreadCount();
     // Poll for count updates every 10 seconds
     const interval = setInterval(fetchUnreadCount, 10000);
-    return () => clearInterval(interval);
+
+    const handleAvatarUpdate = (e: any) => {
+      const updated = e.detail?.avatar || e.avatar;
+      if (updated) setAvatarOverride(updated);
+    };
+    window.addEventListener("PROFILE_AVATAR_UPDATED", handleAvatarUpdate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("PROFILE_AVATAR_UPDATED", handleAvatarUpdate);
+    };
   }, []);
 
   return (
@@ -233,7 +245,7 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
           >
             <div className={`h-[42px] w-[42px] overflow-hidden rounded-2xl border-2 border-white bg-slate-100 object-cover flex items-center justify-center font-black shadow-sm group-hover:shadow-md transition-all shrink-0`}>
               <img 
-                src={getUserAvatar(user?.avatar || user?.image, user?.name)} 
+                src={getUserAvatar(avatarOverride || user?.avatar || user?.image, user?.name)} 
                 alt={user?.name || "User"} 
                 className="w-full h-full object-cover"
               />

@@ -60,6 +60,24 @@ export default function DashboardClient({ user, stats, recentOrders }: Dashboard
   const [filterType, setFilterType] = useState<"all" | "unread">("all");
   const router = useRouter();
 
+  const [currentAvatar, setCurrentAvatar] = useState<string | null>(user.avatar || user.image || null);
+
+  React.useEffect(() => {
+    const handleAvatarUpdate = (e: any) => {
+      const updated = e.detail?.avatar || e.avatar;
+      if (updated) {
+        setCurrentAvatar(updated);
+      }
+    };
+    window.addEventListener("PROFILE_AVATAR_UPDATED", handleAvatarUpdate);
+    return () => window.removeEventListener("PROFILE_AVATAR_UPDATED", handleAvatarUpdate);
+  }, []);
+
+  const activeUser = {
+    ...user,
+    avatar: currentAvatar || user.avatar
+  };
+
   // Shared 3D HUD Mouse Tracking
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -209,7 +227,7 @@ export default function DashboardClient({ user, stats, recentOrders }: Dashboard
         <>
           <div className="hidden md:block">
             <BuyerDashboard 
-              user={user} 
+              user={activeUser} 
               stats={stats} 
               recentOrders={recentOrders} 
               isSidebarOpen={isSidebarOpen} 
@@ -221,7 +239,7 @@ export default function DashboardClient({ user, stats, recentOrders }: Dashboard
           </div>
           <div className="block md:hidden">
             <MobileBuyerDashboard 
-              user={user} 
+              user={activeUser} 
               stats={stats} 
               recentOrders={recentOrders} 
               isSidebarOpen={isSidebarOpen} 

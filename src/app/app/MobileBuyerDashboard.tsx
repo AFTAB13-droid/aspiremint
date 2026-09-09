@@ -78,6 +78,16 @@ export default function MobileBuyerDashboard({
   const [eligibleRefundAmount, setEligibleRefundAmount] = useState(0);
   const [isFetchingRefund, setIsFetchingRefund] = useState(false);
   const [localPreviousRefundFetched, setLocalPreviousRefundFetched] = useState(user.previousRefundFetched || false);
+  const [avatarOverride, setAvatarOverride] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleAvatarUpdate = (e: any) => {
+      const updated = e.detail?.avatar || e.avatar;
+      if (updated) setAvatarOverride(updated);
+    };
+    window.addEventListener("PROFILE_AVATAR_UPDATED", handleAvatarUpdate);
+    return () => window.removeEventListener("PROFILE_AVATAR_UPDATED", handleAvatarUpdate);
+  }, []);
   const [localPreviousRefundAmount, setLocalPreviousRefundAmount] = useState(user.previousRefundAmount || 0);
 
   const fetchActiveDeals = async () => {
@@ -339,7 +349,7 @@ export default function MobileBuyerDashboard({
                    : 'bg-gradient-to-br from-blue-600 to-indigo-600'
              }`}>
                 <img 
-                  src={getUserAvatar(user.avatar || user.image, user.name)} 
+                  src={getUserAvatar(avatarOverride || user.avatar || user.image, user.name)} 
                   alt={user.name || "User"} 
                   className="w-full h-full object-cover rounded-full"
                 />

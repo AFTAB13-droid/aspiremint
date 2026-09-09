@@ -217,6 +217,8 @@ interface SidebarProps {
   isCollapsed?: boolean;
   setCollapsed?: (collapsed: boolean) => void;
   isBanned?: boolean;
+  userAvatar?: string | null;
+  userName?: string | null;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -225,11 +227,60 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setMobileOpen,
   isCollapsed = false,
   setCollapsed,
-  isBanned = false
+  isBanned = false,
+  userAvatar,
+  userName
 }) => {
   const pathname = usePathname();
   const { data: session } = useSession();
   const isActiveSettings = pathname === "/app/settings";
+  
+  const [currentAvatar, setCurrentAvatar] = useState<string | null>(userAvatar || null);
+
+  React.useEffect(() => {
+    if (userAvatar) {
+      setCurrentAvatar(userAvatar);
+    }
+  }, [userAvatar]);
+
+  React.useEffect(() => {
+    const handleAvatarUpdate = (e: any) => {
+      const updated = e.detail?.avatar || e.avatar;
+      if (updated) {
+        setCurrentAvatar(updated);
+      } else {
+        fetch("/api/user/profile")
+          .then(res => res.json())
+          .then(json => {
+            if (json.success && (json.data.avatar || json.data.profileImage)) {
+              setCurrentAvatar(json.data.avatar || json.data.profileImage);
+            }
+          })
+          .catch(() => {});
+      }
+    };
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "user_avatar_updated" && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed.avatar) setCurrentAvatar(parsed.avatar);
+        } catch {}
+      }
+    };
+
+    window.addEventListener("PROFILE_AVATAR_UPDATED", handleAvatarUpdate);
+    window.addEventListener("FCM_REFRESH_DATA", handleAvatarUpdate);
+    window.addEventListener("storage", handleStorage);
+    return () => {
+      window.removeEventListener("PROFILE_AVATAR_UPDATED", handleAvatarUpdate);
+      window.removeEventListener("FCM_REFRESH_DATA", handleAvatarUpdate);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, []);
+
+  const effectiveAvatar = currentAvatar || userAvatar || (session?.user as any)?.avatar || session?.user?.image;
+  const effectiveName = userName || session?.user?.name;
  
   // Lock scroll on mobile when sidebar is open
   React.useEffect(() => {
@@ -272,7 +323,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-200 to-indigo-200 p-0.5 shadow-md">
                 <div className="h-full w-full rounded-full bg-white flex items-center justify-center text-xl font-black text-slate-900 border-2 border-white overflow-hidden shadow-inner uppercase">
                    <img 
-                     src={getUserAvatar((session?.user as any)?.avatar || session?.user?.image, session?.user?.name)} 
+                     src={getUserAvatar(effectiveAvatar, effectiveName)} 
                      alt="" 
                      className="w-full h-full object-cover" 
                    />
@@ -281,7 +332,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="flex flex-col">
                 <span className="text-xs font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Hello,</span>
                 <span className="text-2xl font-black text-slate-900 leading-none tracking-tight">
-                  {session?.user?.name?.split(' ')[0] || "User"}
+                  {effectiveName?.split(' ')[0] || "User"}
                 </span>
                 <Link 
                   href="/app/settings" 
@@ -441,13 +492,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="flex items-center gap-4 relative z-10">
                  <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl font-black shadow-inner border border-white/20 overflow-hidden shrink-0">
                     <img 
-                      src={getUserAvatar((session?.user as any)?.avatar || session?.user?.image, session?.user?.name)} 
+                      src={getUserAvatar(effectiveAvatar, effectiveName)} 
                       alt="" 
                       className="w-full h-full object-cover" 
                     />
                  </div>
                  <div className="overflow-hidden">
-                    <p className="text-[15px] font-black leading-none truncate">{session?.user?.name || "Guest"}</p>
+                    <p className="text-[15px] font-black leading-none truncate">{effectiveName || "Guest"}</p>
                     <p className="text-[9px] font-black uppercase tracking-widest text-white/60 mt-1.5 opacity-80 truncate">{userRole} PROFILE</p>
                  </div>
               </div>

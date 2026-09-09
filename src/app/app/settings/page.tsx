@@ -219,8 +219,14 @@ export default function SettingsPage() {
 
       toast.success("Avatar updated successfully!");
       setOriginalData((prev: any) => ({ ...prev, avatar: newAvatarPath }));
-      await update({ avatar: newAvatarPath, image: newAvatarPath });
+      
+      try {
+        localStorage.setItem("user_avatar_updated", JSON.stringify({ avatar: newAvatarPath, timestamp: Date.now() }));
+      } catch {}
+
+      window.dispatchEvent(new CustomEvent("PROFILE_AVATAR_UPDATED", { detail: { avatar: newAvatarPath } }));
       window.dispatchEvent(new Event("FCM_REFRESH_DATA"));
+      await update({ avatar: newAvatarPath, image: newAvatarPath });
     } catch (err: any) {
       toast.error(err.message || "Failed to update avatar");
     }
@@ -409,8 +415,14 @@ export default function SettingsPage() {
       setShowPaymentOtp(false);
       setPaymentOtp("");
       
-      await update({ name: formData.name, avatar: formData.avatar, image: formData.avatar, isProfileComplete: true });
+      if (formData.avatar) {
+        try {
+          localStorage.setItem("user_avatar_updated", JSON.stringify({ avatar: formData.avatar, timestamp: Date.now() }));
+        } catch {}
+        window.dispatchEvent(new CustomEvent("PROFILE_AVATAR_UPDATED", { detail: { avatar: formData.avatar } }));
+      }
       window.dispatchEvent(new Event("FCM_REFRESH_DATA"));
+      await update({ name: formData.name, avatar: formData.avatar, image: formData.avatar, isProfileComplete: true });
 
     } catch (err: any) {
       toast.error(err.message || "Could not save settings");
