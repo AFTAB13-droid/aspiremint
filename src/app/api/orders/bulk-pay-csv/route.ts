@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import { Order, OrderStatus } from '@/modules/order/order.model';
+import { sendOrderPaymentEmail } from '@/services/emailService';
+import { NotificationService } from '@/services/notification.service';
+import { NotificationType } from '@/modules/notification/notification.model';
 
 export async function POST(req: Request) {
   try {
@@ -42,7 +45,7 @@ export async function POST(req: Request) {
         query.mediator = session.user.id;
       }
 
-      const order = await Order.findOne(query);
+      const order = await Order.findOne(query).populate('buyer', 'name email');
       if (!order) continue;
 
       const actorName = role === 'SUBADMIN' ? `SubAdmin ${session.user.name}` : session.user.name;
@@ -82,7 +85,46 @@ export async function POST(req: Request) {
         }
       );
 
-      completedBuyers.add(order.buyer.toString());
+      const buyer: any = order.buyer;
+      if (buyer) {
+        const buyerId = buyer._id?.toString() || buyer.toString();
+        completedBuyers.add(buyerId);
+        const finalAmt = typeof paidAmount === 'number' && !isNaN(paidAmount) ? paidAmount : (order.refundDetails?.expectedPayout || order.amount);
+
+        try {
+          await NotificationService.create({
+            recipient: buyerId,
+            type: NotificationType.REFUND_COMPLETED,
+            title: "Refund Paid",
+            message: `Your refund of ₹${finalAmt} has been successfully paid by ${finalPayerName}.`,
+            metadata: { orderId: order._id },
+            actionUrl: `/app/orders/${order._id}`
+          });
+        } catch (nErr) {
+          console.error('CSV Bulk pay notif error:', nErr);
+        }
+
+        if (buyer.email) {
+          try {
+            await sendOrderPaymentEmail(
+              buyer.email,
+              buyer.name || "Customer",
+              order.aspireOrderId || order.userOrderId,
+              {
+                transactionId: finalTransactionId,
+                paidAmount: finalAmt,
+                paidAt: finalPaidAt,
+                paidByName: finalPayerName,
+                brandName: order.brandName,
+                productName: order.reviewName
+              }
+            );
+          } catch (eErr) {
+            console.error('CSV Bulk pay email error:', eErr);
+          }
+        }
+      }
+
       successCount++;
     }
 

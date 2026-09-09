@@ -560,25 +560,37 @@ export function ActiveDealsTable({
                       ) : isAdm ? (
                         <>
                           {isArchived ? (
-                            <button 
-                              onClick={() => {
-                                setDealToEdit({
-                                  ...deal,
-                                  commission: deal.commission !== undefined && deal.commission !== null ? deal.commission : "N/A",
-                                  juhiCommission: deal.juhiCommission !== undefined && deal.juhiCommission !== null ? deal.juhiCommission : "N/A",
-                                  totalSlots: deal.totalSlots ?? 0,
-                                  productLink: deal.productLink ?? "",
-                                  userRemarks: deal.userRemarks ?? "",
-                                  mediatorRemarks: deal.mediatorRemarks ?? ""
-                                });
-                                setShowEditModal(true);
-                              }}
-                              className="px-4 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-500 hover:bg-amber-500 hover:text-white transition-all shadow-sm group/restore text-[10px] font-black uppercase tracking-widest gap-2"
-                              title="Make Deal Live Again"
-                            >
-                               <svg className="w-4 h-4 group-hover/restore:rotate-180 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                               Restore
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button 
+                                onClick={() => {
+                                  setDealToEdit({
+                                    ...deal,
+                                    commission: deal.commission !== undefined && deal.commission !== null ? deal.commission : "N/A",
+                                    juhiCommission: deal.juhiCommission !== undefined && deal.juhiCommission !== null ? deal.juhiCommission : "N/A",
+                                    totalSlots: deal.totalSlots ?? 0,
+                                    productLink: deal.productLink ?? "",
+                                    userRemarks: deal.userRemarks ?? "",
+                                    mediatorRemarks: deal.mediatorRemarks ?? ""
+                                  });
+                                  setShowEditModal(true);
+                                }}
+                                className="px-4 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-500 hover:bg-amber-500 hover:text-white transition-all shadow-sm group/restore text-[10px] font-black uppercase tracking-widest gap-2"
+                                title="Make Deal Live Again"
+                              >
+                                 <svg className="w-4 h-4 group-hover/restore:rotate-180 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                 Restore
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setDealToDelete(deal);
+                                  setShowDeleteModal(true);
+                                }}
+                                className="h-10 w-10 rounded-xl bg-white border border-rose-100 flex items-center justify-center text-rose-400 hover:bg-rose-500 hover:text-white transition-all shadow-sm group/purge"
+                                title="Delete Archived Deal Permanently"
+                              >
+                                 <svg className="w-4 h-4 group-hover/purge:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                              </button>
+                            </div>
                           ) : (
                             <>
                               <button 
@@ -727,50 +739,70 @@ export function ActiveDealsTable({
             >
               <div className="p-8 md:p-12 text-center space-y-8">
                 <div className="flex justify-center gap-4">
-                   <div className="h-16 w-16 bg-amber-50 rounded-2xl flex items-center justify-center border-2 border-amber-100 shadow-sm">
-                      <svg className="w-8 h-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
-                   </div>
+                   {(!isArchived && dealToDelete?.isActive !== false) && (
+                     <div className="h-16 w-16 bg-amber-50 rounded-2xl flex items-center justify-center border-2 border-amber-100 shadow-sm">
+                        <svg className="w-8 h-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                     </div>
+                   )}
                    <div className="h-16 w-16 bg-rose-50 rounded-2xl flex items-center justify-center border-2 border-rose-100 shadow-sm">
                       <svg className="w-8 h-8 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                    </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Manage Manifest Lifecycle</h3>
+                  <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">
+                    {isArchived || dealToDelete?.isActive === false ? "Purge Archived Deal" : "Manage Manifest Lifecycle"}
+                  </h3>
                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-4">
-                    Choose the termination protocol for <span className="text-indigo-600">[{dealToDelete?.productCode}]</span>
+                    {isArchived || dealToDelete?.isActive === false ? (
+                      <>Are you sure you want to permanently delete archived deal <span className="text-rose-600 font-black">[{dealToDelete?.productCode}]</span>? This action cannot be undone.</>
+                    ) : (
+                      <>Choose the termination protocol for <span className="text-indigo-600">[{dealToDelete?.productCode}]</span></>
+                    )}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                   {/* Archive Option */}
-                   <button 
-                     onClick={() => handleDelete("archive")}
-                     className="group p-6 rounded-[32px] bg-slate-50 border border-slate-200 text-left hover:bg-white hover:border-amber-400 hover:shadow-xl hover:shadow-amber-400/10 transition-all duration-300"
-                   >
-                      <div className="h-10 w-10 bg-amber-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                         <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
-                      </div>
-                      <h4 className="text-sm font-black text-slate-900 uppercase mb-1">Archive Deal</h4>
-                      <p className="text-[9px] font-bold text-slate-400 leading-relaxed uppercase tracking-tighter">
-                         Sets stock to <span className="text-amber-600">ZERO</span> but keeps the product code in registry.
-                      </p>
-                   </button>
+                {isArchived || dealToDelete?.isActive === false ? (
+                  <div className="space-y-3">
+                     <button 
+                       onClick={() => handleDelete("delete")}
+                       className="w-full p-5 rounded-[24px] bg-rose-600 text-white font-black text-[11px] uppercase tracking-widest hover:bg-rose-700 active:scale-95 transition-all shadow-xl shadow-rose-600/20 flex items-center justify-center gap-3"
+                     >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" /></svg>
+                        Permanently Delete Archived Deal
+                     </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     {/* Archive Option */}
+                     <button 
+                       onClick={() => handleDelete("archive")}
+                       className="group p-6 rounded-[32px] bg-slate-50 border border-slate-200 text-left hover:bg-white hover:border-amber-400 hover:shadow-xl hover:shadow-amber-400/10 transition-all duration-300"
+                     >
+                        <div className="h-10 w-10 bg-amber-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                           <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                        </div>
+                        <h4 className="text-sm font-black text-slate-900 uppercase mb-1">Archive Deal</h4>
+                        <p className="text-[9px] font-bold text-slate-400 leading-relaxed uppercase tracking-tighter">
+                           Sets stock to <span className="text-amber-600">ZERO</span> but keeps the product code in registry.
+                        </p>
+                     </button>
 
-                   {/* Delete Option */}
-                   <button 
-                     onClick={() => handleDelete("delete")}
-                     className="group p-6 rounded-[32px] bg-slate-50 border border-slate-200 text-left hover:bg-white hover:border-rose-400 hover:shadow-xl hover:shadow-rose-400/10 transition-all duration-300"
-                   >
-                      <div className="h-10 w-10 bg-rose-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                         <svg className="w-5 h-5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" /></svg>
-                      </div>
-                      <h4 className="text-sm font-black text-slate-900 uppercase mb-1">Delete Deal</h4>
-                      <p className="text-[9px] font-bold text-slate-400 leading-relaxed uppercase tracking-tighter">
-                         <span className="text-rose-600">PURGES</span> everything from registry. Cannot be undone.
-                      </p>
-                   </button>
-                </div>
+                     {/* Delete Option */}
+                     <button 
+                       onClick={() => handleDelete("delete")}
+                       className="group p-6 rounded-[32px] bg-slate-50 border border-slate-200 text-left hover:bg-white hover:border-rose-400 hover:shadow-xl hover:shadow-rose-400/10 transition-all duration-300"
+                     >
+                        <div className="h-10 w-10 bg-rose-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                           <svg className="w-5 h-5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" /></svg>
+                        </div>
+                        <h4 className="text-sm font-black text-slate-900 uppercase mb-1">Delete Deal</h4>
+                        <p className="text-[9px] font-bold text-slate-400 leading-relaxed uppercase tracking-tighter">
+                           <span className="text-rose-600">PURGES</span> everything from registry. Cannot be undone.
+                        </p>
+                     </button>
+                  </div>
+                )}
 
                 <button 
                   onClick={() => setShowDeleteModal(false)}

@@ -217,7 +217,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       // 1. Remove from Brand Inventory entirely
       if (deal.brandName && deal.productCode) {
         await Brand.findOneAndUpdate(
-          { name: deal.brandName },
+          { name: new RegExp(`^${deal.brandName.trim()}$`, "i") },
           { $pull: { productCodes: { code: deal.productCode } } }
         );
       }
@@ -230,7 +230,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
 
     return NextResponse.json({ 
       success: true, 
-      message: mode === "archive" ? 'Deal archived and stocks zeroed' : 'Active deal fully removed' 
+      message: mode === "archive" ? 'Deal archived successfully' : 'Deal permanently removed from registry' 
     });
   } catch (error: any) {
     console.error('Deal delete/archive error:', error);

@@ -141,9 +141,18 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
            const isApproved = status === OrderStatus.REFUND_APPROVED || status === OrderStatus.APPROVED;
            if (isApproved) message = `Refund request authorized by ${actorTitle}.`;
            if (status === OrderStatus.REFUND_REJECTED) message = `Refund request rejected. Reason: ${body["refundDetails.rejectionNote"] || "Not specified"}`;
+           if (status === OrderStatus.COMPLETED) {
+              message = `Refund processed by ${actorTitle}. Amount: ₹${order.amount}.`;
+              updatePayload['paymentDetails.paidAt'] = new Date();
+              updatePayload['paymentDetails.paidBy'] = session.user.id;
+              updatePayload['paymentDetails.paidByName'] = role === "SUBADMIN" ? `SubAdmin ${session.user.name}` : session.user.name;
+              if (transactionId) {
+                 updatePayload['paymentDetails.transactionId'] = transactionId;
+              }
+           }
            
            const activity = {
-              action: isApproved ? "REFUND_AUTHORIZED" : (status === OrderStatus.REFUND_REJECTED ? "REFUND_REJECTED" : "STATUS_UPDATED"),
+              action: isApproved ? "REFUND_AUTHORIZED" : (status === OrderStatus.REFUND_REJECTED ? "REFUND_REJECTED" : (status === OrderStatus.COMPLETED ? "REFUND_PROCESSED" : "STATUS_UPDATED")),
               message: isApproved 
                  ? `Refund request authorized by ${actorTitle} on ${new Date().toLocaleDateString('en-GB')}.` 
                  : (status === OrderStatus.REFUND_REJECTED ? `Refund request rejected by ${actorTitle}. Reason: ${body["refundDetails.rejectionNote"] || "Not specified"}` : message),
@@ -167,6 +176,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
              updatePayload['paymentDetails.paidAt'] = new Date();
              updatePayload['paymentDetails.paidBy'] = session.user.id;
              updatePayload['paymentDetails.paidByName'] = session.user.name;
+             if (transactionId) {
+                updatePayload['paymentDetails.transactionId'] = transactionId;
+             }
 
              const activity = {
                 action: "REFUND_PROCESSED",
@@ -549,12 +561,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       const buyer: any = order.buyer;
       const mediator: any = order.mediator;
 
-      if (status === OrderStatus.COMPLETED && role === "MEDIATOR") {
+      if (status === OrderStatus.COMPLETED) {
+          const payerName = role === "MEDIATOR" 
+             ? (mediator?.systemDisplayName || mediator?.name || session.user.name)
+             : (role === "SUBADMIN" ? `SubAdmin ${session.user.name}` : (session.user.name || "Admin"));
+          const refundAmt = updatedOrder.refundDetails?.expectedPayout || updatedOrder.amount;
+
           await NotificationService.create({
             recipient: updatedOrder.buyer.toString(),
             type: NotificationType.REFUND_COMPLETED,
             title: "Refund Paid",
-            message: `Your refund of ₹${updatedOrder.amount} has been successfully paid by ${mediator?.systemDisplayName || mediator?.name || session.user.name}.`,
+            message: `Your refund of ₹${refundAmt} has been successfully paid by ${payerName}.`,
             metadata: { orderId: updatedOrder._id },
             actionUrl: `/app/orders/${updatedOrder._id}`,
             mediaUrl
@@ -584,19 +601,23 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
          }
       }
 
-      if (status === OrderStatus.COMPLETED && role === "MEDIATOR") {
-         const mediatorName = mediator?.name?.toLowerCase() || "";
-         if (mediatorName.includes("juhi")) {
+      if (status === OrderStatus.COMPLETED) {
+         const payerName = role === "MEDIATOR" 
+            ? (mediator?.systemDisplayName || mediator?.name || session.user.name)
+            : (role === "SUBADMIN" ? `SubAdmin ${session.user.name}` : (session.user.name || "Admin Desk"));
+         const refundAmt = updatedOrder.refundDetails?.expectedPayout || updatedOrder.amount;
+
+         if (buyer?.email) {
             try {
                await sendOrderPaymentEmail(
                   buyer.email,
-                  buyer.name,
-                  order.aspireOrderId,
+                  buyer.name || "Customer",
+                  order.aspireOrderId || updatedOrder.userOrderId,
                   {
                      transactionId: updatedOrder.paymentDetails?.transactionId,
-                     paidAmount: updatedOrder.refundDetails?.expectedPayout || updatedOrder.amount,
+                     paidAmount: refundAmt,
                      paidAt: updatedOrder.paymentDetails?.paidAt || new Date(),
-                     paidByName: mediator?.systemDisplayName || mediator?.name || session.user.name,
+                     paidByName: payerName,
                      brandName: updatedOrder.brandName,
                      productName: updatedOrder.reviewName
                   }

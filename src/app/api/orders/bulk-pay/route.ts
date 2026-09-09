@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import { Order, OrderStatus } from '@/modules/order/order.model';
+import { sendOrderPaymentEmail } from '@/services/emailService';
+import { NotificationService } from '@/services/notification.service';
+import { NotificationType } from '@/modules/notification/notification.model';
 
 export async function POST(req: Request) {
   try {
@@ -55,8 +58,10 @@ export async function POST(req: Request) {
       timestamp: new Date()
     };
 
-    // Fetch orders to know the buyers before updating
-    const ordersToComplete = await Order.find(query).select('buyer');
+    // Fetch orders with buyer and mediator info before updating
+    const ordersToComplete = await Order.find(query)
+      .populate('buyer', 'name email')
+      .populate('mediator', 'name systemDisplayName');
     
     if (ordersToComplete.length === 0) {
       return NextResponse.json({ success: false, message: 'No eligible orders found' }, { status: 404 });
@@ -73,7 +78,7 @@ export async function POST(req: Request) {
     // Update Badge Counts efficiently
     try {
       const { User } = await import('@/modules/user/user.model');
-      const buyerIds = Array.from(new Set(ordersToComplete.map(o => o.buyer.toString())));
+      const buyerIds = Array.from(new Set(ordersToComplete.map(o => (o.buyer as any)?._id?.toString() || o.buyer?.toString()).filter(Boolean)));
       if (buyerIds.length > 0) {
         await User.updateMany(
           { _id: { $in: buyerIds } },
@@ -83,6 +88,52 @@ export async function POST(req: Request) {
     } catch (countError) {
       console.error('Failed to update buyer counts:', countError);
     }
+
+    // Trigger in-app notifications and refund paid emails
+    const finalPayerName = paidBy || actorName;
+    const finalTxId = updateData['paymentDetails.transactionId'];
+
+    (async () => {
+      for (const ord of ordersToComplete) {
+        const buyer: any = ord.buyer;
+        if (!buyer) continue;
+        const buyerId = buyer._id?.toString() || buyer.toString();
+        const refundAmt = ord.refundDetails?.expectedPayout || ord.amount;
+
+        try {
+          await NotificationService.create({
+            recipient: buyerId,
+            type: NotificationType.REFUND_COMPLETED,
+            title: "Refund Paid",
+            message: `Your refund of ₹${refundAmt} has been successfully paid by ${finalPayerName}.`,
+            metadata: { orderId: ord._id },
+            actionUrl: `/app/orders/${ord._id}`
+          });
+        } catch (notifErr) {
+          console.error("Bulk-pay notification error:", notifErr);
+        }
+
+        if (buyer.email) {
+          try {
+            await sendOrderPaymentEmail(
+              buyer.email,
+              buyer.name || "Customer",
+              ord.aspireOrderId || ord.userOrderId,
+              {
+                transactionId: finalTxId,
+                paidAmount: refundAmt,
+                paidAt: new Date(),
+                paidByName: finalPayerName,
+                brandName: ord.brandName,
+                productName: ord.reviewName
+              }
+            );
+          } catch (emailErr) {
+            console.error("Bulk-pay email error:", emailErr);
+          }
+        }
+      }
+    })().catch(e => console.error("Bulk-pay background notification error:", e));
 
     return NextResponse.json({
       success: true,
