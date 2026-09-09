@@ -318,25 +318,44 @@ export default function MediatorSupportPage() {
                       </div>
 
                       <div className="p-5 lg:p-7 border-t border-slate-100 bg-white shadow-2xl">
-                        <div className="max-w-4xl mx-auto flex flex-col gap-4">
-                          <form 
-                            onSubmit={(e: any) => {
-                              e.preventDefault();
-                              handleReply(selectedTicket._id, e.target.reply.value);
-                              e.target.reset();
-                            }}
-                            className="flex items-center gap-3 bg-slate-100 p-2 rounded-[24px] shadow-inner border border-slate-200"
-                          >
-                            <input name="reply" placeholder="Type message..." className="flex-1 bg-transparent border-none outline-none px-5 text-xs lg:text-sm font-black text-slate-900 placeholder:text-slate-400" autoComplete="off" disabled={sendingQueries[selectedTicket._id]} />
-                            <button type="submit" disabled={sendingQueries[selectedTicket._id]} className="h-12 w-12 flex items-center justify-center bg-slate-900 text-white rounded-2xl shadow-xl active:scale-95 transition-all">
-                               {sendingQueries[selectedTicket._id] ? <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <svg className="w-6 h-6 rotate-45 transform -translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>}
+                        {selectedTicket.status === 'CLOSED' || selectedTicket.status === 'RESOLVED' ? (
+                          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-2.5 px-4 py-2.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-700">
+                              <svg className="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                              <span className="text-[10px] font-black uppercase tracking-widest">
+                                Ticket Resolved • Read-Only Chat History
+                              </span>
+                            </div>
+                            <button 
+                              onClick={() => setConfModal({ isOpen: true, title: "Delete Permanently", message: "This action is irreversible. Delete this thread?", onConfirm: () => handleDelete(selectedTicket._id), variant: 'danger', confirmText: "Delete" })} 
+                              className="px-6 py-3.5 bg-rose-50 text-rose-500 border border-rose-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all active:scale-95"
+                            >
+                              DELETE RECORD
                             </button>
-                          </form>
-                          <div className="flex gap-3">
-                            <button onClick={() => setConfModal({ isOpen: true, title: "Resolve Ticket", message: "Are you sure you want to resolve and close this support thread?", onConfirm: () => handleResolve(selectedTicket._id), variant: 'success', confirmText: "Resolve Now" })} disabled={resolvingQueries[selectedTicket._id]} className="flex-1 py-3.5 bg-emerald-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200 active:scale-95">RESOLVE TICKET</button>
-                            <button onClick={() => setConfModal({ isOpen: true, title: "Delete Permanently", message: "This action is irreversible. Delete this thread?", onConfirm: () => handleDelete(selectedTicket._id), variant: 'danger', confirmText: "Delete" })} className="px-6 py-3.5 bg-rose-50 text-rose-500 border border-rose-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all active:scale-95">DELETE</button>
                           </div>
-                        </div>
+                        ) : (
+                          <div className="max-w-4xl mx-auto flex flex-col gap-4">
+                            <form 
+                              onSubmit={(e: any) => {
+                                e.preventDefault();
+                                handleReply(selectedTicket._id, e.target.reply.value);
+                                e.target.reset();
+                              }}
+                              className="flex items-center gap-3 bg-slate-100 p-2 rounded-[24px] shadow-inner border border-slate-200"
+                            >
+                              <input name="reply" placeholder="Type message..." className="flex-1 bg-transparent border-none outline-none px-5 text-xs lg:text-sm font-black text-slate-900 placeholder:text-slate-400" autoComplete="off" disabled={sendingQueries[selectedTicket._id]} />
+                              <button type="submit" disabled={sendingQueries[selectedTicket._id]} className="h-12 w-12 flex items-center justify-center bg-slate-900 text-white rounded-2xl shadow-xl active:scale-95 transition-all">
+                                 {sendingQueries[selectedTicket._id] ? <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <svg className="w-6 h-6 rotate-45 transform -translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>}
+                              </button>
+                            </form>
+                            <div className="flex gap-3">
+                              <button onClick={() => setConfModal({ isOpen: true, title: "Resolve Ticket", message: "Are you sure you want to resolve and close this support thread?", onConfirm: () => handleResolve(selectedTicket._id), variant: 'success', confirmText: "Resolve Now" })} disabled={resolvingQueries[selectedTicket._id]} className="flex-1 py-3.5 bg-emerald-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200 active:scale-95">RESOLVE TICKET</button>
+                              <button onClick={() => setConfModal({ isOpen: true, title: "Delete Permanently", message: "This action is irreversible. Delete this thread?", onConfirm: () => handleDelete(selectedTicket._id), variant: 'danger', confirmText: "Delete" })} className="px-6 py-3.5 bg-rose-50 text-rose-500 border border-rose-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all active:scale-95">DELETE</button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </>
                   ) : (

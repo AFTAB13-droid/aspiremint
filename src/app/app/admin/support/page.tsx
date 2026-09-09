@@ -242,6 +242,9 @@ export default function AdminSupportPage() {
                        Contact WhatsApp
                      </a>
                    )}
+                   {(selectedTicket.status === 'CLOSED' || selectedTicket.status === 'RESOLVED') && (
+                     <span className="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-sm">RESOLVED</span>
+                   )}
                    <span className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-[8px] font-black text-slate-400 uppercase tracking-widest shadow-sm">{selectedTicket.type === 'ORDER_DISPUTE' ? 'ORDER QUERY' : 'GENERAL QUERY'}</span>
                 </div>
               </div>
@@ -291,49 +294,76 @@ export default function AdminSupportPage() {
                 ))}
               </div>
 
-              <div className="p-6 bg-white border-t border-slate-100">
-                <form 
-                  onSubmit={(e: any) => {
-                    e.preventDefault();
-                    handleReply(selectedTicket._id, e.target.reply.value);
-                    e.target.reset();
-                  }}
-                  className="flex items-center gap-3 bg-slate-900 p-2 rounded-2xl shadow-xl"
-                >
-                    <input 
-                      name="reply"
-                      placeholder="Reply as Administrator..."
-                      className="flex-1 bg-transparent border-none outline-none px-4 text-sm font-black text-white placeholder:text-slate-600 placeholder:text-[8px] placeholder:tracking-widest"
-                      autoComplete="off"
-                      disabled={sendingQueries[selectedTicket._id]}
-                    />
-                  <button type="submit" disabled={sendingQueries[selectedTicket._id]} className="h-12 w-12 flex items-center justify-center bg-indigo-600 text-white rounded-xl shadow-lg active:scale-95 transition-all">
-                     {sendingQueries[selectedTicket._id] ? <div className="h-5 w-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <svg className="w-5 h-5 rotate-45 transform -translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>}
+              {selectedTicket.status === 'CLOSED' || selectedTicket.status === 'RESOLVED' ? (
+                <div className="p-6 bg-white border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-2.5 px-4 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
+                    <svg className="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-[9px] font-black uppercase tracking-widest">
+                      Resolved Inquiry • Read-Only Chat History
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => setConfModal({
+                      isOpen: true,
+                      title: "Delete Thread",
+                      message: "This action is permanent. Are you sure you want to delete this support channel and all its history?",
+                      onConfirm: () => handleDelete(selectedTicket._id),
+                      variant: 'danger',
+                      confirmText: "Delete Permanently"
+                    })}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm border border-rose-100 active:scale-95"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    <span>Delete Thread</span>
                   </button>
-                </form>
-                <div className="mt-4 flex justify-center">
-                  {selectedTicket.type === 'GENERAL_QUERY' ? (
-                    <button 
-                      onClick={() => setConfModal({
-                        isOpen: true,
-                        title: "Resolve Ticket",
-                        message: "Are you sure you want to resolve and close this support thread? This action will notify the user.",
-                        onConfirm: () => handleResolve(selectedTicket._id),
-                        variant: 'success',
-                        confirmText: "Resolve Now"
-                      })} 
-                      disabled={resolvingQueries[selectedTicket._id]} 
-                      className="px-8 py-2.5 bg-emerald-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200"
-                    >
-                      RESOLVE TICKET
-                    </button>
-                  ) : (
-                    <div className="px-6 py-3 bg-slate-100 rounded-xl border border-slate-200">
-                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest text-center">Monitoring Mode: Order Queries are handled by Mediators</p>
-                    </div>
-                  )}
                 </div>
-              </div>
+              ) : (
+                <div className="p-6 bg-white border-t border-slate-100">
+                  <form 
+                    onSubmit={(e: any) => {
+                      e.preventDefault();
+                      handleReply(selectedTicket._id, e.target.reply.value);
+                      e.target.reset();
+                    }}
+                    className="flex items-center gap-3 bg-slate-900 p-2 rounded-2xl shadow-xl"
+                  >
+                      <input 
+                        name="reply"
+                        placeholder="Reply as Administrator..."
+                        className="flex-1 bg-transparent border-none outline-none px-4 text-sm font-black text-white placeholder:text-slate-600 placeholder:text-[8px] placeholder:tracking-widest"
+                        autoComplete="off"
+                        disabled={sendingQueries[selectedTicket._id]}
+                      />
+                    <button type="submit" disabled={sendingQueries[selectedTicket._id]} className="h-12 w-12 flex items-center justify-center bg-indigo-600 text-white rounded-xl shadow-lg active:scale-95 transition-all">
+                       {sendingQueries[selectedTicket._id] ? <div className="h-5 w-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <svg className="w-5 h-5 rotate-45 transform -translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>}
+                    </button>
+                  </form>
+                  <div className="mt-4 flex justify-center">
+                    {selectedTicket.type === 'GENERAL_QUERY' ? (
+                      <button 
+                        onClick={() => setConfModal({
+                          isOpen: true,
+                          title: "Resolve Ticket",
+                          message: "Are you sure you want to resolve and close this support thread? This action will notify the user.",
+                          onConfirm: () => handleResolve(selectedTicket._id),
+                          variant: 'success',
+                          confirmText: "Resolve Now"
+                        })} 
+                        disabled={resolvingQueries[selectedTicket._id]} 
+                        className="px-8 py-2.5 bg-emerald-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-200"
+                      >
+                        RESOLVE TICKET
+                      </button>
+                    ) : (
+                      <div className="px-6 py-3 bg-slate-100 rounded-xl border border-slate-200">
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest text-center">Monitoring Mode: Order Queries are handled by Mediators</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </motion.div>
           ) : (
             /* Admin List View */
@@ -347,8 +377,8 @@ export default function AdminSupportPage() {
                   <motion.div 
                     layout
                     key={q._id}
-                    onClick={() => activeTab === 'ACTIVE' && setSelectedTicketId(q._id)}
-                    className={`bg-white rounded-2xl border border-slate-100 shadow-sm relative group overflow-hidden transition-all duration-300 flex items-center p-4 hover:shadow-xl hover:border-indigo-100 ${activeTab === 'ACTIVE' ? 'cursor-pointer hover:bg-indigo-50/10' : ''}`}
+                    onClick={() => setSelectedTicketId(q._id)}
+                    className="bg-white rounded-2xl border border-slate-100 shadow-sm relative group overflow-hidden transition-all duration-300 flex items-center p-4 hover:shadow-xl hover:border-indigo-100 cursor-pointer hover:bg-indigo-50/10"
                   >
                     <div className={`h-10 w-10 rounded-lg flex items-center justify-center text-white shadow-md flex-shrink-0 ${q.type === 'GENERAL_QUERY' ? 'bg-indigo-600' : 'bg-slate-400'}`}>
                        <span className="font-black uppercase text-xs">{q.user?.name?.charAt(0) || 'U'}</span>
@@ -385,10 +415,12 @@ export default function AdminSupportPage() {
                                    confirmText: "Delete Permanently"
                                  });
                                }} 
-                               className="h-8 w-8 flex items-center justify-center bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-500 hover:text-white transition-all"
+                               title="Delete Permanently"
+                               className="h-8 w-8 flex items-center justify-center bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-500 hover:text-white transition-all shadow-sm"
                              >
                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                              </button>
+                             <svg className="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                          </div>
                        ) : (
                          <div className="flex items-center gap-2">
