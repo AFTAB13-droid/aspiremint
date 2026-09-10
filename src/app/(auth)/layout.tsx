@@ -50,16 +50,16 @@ export default function AuthLayout({
       </div>
 
       {/* CENTER FORM SIDE - Middle on Desktop, Full on Mobile */}
-      <div className="flex w-full flex-col justify-center px-6 lg:w-[600px] xl:w-[700px] 2xl:w-[800px] lg:mx-auto relative z-20 min-h-[100dvh]">
+      <div className="flex w-full flex-col justify-center px-4 sm:px-6 lg:w-[600px] xl:w-[700px] 2xl:w-[800px] lg:mx-auto relative z-20 min-h-[100dvh]">
          {/* Mobile Edge Decorations */}
          <div className="lg:hidden absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-600" />
          
-         <div className="relative z-10 w-full max-w-md lg:max-w-none mx-auto py-12 lg:py-8 lg:px-4">
+         <div className="relative z-10 w-full max-w-md lg:max-w-none mx-auto py-4 lg:py-4 lg:px-4">
            {children}
          </div>
 
          {/* Footer Support - App Style */}
-         <div className="mt-auto py-4 lg:py-6 text-center border-t border-slate-100 lg:border-none">
+         <div className="mt-auto py-2 lg:py-3 text-center border-t border-slate-100 lg:border-none">
             <div className="flex items-center justify-center gap-6">
                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 cursor-pointer transition-colors">Security</span>
                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 cursor-pointer transition-colors">Privacy</span>

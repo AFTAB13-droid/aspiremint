@@ -70,12 +70,8 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
     originalCommission: "N/A",
   });
 
-  const [selectedMediators, setSelectedMediators] = useState<string[]>([]);
-  const [selectAllMediators, setSelectAllMediators] = useState(false);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
   const [previewCode, setPreviewCode] = useState("");
-  const [showMediatorPopup, setShowMediatorPopup] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const [randomSuffix, setRandomSuffix] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -94,10 +90,6 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
       setPreviewCode("");
     }
   }, [formData.brandName, formData.productDetails, randomSuffix]);
-
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
 
   const fetchInitialData = async () => {
     try {
@@ -132,20 +124,9 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
     }
   };
 
-  const toggleMediator = (id: string) => {
-    setSelectedMediators(prev => 
-      prev.includes(id) ? prev.filter(mid => mid !== id) : [...prev, id]
-    );
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    setSelectAllMediators(checked);
-    if (checked) {
-      setSelectedMediators(mediators.map(m => m._id));
-    } else {
-      setSelectedMediators([]);
-    }
-  };
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
 
   const handleFileUpload = async (file: File) => {
     const formData = new FormData();
@@ -163,9 +144,6 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
     e.preventDefault();
     if (!formData.brandName || !formData.productDetails) {
       return toast.error("Please fill required fields (Brand and Product Details)");
-    }
-    if (!selectAllMediators && selectedMediators.length === 0) {
-      return toast.error("Please assign at least one mediator");
     }
 
     setLoading(true);
@@ -192,16 +170,14 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
         submittedSlots: formData.submittedSlots,
         dealType: formData.dealType,
         reviewType: formData.reviewType,
-        commission: formData.commission,
+        commission: "N/A",
         juhiCommission: formData.juhiCommission,
         productImage: finalImageUrl,
         userRemarks: formData.userRemarks,
-        mediatorRemarks: formData.mediatorRemarks,
+        mediatorRemarks: "",
         remarks: formData.remarks,
         originalCommission: formData.originalCommission,
-        assignedMediators: selectAllMediators 
-          ? mediators.map(m => ({ mediatorId: m._id, commission: formData.commission }))
-          : selectedMediators.map(id => ({ mediatorId: id, commission: formData.commission })),
+        assignedMediators: mediators.map(m => ({ mediatorId: m._id, commission: "N/A" })),
       };
 
       const res = await fetch("/api/deals/active", {
@@ -462,7 +438,7 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
                    className="h-[60px] border-slate-200 bg-white" 
                 />
               </div>
-              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="md:col-span-2">
                 <div className="space-y-2">
                   <label className="text-[11px] font-black uppercase tracking-widest text-indigo-950 pl-1">User Remarks (Visibility: User Only)</label>
                   <textarea 
@@ -472,34 +448,7 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
                     className="w-full h-24 px-6 py-4 rounded-xl bg-white border border-slate-200 font-bold text-sm outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 transition-all placeholder:text-slate-400 resize-none"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[11px] font-black uppercase tracking-widest text-indigo-950 pl-1">Mediator Remarks (Visibility: Mediator/Admin)</label>
-                  <textarea 
-                    placeholder="Special instructions for specialists..."
-                    value={formData.mediatorRemarks}
-                    onChange={(e) => setFormData({...formData, mediatorRemarks: e.target.value})}
-                    className="w-full h-24 px-6 py-4 rounded-xl bg-white border border-slate-200 font-bold text-sm outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 transition-all placeholder:text-slate-400 resize-none"
-                  />
-                </div>
               </div>
-          </div>
-
-          <div className="bg-indigo-50/30 rounded-[32px] p-8 border border-indigo-100 space-y-6">
-             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                   <h4 className="text-base font-black text-indigo-950 uppercase tracking-tight">Mediator Distribution</h4>
-                   <p className="text-[10px] font-bold text-indigo-500/60 uppercase tracking-widest mt-1">Juhi inherits access automatically.</p>
-                </div>
-                <div className="flex items-center gap-3">
-                   <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-indigo-200 shadow-sm">
-                      <span className="text-[9px] font-black uppercase text-indigo-900">Global</span>
-                      <input type="checkbox" checked={selectAllMediators} onChange={(e) => handleSelectAll(e.target.checked)} className="h-4 w-4 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500" />
-                   </div>
-                   <button type="button" onClick={() => !selectAllMediators && setShowMediatorPopup(true)} disabled={selectAllMediators} className="h-10 px-5 rounded-xl font-black text-[9px] uppercase tracking-widest bg-white border border-indigo-200 text-indigo-900 hover:bg-indigo-600 hover:text-white transition-all disabled:opacity-30">
-                     {selectedMediators.length > 0 ? `${selectedMediators.length} Selected` : "Selective"}
-                   </button>
-                </div>
-             </div>
           </div>
 
           <div className="bg-gradient-to-br from-indigo-950 to-slate-950 text-white rounded-[32px] p-8 md:p-10 space-y-8 overflow-hidden relative border-2 border-indigo-500/20 shadow-2xl">
@@ -514,7 +463,7 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
                 </p>
              </div>
              
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative z-10">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
                 <div className="space-y-3">
                    <label className={`text-[10px] font-black uppercase tracking-widest pl-1 ${
                      formData.originalCommission === "N/A" || formData.originalCommission === "" || isNaN(Number(formData.originalCommission)) 
@@ -549,46 +498,6 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
                             ? "bg-slate-500/10 border-slate-500/20 focus:bg-slate-500/20 focus:border-slate-400 text-slate-50"
                             : Number(formData.originalCommission) >= 0 
                               ? "bg-blue-500/10 border-blue-500/20 focus:bg-blue-500/20 focus:border-blue-400 text-blue-50" 
-                              : "bg-rose-500/10 border-rose-500/20 focus:bg-rose-500/20 focus:border-rose-400 text-rose-50"
-                        }`} 
-                      />
-                   </div>
-                </div>
-
-                <div className="space-y-3">
-                   <label className={`text-[10px] font-black uppercase tracking-widest pl-1 ${
-                     formData.commission === "N/A" || formData.commission === "" || isNaN(Number(formData.commission)) 
-                       ? "text-slate-400" 
-                       : Number(formData.commission) >= 0 
-                         ? "text-emerald-400" 
-                         : "text-rose-400"
-                   }`}>
-                     Mediators Rate (₹{
-                       formData.commission === "N/A" || formData.commission === "" || isNaN(Number(formData.commission)) 
-                         ? "N/A" 
-                         : Number(formData.commission) >= 0 
-                           ? "+" 
-                           : "-"
-                     })
-                   </label>
-                   <div className="relative">
-                      <span className={`absolute left-6 top-1/2 -translate-y-1/2 font-black text-xl ${
-                        formData.commission === "N/A" || formData.commission === "" || isNaN(Number(formData.commission)) 
-                          ? "text-slate-500/50" 
-                          : Number(formData.commission) >= 0 
-                            ? "text-emerald-500/50" 
-                            : "text-rose-500/50"
-                      }`}>₹</span>
-                      <input 
-                        type="text" 
-                        placeholder="e.g. 250 or -150" 
-                        value={formData.commission} 
-                        onChange={(e) => setFormData({...formData, commission: e.target.value})} 
-                        className={`w-full h-[70px] pl-12 pr-6 rounded-2xl border-2 font-black text-xl outline-none transition-all placeholder:text-white/20 shadow-inner ${
-                          formData.commission === "N/A" || formData.commission === "" || isNaN(Number(formData.commission)) 
-                            ? "bg-slate-500/10 border-slate-500/20 focus:bg-slate-500/20 focus:border-slate-400 text-slate-50"
-                            : Number(formData.commission) >= 0 
-                              ? "bg-emerald-500/10 border-emerald-500/20 focus:bg-emerald-500/20 focus:border-emerald-400 text-emerald-50" 
                               : "bg-rose-500/10 border-rose-500/20 focus:bg-rose-500/20 focus:border-rose-400 text-rose-50"
                         }`} 
                       />
@@ -656,69 +565,7 @@ export const DealCreationForm: React.FC<Props> = ({ onCreated }) => {
         </form>
       </div>
 
-      <AnimatePresence>
-          {showMediatorPopup && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 transition-all duration-300">
-               <motion.div initial={{ opacity: 0, scale: 0.98, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98, y: 10 }} className="relative w-full max-w-2xl bg-white rounded-[40px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] p-10 border border-slate-100 ring-1 ring-black/5">
-                  <div className="flex items-center justify-between mb-8">
-                     <div>
-                       <h3 className="text-2xl font-black text-indigo-950 uppercase tracking-tighter">Assign Specialists</h3>
-                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Available: {mediators.length} Specialists</p>
-                     </div>
-                     <button onClick={() => setShowMediatorPopup(false)} className="h-10 w-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all">
-                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                     </button>
-                  </div>
 
-                  {/* Search Bar */}
-                  <div className="mb-8 relative group">
-                    <svg className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-indigo-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                    <input 
-                      type="text"
-                      placeholder="Search specialists by name or email..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full h-14 pl-14 pr-6 rounded-2xl bg-slate-50 border border-slate-200 font-bold text-sm outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 transition-all placeholder:text-slate-400"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar pb-4">
-                     {mediators
-                       .filter(m => 
-                         m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         m.email.toLowerCase().includes(searchTerm.toLowerCase())
-                       )
-                       .map(m => {
-                         const isJuhi = m.name.toLowerCase().includes("juhi");
-                         return (
-                       <div key={m._id} onClick={() => toggleMediator(m._id)} className={`p-5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden group ${selectedMediators.includes(m._id) ? "bg-black border-black text-white shadow-lg shadow-black/20" : isJuhi ? "bg-slate-50 border-slate-200 text-black hover:border-black" : "bg-slate-50/50 border-slate-100 text-indigo-900 hover:border-indigo-300 hover:bg-white"}`}>
-                          <div className={`absolute top-0 right-0 p-2 transition-opacity ${selectedMediators.includes(m._id) ? "opacity-100" : "opacity-0"}`}>
-                            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                          </div>
-                          <p className={`text-[11px] font-black uppercase truncate flex items-center gap-2 ${isJuhi && !selectedMediators.includes(m._id) ? "text-black animate-pulse" : ""}`}>
-                             {isJuhi && <span>⭐</span>}
-                             {m.systemDisplayName || m.name}
-                          </p>
-                          <p className={`text-[9px] truncate transition-all ${selectedMediators.includes(m._id) ? "text-slate-300" : isJuhi ? "text-slate-500" : "text-slate-400"}`}>{m.email}</p>
-                       </div>
-                         );
-                       })}
-                     {mediators.filter(m => 
-                       m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                       m.email.toLowerCase().includes(searchTerm.toLowerCase())
-                     ).length === 0 && (
-                       <div className="col-span-full py-12 text-center">
-                         <p className="text-slate-400 font-bold text-sm">No specialists found matching "{searchTerm}"</p>
-                       </div>
-                     )}
-                  </div>
-                  <div className="mt-10 flex justify-end">
-                     <button onClick={() => setShowMediatorPopup(false)} className="px-10 h-14 bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-600/20 hover:scale-105 transition-all">Confirm Selection</button>
-                  </div>
-               </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
 
         {/* High-Tech Deployment Popup */}
         <AnimatePresence>

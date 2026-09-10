@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import { ActiveDeal } from '@/modules/brand/deal.model';
 import { Brand } from '@/modules/brand/brand.model';
+import { User, UserRole } from '@/modules/user/user.model';
 import { CACHE_KEYS, invalidateDealsCache, getCache, setCache } from '@/lib/redis';
 
 const parsePayoutValue = (val: any) => {
@@ -182,12 +183,26 @@ export async function POST(req: Request) {
     const parsedCommission = parsePayoutValue(body.commission);
     const parsedOriginal = parsePayoutValue(body.originalCommission);
 
-    const parsedAssignedMediators = Array.isArray(assignedMediators)
+    let parsedAssignedMediators = Array.isArray(assignedMediators)
       ? assignedMediators.map((m: any) => ({
           mediatorId: m.mediatorId,
           commission: parsePayoutValue(m.commission)
         }))
       : [];
+
+    if (parsedAssignedMediators.length === 0) {
+      const allMediators = await User.find({
+        role: UserRole.MEDIATOR,
+        isActive: true,
+        isApproved: { $ne: false },
+        isCampaignPaused: { $ne: true }
+      }).select('_id');
+
+      parsedAssignedMediators = allMediators.map((m) => ({
+        mediatorId: m._id,
+        commission: "N/A"
+      }));
+    }
 
     // 3. Create the Active Deal
     const deal = await ActiveDeal.create({

@@ -41,7 +41,7 @@ function getPasswordStrength(pwd: string) {
 export default function SignupPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [role, setRole] = useState("USER");
+  const role = "USER";
   const [showPassword, setShowPassword] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
   const [otp, setOtp] = useState("");
@@ -172,12 +172,8 @@ export default function SignupPage() {
 
       setSubmitPhase(2);
       setTimeout(() => {
-        if (result.data.role === "MEDIATOR") {
-          router.replace("/registration-pending");
-        } else {
-          router.replace("/login");
-        }
-      }, 2500);
+        router.replace("/login");
+      }, 2000);
     } catch (error) {
       setErrorMessage("Network synchronization failure");
       setIsLoading(false);
@@ -343,50 +339,23 @@ export default function SignupPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-8 relative z-10 shrink-0">
-                  <div className="space-y-1.5 lg:space-y-2">
-                    <label className="text-[8px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Secure Mobile</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-5 flex items-center text-slate-400">
-                         <Phone className="w-4 h-4 lg:w-5 lg:h-5" />
-                      </div>
-                      <input 
-                        type="tel" 
-                        name="mobile" 
-                        placeholder="10-Digit ID" 
-                        required 
-                        maxLength={10}
-                        pattern="[0-9]{10}"
-                        value={formData.mobile}
-                        onChange={(e) => setFormData({ ...formData, mobile: e.target.value.replace(/[^0-9]/g, '') })}
-                        className="w-full h-12 lg:h-16 pl-12 lg:pl-14 pr-6 bg-slate-50/70 lg:bg-slate-50/50 border border-slate-100 lg:border-none focus:bg-white rounded-[16px] lg:rounded-[24px] shadow-none lg:shadow-inner font-bold text-xs lg:text-sm transition-all focus:border-blue-200 focus:ring-4 focus:ring-blue-500/5 outline-none"
-                      />
+                <div className="space-y-1.5 lg:space-y-2 relative z-10 shrink-0">
+                  <label className="text-[8px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Secure Mobile</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-5 flex items-center text-slate-400">
+                       <Phone className="w-4 h-4 lg:w-5 lg:h-5" />
                     </div>
-                  </div>
-
-                  <div className="space-y-1.5 lg:space-y-2">
-                    <label className="text-[8px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Role Type</label>
-                    <div className="flex gap-2 h-12 lg:h-16">
-                       {[
-                         { id: 'USER', label: 'Buyer', icon: User },
-                         { id: 'MEDIATOR', label: 'Mediator', icon: Shield }
-                       ].map((opt) => (
-                         <button
-                           key={opt.id}
-                           type="button"
-                           onClick={() => setRole(opt.id)}
-                           className={`flex-1 rounded-[16px] lg:rounded-[24px] border flex items-center justify-center gap-2 transition-all ${
-                             role === opt.id 
-                               ? 'bg-blue-600 border-blue-600 text-white shadow-md lg:shadow-xl shadow-blue-600/20' 
-                               : 'bg-white border-slate-200 text-slate-500 hover:border-blue-200'
-                           }`}
-                         >
-                            <opt.icon className="w-3.5 h-3.5 lg:w-5 lg:h-5" />
-                            <span className="text-[9px] lg:text-[10px] font-black uppercase tracking-widest">{opt.label}</span>
-                            <input type="radio" name="role" value={opt.id} checked={role === opt.id} onChange={() => {}} className="hidden" />
-                         </button>
-                       ))}
-                    </div>
+                    <input 
+                      type="tel" 
+                      name="mobile" 
+                      placeholder="10-Digit ID" 
+                      required 
+                      maxLength={10}
+                      pattern="[0-9]{10}"
+                      value={formData.mobile}
+                      onChange={(e) => setFormData({ ...formData, mobile: e.target.value.replace(/[^0-9]/g, '') })}
+                      className="w-full h-12 lg:h-16 pl-12 lg:pl-14 pr-6 bg-slate-50/70 lg:bg-slate-50/50 border border-slate-100 lg:border-none focus:bg-white rounded-[16px] lg:rounded-[24px] shadow-none lg:shadow-inner font-bold text-xs lg:text-sm transition-all focus:border-blue-200 focus:ring-4 focus:ring-blue-500/5 outline-none"
+                    />
                   </div>
                 </div>
 

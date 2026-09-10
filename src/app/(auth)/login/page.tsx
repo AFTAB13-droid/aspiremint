@@ -158,19 +158,19 @@ export default function LoginPage() {
       {/* IDENTITY MODULE */}
       <motion.div 
         variants={item}
-        className="mb-12 flex flex-col items-center text-center"
+        className="mb-4 lg:mb-6 flex flex-col items-center text-center"
       >
-        <div className="flex items-center justify-center gap-4 lg:gap-6 mb-4 lg:mb-6">
-           <div className="h-16 w-16 lg:h-24 lg:w-24 bg-white rounded-[24px] lg:rounded-[32px] shadow-2xl border border-slate-100 flex shrink-0 items-center justify-center hover:rotate-6 transition-transform cursor-pointer relative z-10">
-              <Logo size={44} variant="blue" className="lg:hidden" />
-              <Logo size={64} variant="blue" className="hidden lg:block" />
+        <div className="flex items-center justify-center gap-3 lg:gap-5 mb-2 lg:mb-3">
+           <div className="h-12 w-12 lg:h-16 lg:w-16 bg-white rounded-[18px] lg:rounded-[24px] shadow-xl border border-slate-100 flex shrink-0 items-center justify-center hover:rotate-6 transition-transform cursor-pointer relative z-10">
+              <Logo size={32} variant="blue" className="lg:hidden" />
+              <Logo size={44} variant="blue" className="hidden lg:block" />
            </div>
            <div className="relative">
              <motion.span 
                initial={{ opacity: 0, x: -10 }}
                animate={{ opacity: 1, x: 0 }}
                transition={{ duration: 0.5, delay: 0.2 }}
-               className="text-4xl sm:text-5xl lg:text-[4.5rem] font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 relative z-10 leading-none"
+               className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 relative z-10 leading-none"
              >
                 AspireMint
              </motion.span>
@@ -182,23 +182,26 @@ export default function LoginPage() {
              />
            </div>
         </div>
-        <h1 className="text-xl lg:text-2xl font-black text-slate-700 tracking-[0.2em] lg:tracking-[0.3em] leading-none mb-3 uppercase">
-           WELCOME
-        </h1>
-        <p className="text-[9px] lg:text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
-           Initialize Core Synchronization
-        </p>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xs lg:text-sm font-black text-slate-700 tracking-[0.2em] uppercase">
+             WELCOME
+          </h1>
+          <span className="h-1 w-1 rounded-full bg-slate-300" />
+          <Link href="/signup" className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline flex items-center gap-1">
+             New User? Register <ArrowRight className="w-3 h-3" />
+          </Link>
+        </div>
       </motion.div>
 
       {/* LOGIN CORE CARD */}
       <motion.div 
         variants={item}
-        whileHover={{ scale: 1.01, y: -5 }}
+        whileHover={{ scale: 1.01, y: -3 }}
         className="relative group"
       >
         <div className="absolute -inset-4 bg-blue-600/10 blur-[100px] rounded-full -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
         
-        <div className="relative group overflow-hidden rounded-[40px] lg:rounded-[56px] bg-gradient-to-b from-[#e0f7fa]/90 via-white/90 to-white/90 backdrop-blur-2xl border border-white/60 shadow-[0_32px_80px_-15px_rgba(0,0,0,0.1)]">
+        <div className="relative group overflow-hidden rounded-[28px] lg:rounded-[40px] bg-gradient-to-b from-[#e0f7fa]/90 via-white/90 to-white/90 backdrop-blur-2xl border border-white/60 shadow-[0_24px_60px_-15px_rgba(0,0,0,0.08)]">
             {/* SPEEDY ANIMATED BACKGROUND - Moved to base layer */}
             {isLargeScreen && (
               <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -226,13 +229,13 @@ export default function LoginPage() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="p-6 lg:p-12 space-y-6 lg:space-y-10 relative z-10">
+            <form onSubmit={handleSubmit} className="p-5 sm:p-6 lg:p-8 space-y-4 lg:space-y-5 relative z-10">
 
-          <div className="space-y-3 relative z-10">
-            <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Email ID</label>
+          <div className="space-y-1.5 relative z-10">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email ID</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-5 flex items-center text-slate-400">
-                 <Mail className="w-5 h-5" />
+              <div className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+                 <Mail className="w-4 h-4" />
               </div>
               <input 
                 type="email" 
@@ -241,110 +244,110 @@ export default function LoginPage() {
                 required 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-16 pl-14 pr-6 bg-slate-50/50 border-none focus:bg-white rounded-[24px] shadow-inner font-bold text-sm transition-all focus:ring-8 focus:ring-blue-500/5 outline-none placeholder:text-slate-300"
+                className="w-full h-12 lg:h-14 pl-12 pr-5 bg-slate-50/50 border-none focus:bg-white rounded-[18px] lg:rounded-[20px] shadow-inner font-bold text-xs lg:text-sm transition-all focus:ring-4 focus:ring-blue-500/10 outline-none placeholder:text-slate-300"
               />
             </div>
           </div>
 
-          <div className="space-y-3 relative z-10">
+          <div className="space-y-1.5 relative z-10">
             <div className="flex justify-between items-center px-1">
-              <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Password</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Password</label>
               <Link href="/forgot-password" className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">Forgot Password?</Link>
             </div>
             <div className="relative">
-              <div className="absolute inset-y-0 left-5 flex items-center text-slate-400">
-                 <Lock className="w-5 h-5" />
+              <div className="absolute inset-y-0 left-4 flex items-center text-slate-400">
+                 <Lock className="w-4 h-4" />
               </div>
               <input 
                 type={showPassword ? "text" : "password"} 
                 name="password" 
                 placeholder="••••••••••••" 
                 required 
-                className="w-full h-16 pl-14 pr-14 bg-slate-50/50 border-none focus:bg-white rounded-[24px] shadow-inner font-bold text-sm transition-all focus:ring-8 focus:ring-blue-500/5 outline-none placeholder:text-slate-300"
+                className="w-full h-12 lg:h-14 pl-12 pr-12 bg-slate-50/50 border-none focus:bg-white rounded-[18px] lg:rounded-[20px] shadow-inner font-bold text-xs lg:text-sm transition-all focus:ring-4 focus:ring-blue-500/10 outline-none placeholder:text-slate-300"
               />
               <button 
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-5 flex items-center text-slate-400 hover:text-blue-600 transition-colors"
+                className="absolute inset-y-0 right-4 flex items-center text-slate-400 hover:text-blue-600 transition-colors"
               >
-                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
           {/* Remember Me Checkbox */}
-          <div className="flex items-center gap-3 px-1 relative z-10">
+          <div className="flex items-center gap-2 px-1 relative z-10">
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <input 
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4.5 h-4.5 rounded-lg border-slate-200 text-blue-600 focus:ring-blue-500/10 cursor-pointer"
+                className="w-4 h-4 rounded-md border-slate-200 text-blue-600 focus:ring-blue-500/10 cursor-pointer"
               />
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                Remember email for quick OTP logins
+              <span className="text-[10px] font-bold text-slate-500">
+                Remember email for quick logins
               </span>
             </label>
           </div>
 
-          <div className="pt-4 relative z-10">
+          <div className="pt-2 relative z-10">
             <button 
               type="submit" 
               disabled={isLoading || isBiometricLoading}
-              className="w-full h-16 bg-slate-900 text-white rounded-[24px] font-black uppercase tracking-[0.3em] text-[11px] shadow-3xl shadow-slate-900/20 active:scale-95 transition-all flex items-center justify-center gap-4 group/btn overflow-hidden relative"
+              className="w-full h-12 lg:h-14 bg-slate-900 text-white rounded-[18px] lg:rounded-[20px] font-black uppercase tracking-[0.25em] text-[10px] lg:text-[11px] shadow-xl shadow-slate-900/20 active:scale-95 transition-all flex items-center justify-center gap-3 group/btn overflow-hidden relative"
             >
                <div className="absolute inset-0 bg-blue-600 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-500" />
                <span className="relative z-10">{isLoading ? "AUTHENTICATING..." : "SIGN IN TO PORTAL"}</span>
-               {!isLoading && <ArrowRight className="w-4 h-4 relative z-10 group-hover/btn:translate-x-2 transition-transform" />}
+               {!isLoading && <ArrowRight className="w-4 h-4 relative z-10 group-hover/btn:translate-x-1.5 transition-transform" />}
             </button>
           </div>
 
           {/* Biometric Bypass Button */}
-          <div className="pt-2 relative z-10 flex flex-col items-center">
-            <div className="flex items-center w-full gap-4 mb-4">
-              <div className="h-px bg-slate-100/50 flex-1" />
+          <div className="pt-1 relative z-10 flex flex-col items-center">
+            <div className="flex items-center w-full gap-3 mb-2.5">
+              <div className="h-px bg-slate-100/70 flex-1" />
               <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">or bypass with</span>
-              <div className="h-px bg-slate-100/50 flex-1" />
+              <div className="h-px bg-slate-100/70 flex-1" />
             </div>
 
             <button 
               type="button"
               disabled={isLoading || isBiometricLoading}
               onClick={handleBiometricLogin}
-              className="w-full h-16 bg-white hover:bg-slate-50 border border-slate-100 rounded-[24px] text-slate-700 font-black uppercase tracking-[0.2em] text-[10px] shadow-sm flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+              className="w-full h-11 lg:h-12 bg-white hover:bg-slate-50 border border-slate-100 rounded-[18px] lg:rounded-[20px] text-slate-700 font-black uppercase tracking-[0.15em] text-[9px] shadow-sm flex items-center justify-center gap-2.5 transition-all active:scale-95 disabled:opacity-50"
             >
-              <svg className="w-5 h-5 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 009 11c0-1.18-.91-2.164-2.09-2.201a5.122 5.122 0 00-4.756 5.11 9.96 9.96 0 00.322 2.501M12 11c0-3.517 1.009-6.799 2.753-9.571m3.44 2.04l-.054.09A13.916 13.916 0 0015 11c0 1.18.91 2.164 2.09 2.201a5.122 5.122 0 004.756-5.11 9.96 9.96 0 00-.322-2.501M12 21c-2.907 0-5.525-1.125-7.5-2.965m15 0A14.902 14.902 0 0112 21z" />
               </svg>
               <span>{isBiometricLoading ? "SCANNING BIOMETRIC..." : "TOUCH / FACE ID QUICK LOGIN"}</span>
             </button>
           </div>
+
+          {/* Quick Register Link inside form */}
+          <div className="pt-2 text-center relative z-10 border-t border-slate-100/80 mt-2">
+            <p className="text-xs text-slate-500 font-medium pt-1">
+              Don&apos;t have an account?{" "}
+              <Link 
+                href="/signup" 
+                className="font-black text-blue-600 hover:text-blue-700 underline uppercase tracking-wider text-[11px] ml-1"
+              >
+                Register / Sign Up →
+              </Link>
+            </p>
+          </div>
         </form>
       </div>
     </motion.div>
 
-      {/* FOOTER LINK MODULE */}
-      <motion.div 
-        variants={item}
-        className="mt-12 p-8 bg-slate-50 rounded-[32px] border border-slate-100 flex flex-col items-center text-center gap-4"
-      >
-        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Don&apos;t have an account?</p>
-        <Link href="/signup" className="w-full">
-           <button className="w-full py-4 bg-white border border-slate-200 text-blue-600 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all active:scale-95 flex items-center justify-center gap-3">
-              Create New Account <Plus className="w-3 h-3" />
-           </button>
-        </Link>
-      </motion.div>
-
       {/* SYSTEM TRUST BARS */}
       <motion.div 
         variants={item}
-        className="mt-12 grid grid-cols-3 gap-4"
+        className="mt-4 grid grid-cols-3 gap-3"
       >
         {[Shield, Command, Activity].map((Icon, i) => (
-          <div key={i} className="flex flex-col items-center gap-2 opacity-20">
-             <Icon className="w-5 h-5 text-slate-900" />
-             <div className="h-1 w-full bg-slate-200 rounded-full overflow-hidden">
+          <div key={i} className="flex flex-col items-center gap-1.5 opacity-20">
+             <Icon className="w-4 h-4 text-slate-900" />
+             <div className="h-0.5 w-full bg-slate-200 rounded-full overflow-hidden">
                 <motion.div animate={{ x: [-20, 40] }} transition={{ repeat: Infinity, duration: 2, ease: "linear" }} className="h-full w-1/2 bg-slate-900" />
              </div>
           </div>
