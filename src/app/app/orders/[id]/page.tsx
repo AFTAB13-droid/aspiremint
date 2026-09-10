@@ -265,6 +265,16 @@ export default function OrderDetailsPage() {
                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Order ID</p>
                       <p className="text-lg font-black text-slate-900 mt-1 uppercase truncate">{order.userOrderId || "N/A"}</p>
                    </div>
+                   {(order.refundDetails?.invoiceOrderId || order.invoiceOrderId) && (
+                      <div>
+                         <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 flex items-center gap-1">
+                            <span>🧾</span> Invoice Order ID
+                         </p>
+                         <p className="text-lg font-black text-slate-900 mt-1 uppercase truncate select-all font-mono">
+                            {order.refundDetails?.invoiceOrderId || order.invoiceOrderId}
+                         </p>
+                      </div>
+                   )}
                    <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Brand Designation</p>
                       <p className="text-lg font-black text-slate-900 mt-1 uppercase underline decoration-blue-100 decoration-4 underline-offset-4">{order.brandName}</p>

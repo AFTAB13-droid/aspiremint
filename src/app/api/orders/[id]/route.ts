@@ -367,12 +367,24 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
            const currentRefundDetails = order.refundDetails ? JSON.parse(JSON.stringify(order.refundDetails)) : {};
            const currentRefundProof = order.refundProof ? JSON.parse(JSON.stringify(order.refundProof)) : {};
            
+           const isBlinkit = Boolean(
+              order.marketplace?.toLowerCase().includes("blinkit") || 
+              order.brandName?.toLowerCase().includes("blinkit")
+           );
+
+           if (isBlinkit && (!refundDetails?.invoiceOrderId || String(refundDetails.invoiceOrderId).trim() === "")) {
+              throw new Error("Invoice Order ID is mandatory for Blinkit orders.");
+           }
+
            const newRefundDetails = {
               ...currentRefundDetails,
               ...refundDetails,
               submittedAt: new Date()
            };
            updatePayload.refundDetails = newRefundDetails;
+           if (newRefundDetails.invoiceOrderId) {
+              updatePayload.invoiceOrderId = newRefundDetails.invoiceOrderId;
+           }
 
            if (body.refundProof) {
               updatePayload.refundProof = {
@@ -607,11 +619,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             : (role === "SUBADMIN" ? `SubAdmin ${session.user.name}` : (session.user.name || "Admin Desk"));
          const refundAmt = updatedOrder.refundDetails?.expectedPayout || updatedOrder.amount;
 
-         if (buyer?.email) {
+         const recipientEmail = buyer?.email || order.buyerEmail || updatedOrder.buyerEmail;
+         if (recipientEmail) {
             try {
                await sendOrderPaymentEmail(
-                  buyer.email,
-                  buyer.name || "Customer",
+                  recipientEmail,
+                  buyer?.name || "Customer",
                   order.aspireOrderId || updatedOrder.userOrderId,
                   {
                      transactionId: updatedOrder.paymentDetails?.transactionId,

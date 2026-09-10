@@ -47,11 +47,15 @@ export interface IOrder extends Document {
     bankName?: string;
     accountHolderName?: string;
     expectedPayout?: number;
+    invoiceOrderId?: string;
     rejectionNote?: string;
     submittedAt?: Date;
     authorizedAt?: Date;
     rejectedAt?: Date;
   };
+  invoiceOrderId?: string;
+  refundReminderSent?: boolean;
+  refundReminderSentAt?: Date;
   refundProof?: {
     reviewLink?: string;
     reviewScreenshot?: string;
@@ -124,6 +128,9 @@ const OrderSchema = new Schema<IOrder>(
       enum: Object.values(OrderStatus),
       default: OrderStatus.REFUND_FORM_PENDING,
     },
+    invoiceOrderId: { type: String },
+    refundReminderSent: { type: Boolean, default: false },
+    refundReminderSentAt: { type: Date },
     refundDetails: {
       upiId: String,
       accountNumber: String,
@@ -131,6 +138,7 @@ const OrderSchema = new Schema<IOrder>(
       bankName: String,
       accountHolderName: String,
       expectedPayout: Number,
+      invoiceOrderId: String,
       rejectionNote: String,
       submittedAt: Date,
       authorizedAt: Date,

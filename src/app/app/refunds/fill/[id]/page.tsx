@@ -22,6 +22,7 @@ export default function FillRefundPage() {
     reviewScreenshot: "",
     returnPeriodScreenshot: "",
     deliveryScreenshot: "",
+    invoiceOrderId: "",
     upiId: "",
     accountHolderName: "",
     expectedPayout: 0,
@@ -65,6 +66,7 @@ export default function FillRefundPage() {
                     // to ensure "Global Sync" works even if a draft exists in localStorage.
                     newState.upiId = o.refundDetails?.upiId || profileUpi || newState.upiId || "";
                     newState.accountHolderName = o.refundDetails?.accountHolderName || profileHolder || newState.accountHolderName || "";
+                    newState.invoiceOrderId = o.refundDetails?.invoiceOrderId || o.invoiceOrderId || newState.invoiceOrderId || "";
 
                     if (!newState.expectedPayout) {
                        newState.expectedPayout = o.refundDetails?.expectedPayout || calculatedPayout;
@@ -87,6 +89,7 @@ export default function FillRefundPage() {
                 reviewScreenshot: o.refundProof?.reviewScreenshot || "",
                 returnPeriodScreenshot: o.refundProof?.returnPeriodScreenshot || "",
                 deliveryScreenshot: o.refundProof?.deliveryScreenshot || "",
+                invoiceOrderId: o.refundDetails?.invoiceOrderId || o.invoiceOrderId || "",
                 upiId: o.refundDetails?.upiId || profileUpi || "",
                 accountHolderName: o.refundDetails?.accountHolderName || profileHolder || "",
                 expectedPayout: o.refundDetails?.expectedPayout || calculatedPayout,
@@ -171,9 +174,15 @@ export default function FillRefundPage() {
     const isSubmitted = rt === "SUBMITTED" || rt === "REVIEW SUBMITTED" || rt === "REVIEW_SUBMITTED";
     const isOnlyOrder = rt === "ORDER" || rt === "ONLY_ORDER" || rt === "ONLY-ORDER";
 
-    if (isReview) {
-       if (!formData.reviewLink || formData.reviewLink.trim() === '') {
-          toast.error("Please provide the Live Review URL");
+    const isBlinkit = Boolean(
+       order.marketplace?.toLowerCase().includes("blinkit") || 
+       order.brandName?.toLowerCase().includes("blinkit")
+    );
+
+    // Mandatory check for Blinkit
+    if (isBlinkit) {
+       if (!formData.invoiceOrderId || formData.invoiceOrderId.trim() === '') {
+          toast.error("Please provide the Blinkit Invoice Order ID");
           return;
        }
     }
@@ -185,7 +194,6 @@ export default function FillRefundPage() {
           return;
        }
        if (!formData.returnPeriodScreenshot) {
-          const isBlinkit = order.marketplace?.toLowerCase().includes("blinkit") || order.brandName?.toLowerCase().includes("blinkit");
           toast.error(`Please upload the ${isBlinkit ? "Invoice Screenshot" : "Return Period Over Screenshot"}`);
           return;
        }
@@ -222,6 +230,7 @@ export default function FillRefundPage() {
             expectedPayout: formData.expectedPayout,
             dealType: formData.dealType || order.dealType,
             productCode: formData.productCode || order.productCode,
+            invoiceOrderId: isBlinkit ? formData.invoiceOrderId.trim() : (formData.invoiceOrderId?.trim() || undefined),
             submittedAt: new Date()
           },
           refundProof: {
@@ -280,6 +289,7 @@ export default function FillRefundPage() {
   const isOnlyOrder = rt === "ORDER" || rt === "ONLY_ORDER" || rt === "ONLY-ORDER";
   const isSubmittedDeal = rt === "SUBMITTED" || rt === "REVIEW SUBMITTED" || rt === "REVIEW_SUBMITTED";
   const isEmptyBox = (order.dealType || "").toLowerCase().includes("empty box");
+  const isBlinkit = Boolean(order.marketplace?.toLowerCase().includes("blinkit") || order.brandName?.toLowerCase().includes("blinkit"));
 
   const RenderProofInput = ({ label, field, sublabel }: { label: string, field: string, sublabel?: string }) => {
     let tabLink = "";
@@ -389,14 +399,35 @@ export default function FillRefundPage() {
                          <div className="h-4 w-1 bg-blue-600 rounded-full" /> Proof Verification
                       </h3>
 
-                       <div className="font-mono">
-                          {(isReviewDeal) && ( // Removed isSubmittedDeal from here to hide link
+                        <div className="space-y-6 font-mono">
+                           {isBlinkit && (
+                              <div className="space-y-3 font-mono">
+                                 <div className="flex items-center justify-between ml-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-1.5">
+                                       <span className="text-blue-600">🧾</span> Invoice Order ID <span className="text-red-500 font-bold">*</span>
+                                    </label>
+                                    <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60">
+                                       Mandatory for Blinkit
+                                    </span>
+                                 </div>
+                                 <input 
+                                   required
+                                   type="text" 
+                                   value={formData.invoiceOrderId}
+                                   onChange={(e) => setFormData({...formData, invoiceOrderId: e.target.value})}
+                                   placeholder="ENTER BLINKIT INVOICE ORDER ID..."
+                                   className="w-full rounded-2xl border-2 border-blue-200/80 bg-blue-50/20 px-6 py-5 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all shadow-sm"
+                                 />
+                              </div>
+                           )}
+
+                           {(isReviewDeal) && (
                              <div className="space-y-3 font-mono">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                                  Live Review URL <span className="text-red-500 font-bold">*</span>
+                                  Live Review URL
                                 </label>
                                <input 
-                                 required type="url" value={formData.reviewLink}
+                                 type="url" value={formData.reviewLink}
                                  onChange={(e) => setFormData({...formData, reviewLink: e.target.value})}
                                  placeholder="PASTE AMAZON/FLIPKART LINK..."
                                  className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-6 py-5 text-sm font-bold text-slate-800 outline-none focus:bg-white focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all"

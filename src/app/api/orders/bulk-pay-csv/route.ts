@@ -104,11 +104,12 @@ export async function POST(req: Request) {
           console.error('CSV Bulk pay notif error:', nErr);
         }
 
-        if (buyer.email) {
+        const recipientEmail = buyer?.email || order.buyerEmail;
+        if (recipientEmail) {
           try {
             await sendOrderPaymentEmail(
-              buyer.email,
-              buyer.name || "Customer",
+              recipientEmail,
+              buyer?.name || "Customer",
               order.aspireOrderId || order.userOrderId,
               {
                 transactionId: finalTransactionId,

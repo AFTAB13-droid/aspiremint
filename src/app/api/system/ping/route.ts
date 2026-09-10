@@ -32,6 +32,14 @@ export async function GET() {
     redisStatus = `error/bypass: ${redisErr.message || "failed"}`;
   }
 
+  // 3. Automated 20-Day Refund Reminders check (background, non-blocking)
+  try {
+    const { checkAndSendRefundReminders } = await import("@/services/refundReminderService");
+    checkAndSendRefundReminders().catch((err) => console.error("[Warmup Ping] Refund reminder check error:", err));
+  } catch (reminderErr) {
+    console.warn("[Warmup Ping] Failed to trigger refund reminder check:", reminderErr);
+  }
+
   const durationMs = Date.now() - startTime;
 
   return NextResponse.json({

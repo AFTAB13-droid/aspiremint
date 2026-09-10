@@ -211,25 +211,90 @@ export const sendRefundSubmittedEmail = async (email: string, name: string, orde
 };
 
 export const sendOrderPaymentEmail = async (email: string, name: string, orderId: string, paymentData: any) => {
+  const payer = paymentData.paidByName || "System Specialist";
+  const amountStr = typeof paymentData.paidAmount === 'number'
+    ? `₹${paymentData.paidAmount.toLocaleString()}`
+    : `₹${paymentData.paidAmount || "0.00"}`;
+
   const details = [
     { label: "Order ID", value: orderId },
-    { label: "Paid Amount", value: `₹${paymentData.paidAmount || "0.00"}` },
+    ...(paymentData.brandName ? [{ label: "Brand", value: paymentData.brandName }] : []),
+    ...(paymentData.productName ? [{ label: "Product", value: paymentData.productName }] : []),
+    { label: "Refund Amount", value: amountStr },
+    { label: "Paid By", value: payer },
     { label: "Transaction ID", value: paymentData.transactionId || "System Auto-gen" },
     { label: "Payment Date", value: new Date(paymentData.paidAt || Date.now()).toLocaleString() },
-    { label: "Disbursed By", value: paymentData.paidByName || "Admin Desk" }
   ];
 
   const body = `
     Hi <b>${name}</b>,<br><br>
-    Your refund has been processed. Log in to the portal for detailed information.
+    Great news! Your refund of <b>${amountStr}</b> has been successfully paid by <b>${payer}</b>.<br><br>
+    The amount has been transferred to your registered payment method. Below are the transaction details:
     ${renderTable(details)}
+    Log in to your AspireMint account to view your updated dashboard and order details.
   `;
 
   return transporter.sendMail({
     from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
-    subject: `₹ Payout Processed: Order ${orderId}`,
-    html: renderSimpleEmail("Payout Completed", "#17a2b8", "#ffffff", body),
+    subject: `✓ Refund Paid: ${amountStr} for Order #${orderId} by ${payer}`,
+    html: renderSimpleEmail("Refund Paid Successfully", "#28a745", "#ffffff", body),
+  });
+};
+
+export const sendRefundReminderEmail = async (email: string, name: string, orderData: any) => {
+  const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "https://aspiremint.in";
+  const targetId = orderData._id || orderData.aspireOrderId;
+  const refundFormUrl = `${baseUrl}/app/refunds/fill/${targetId}`;
+  const orderUrl = `${baseUrl}/app/orders/${targetId}`;
+
+  const refundAmt = orderData.refundDetails?.expectedPayout !== undefined && orderData.refundDetails?.expectedPayout !== null
+    ? orderData.refundDetails.expectedPayout
+    : ((orderData.amount || 0) + (Number(orderData.lessAmount) || 0));
+
+  const details = [
+    { label: "Order ID", value: orderData.userOrderId || orderData.aspireOrderId || "N/A" },
+    { label: "Brand", value: orderData.brandName || "N/A" },
+    { label: "Product", value: orderData.reviewName || orderData.productCode || "N/A" },
+    { label: "Marketplace", value: orderData.marketplace || "N/A" },
+    { label: "Order Amount", value: `₹${(orderData.amount || 0).toLocaleString()}` },
+    { label: "Refund Amount", value: `₹${Number(refundAmt || 0).toLocaleString()}` },
+    { label: "Order Date", value: new Date(orderData.createdAt || Date.now()).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) },
+    { label: "Status", value: "Refund Form Pending" }
+  ];
+
+  const body = `
+    Hi <b>${name}</b>,<br><br>
+    <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 14px 18px; margin: 15px 0; border-radius: 4px;">
+      <strong style="color: #856404; font-size: 15px;">⏳ Urgent Notice: Only 5 Days Left!</strong><br>
+      <span style="color: #664d03; font-size: 13px;">
+        It has been 20 days since your order form was filled, and you have not submitted your refund form yet. 
+        You have <b>only 5 days left</b> before the claim window closes. Please fill and submit your refund form immediately to receive your cashback!
+      </span>
+    </div>
+
+    <b>Order Details:</b>
+    ${renderTable(details)}
+
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="${refundFormUrl}" style="background-color: #0d6efd; color: #ffffff; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 8px; font-size: 15px; display: inline-block;">
+        👉 Fill Refund Form Now
+      </a>
+    </div>
+
+    <p style="font-size: 12px; color: #666; line-height: 1.6;">
+      Direct Form Link: <a href="${refundFormUrl}" style="color: #0d6efd;">${refundFormUrl}</a><br>
+      View Order Page: <a href="${orderUrl}" style="color: #0d6efd;">${orderUrl}</a>
+    </p>
+
+    Please submit the form as soon as possible so our verification team can approve your payout.
+  `;
+
+  return transporter.sendMail({
+    from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
+    to: email,
+    subject: `⚠️ Only 5 Days Left: Please Fill Refund Form for Order #${orderData.userOrderId || orderData.aspireOrderId}`,
+    html: renderSimpleEmail("Action Required: 5 Days Left for Refund", "#ffc107", "#000000", body),
   });
 };
 

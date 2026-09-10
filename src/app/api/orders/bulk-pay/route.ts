@@ -113,11 +113,12 @@ export async function POST(req: Request) {
           console.error("Bulk-pay notification error:", notifErr);
         }
 
-        if (buyer.email) {
+        const recipientEmail = buyer?.email || ord.buyerEmail;
+        if (recipientEmail) {
           try {
             await sendOrderPaymentEmail(
-              buyer.email,
-              buyer.name || "Customer",
+              recipientEmail,
+              buyer?.name || "Customer",
               ord.aspireOrderId || ord.userOrderId,
               {
                 transactionId: finalTxId,
