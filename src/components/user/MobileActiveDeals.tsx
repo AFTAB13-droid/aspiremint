@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 
 interface MobileActiveDealsProps {
   deals: any[];
+  totalDealsCount?: number;
   loading?: boolean;
   isAdm: boolean;
   role: string;
@@ -16,6 +17,12 @@ interface MobileActiveDealsProps {
   brandFilter: string;
   setBrandFilter: (val: string) => void;
   uniqueBrands: string[];
+  dealTypeFilter?: string;
+  setDealTypeFilter?: (val: string) => void;
+  dealTypeOptions?: { label: string; value: string }[];
+  reviewTypeFilter?: string;
+  setReviewTypeFilter?: (val: string) => void;
+  reviewTypeOptions?: { label: string; value: string }[];
   searchQuery: string;
   setSearchQuery: (val: string) => void;
   currentPage: number;
@@ -24,8 +31,10 @@ interface MobileActiveDealsProps {
 }
 
 export function MobileActiveDeals({ 
-  deals, loading, isAdm, role, onRefresh, 
+  deals, totalDealsCount, loading, isAdm, role, onRefresh, 
   brandFilter, setBrandFilter, uniqueBrands,
+  dealTypeFilter = "All Deals", setDealTypeFilter, dealTypeOptions,
+  reviewTypeFilter = "All Types", setReviewTypeFilter, reviewTypeOptions,
   searchQuery, setSearchQuery,
   currentPage, setCurrentPage, totalPages
 }: MobileActiveDealsProps) {
@@ -36,6 +45,36 @@ export function MobileActiveDeals({
   // Stats for the mobile header
   const totalSlots = deals.reduce((sum, d) => sum + (d.remainingSlots || 0), 0);
   const urgentDeals = deals.filter(d => (d.remainingSlots || 0) > 0 && (d.remainingSlots || 0) < 5).length;
+
+  const defaultDealTypeOptions = [
+    { label: "All Protocols", value: "All Deals" },
+    { label: "Original", value: "Original" },
+    { label: "Empty Box", value: "Empty Box" },
+    { label: "Exchange", value: "Exchange" }
+  ];
+
+  const defaultReviewTypeOptions = [
+    { label: "All Types", value: "All Types" },
+    { label: "Review", value: "Review" },
+    { label: "Rating", value: "Rating" },
+    { label: "Order Only", value: "Order Only" },
+    { label: "Review Submitted", value: "Submitted" }
+  ];
+
+  const effectiveDealTypeOptions = dealTypeOptions || defaultDealTypeOptions;
+  const effectiveReviewTypeOptions = reviewTypeOptions || defaultReviewTypeOptions;
+
+  const hasBrandFilter = brandFilter !== "All Brands";
+  const hasDealTypeFilter = Boolean(dealTypeFilter && dealTypeFilter !== "All Deals" && dealTypeFilter !== "All Protocols");
+  const hasReviewTypeFilter = Boolean(reviewTypeFilter && reviewTypeFilter !== "All Types");
+  const activeFiltersCount = (hasBrandFilter ? 1 : 0) + (hasDealTypeFilter ? 1 : 0) + (hasReviewTypeFilter ? 1 : 0);
+
+  const resetAllFilters = () => {
+    setBrandFilter("All Brands");
+    if (setDealTypeFilter) setDealTypeFilter("All Deals");
+    if (setReviewTypeFilter) setReviewTypeFilter("All Types");
+    setCurrentPage(1);
+  };
 
   return (
     <div className="flex flex-col gap-4 pb-24">
@@ -53,69 +92,235 @@ export function MobileActiveDeals({
          </div>
          
          <div className="flex items-center gap-1.5 bg-blue-50/50 px-3 py-1.5 rounded-xl border border-blue-100/50">
-            <span className="text-[11px] font-black text-blue-600">{deals.length}</span>
+            <span className="text-[11px] font-black text-blue-600">{totalDealsCount ?? deals.length}</span>
          </div>
 
          <button 
            onClick={() => setIsFilterDrawerOpen(true)}
-           className={`h-11 w-11 rounded-2xl flex items-center justify-center transition-all ${
-             brandFilter !== "All Brands" 
-             ? "bg-blue-600 text-white shadow-lg" 
+           aria-label="Filter Registry"
+           className={`h-11 w-11 rounded-2xl flex items-center justify-center transition-all relative ${
+             activeFiltersCount > 0 
+             ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30 ring-2 ring-blue-400/40" 
              : "bg-slate-50 text-slate-500 border border-slate-100 shadow-sm"
            }`}
          >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+            {activeFiltersCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 w-4 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                {activeFiltersCount}
+              </span>
+            )}
          </button>
       </div>
-      
 
-      {/* Filter Drawer - Sync with My Orders Dashboard */}
+      {/* Active Filter Chips Bar */}
+      {activeFiltersCount > 0 && (
+         <div className="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar -mt-1 px-1">
+            {hasBrandFilter && (
+               <div className="inline-flex items-center gap-1.5 bg-slate-900 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-wider shrink-0 shadow-sm">
+                  <span>Brand: {brandFilter}</span>
+                  <button 
+                    type="button"
+                    onClick={() => { setBrandFilter("All Brands"); setCurrentPage(1); }}
+                    className="hover:text-rose-400 p-0.5 leading-none"
+                  >
+                     ✕
+                  </button>
+               </div>
+            )}
+            {hasDealTypeFilter && (
+               <div className="inline-flex items-center gap-1.5 bg-blue-600 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-wider shrink-0 shadow-sm">
+                  <span>Protocol: {dealTypeFilter}</span>
+                  <button 
+                    type="button"
+                    onClick={() => { if (setDealTypeFilter) setDealTypeFilter("All Deals"); setCurrentPage(1); }}
+                    className="hover:text-rose-300 p-0.5 leading-none"
+                  >
+                     ✕
+                  </button>
+               </div>
+            )}
+            {hasReviewTypeFilter && (
+               <div className="inline-flex items-center gap-1.5 bg-indigo-600 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-wider shrink-0 shadow-sm">
+                  <span>Review: {reviewTypeFilter}</span>
+                  <button 
+                    type="button"
+                    onClick={() => { if (setReviewTypeFilter) setReviewTypeFilter("All Types"); setCurrentPage(1); }}
+                    className="hover:text-rose-300 p-0.5 leading-none"
+                  >
+                     ✕
+                  </button>
+               </div>
+            )}
+            <button 
+              type="button"
+              onClick={resetAllFilters}
+              className="text-[9px] font-black text-rose-500 hover:text-rose-700 uppercase tracking-widest px-2 py-1 shrink-0 underline decoration-2 underline-offset-2"
+            >
+               Clear All
+            </button>
+         </div>
+      )}
+
+      {/* Filter Drawer - 3 Parameters: Brand, Deal Protocol, Review Type */}
       <AnimatePresence>
          {isFilterDrawerOpen && (
             <div className="fixed inset-0 z-[110] flex items-end justify-center p-0">
                <motion.div 
-                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                 initial={{ opacity: 0 }} 
+                 animate={{ opacity: 1 }} 
+                 exit={{ opacity: 0 }}
                  onClick={() => setIsFilterDrawerOpen(false)}
                  className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" 
                />
                <motion.div
-                 initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+                 initial={{ y: "100%" }} 
+                 animate={{ y: 0 }} 
+                 exit={{ y: "100%" }}
                  transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                 className="w-full bg-white rounded-t-[40px] p-8 pb-12 relative z-10 shadow-2xl border-t border-slate-100"
+                 className="w-full bg-white rounded-t-[36px] max-h-[85vh] flex flex-col relative z-10 shadow-2xl border-t border-slate-100"
                >
-                  <div className="h-1.5 w-12 bg-slate-100 rounded-full mx-auto mb-8" />
-                  <div className="flex items-center justify-between mb-8">
-                     <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">Filter Registry</h3>
-                     <button onClick={() => setBrandFilter("All Brands")} className="text-[10px] font-black text-blue-600 uppercase tracking-widest underline decoration-2 underline-offset-4">Reset</button>
-                  </div>
-                  
-                  <div className="space-y-6">
-                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Brand Specialty</label>
-                        <div className="grid grid-cols-2 gap-2">
-                           {uniqueBrands.map(brand => (
-                              <button
-                                key={brand}
-                                onClick={() => { setBrandFilter(brand); setIsFilterDrawerOpen(false); }}
-                                className={`px-4 py-3.5 rounded-2xl text-[9px] font-black uppercase tracking-widest border transition-all ${
-                                   brandFilter === brand 
-                                   ? "bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20" 
-                                   : "bg-slate-50 text-slate-500 border-slate-100"
-                                }`}
-                              >
-                                 {brand === "All Brands" ? "Global Market" : brand}
-                              </button>
-                           ))}
+                  {/* Header */}
+                  <div className="p-6 pb-4 border-b border-slate-100 shrink-0">
+                     <div className="h-1.5 w-12 bg-slate-200 rounded-full mx-auto mb-4" />
+                     <div className="flex items-center justify-between">
+                        <div>
+                           <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Filter Active Deals</h3>
+                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Brand • Deal Protocol • Review Type</p>
                         </div>
+                        {activeFiltersCount > 0 && (
+                           <button 
+                             onClick={resetAllFilters} 
+                             className="text-[10px] font-black text-rose-600 bg-rose-50 border border-rose-100 px-3 py-1 rounded-full uppercase tracking-wider active:scale-95 transition-all"
+                           >
+                              Reset ({activeFiltersCount})
+                           </button>
+                        )}
                      </div>
                   </div>
                   
-                  <button 
-                    onClick={() => setIsFilterDrawerOpen(false)}
-                    className="w-full h-16 bg-blue-600 text-white rounded-[24px] text-[11px] font-black uppercase tracking-widest mt-10 active:scale-95 transition-all shadow-xl shadow-blue-600/20"
-                  >
-                     Apply Manifest
-                  </button>
+                  {/* Filter Content - 3 Sections */}
+                  <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+                     
+                     {/* 1. Brand Parameter */}
+                     <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                              <span>🏷️</span> Brand Specialty
+                           </label>
+                           {hasBrandFilter && (
+                              <span className="text-[9px] font-black text-blue-600 uppercase tracking-tight">{brandFilter}</span>
+                           )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                           {uniqueBrands.map(brand => {
+                              const isSelected = brandFilter === brand;
+                              return (
+                                 <button
+                                   key={brand}
+                                   type="button"
+                                   onClick={() => { 
+                                     setBrandFilter(brand); 
+                                     setCurrentPage(1); 
+                                   }}
+                                   className={`px-3.5 py-3 rounded-2xl text-[9px] font-black uppercase tracking-wider border transition-all text-left flex items-center justify-between ${
+                                      isSelected 
+                                      ? "bg-slate-900 text-white border-slate-900 shadow-md shadow-slate-900/20" 
+                                      : "bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100"
+                                   }`}
+                                 >
+                                    <span className="truncate">{brand === "All Brands" ? "Global Market" : brand}</span>
+                                    {isSelected && <span className="text-emerald-400 text-xs shrink-0 ml-1">✓</span>}
+                                 </button>
+                              );
+                           })}
+                        </div>
+                     </div>
+
+                     {/* 2. Deal Protocol Parameter */}
+                     <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                              <span>📋</span> Deal Protocol
+                           </label>
+                           {hasDealTypeFilter && (
+                              <span className="text-[9px] font-black text-blue-600 uppercase tracking-tight">{dealTypeFilter}</span>
+                           )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                           {effectiveDealTypeOptions.map(item => {
+                              const isSelected = dealTypeFilter === item.value || (item.value === "All Deals" && dealTypeFilter === "All Protocols");
+                              return (
+                                 <button
+                                   key={item.value}
+                                   type="button"
+                                   onClick={() => { 
+                                     if (setDealTypeFilter) setDealTypeFilter(item.value); 
+                                     setCurrentPage(1); 
+                                   }}
+                                   className={`px-3.5 py-3 rounded-2xl text-[9px] font-black uppercase tracking-wider border transition-all text-left flex items-center justify-between ${
+                                      isSelected 
+                                      ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20" 
+                                      : "bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100"
+                                   }`}
+                                 >
+                                    <span className="truncate">{item.label}</span>
+                                    {isSelected && <span className="text-white text-xs shrink-0 ml-1">✓</span>}
+                                 </button>
+                              );
+                           })}
+                        </div>
+                     </div>
+
+                     {/* 3. Review Type Parameter */}
+                     <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                              <span>⭐</span> Review Type
+                           </label>
+                           {hasReviewTypeFilter && (
+                              <span className="text-[9px] font-black text-indigo-600 uppercase tracking-tight">{reviewTypeFilter}</span>
+                           )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                           {effectiveReviewTypeOptions.map(item => {
+                              const isSelected = reviewTypeFilter === item.value;
+                              return (
+                                 <button
+                                   key={item.value}
+                                   type="button"
+                                   onClick={() => { 
+                                     if (setReviewTypeFilter) setReviewTypeFilter(item.value); 
+                                     setCurrentPage(1); 
+                                   }}
+                                   className={`px-3.5 py-3 rounded-2xl text-[9px] font-black uppercase tracking-wider border transition-all text-left flex items-center justify-between ${
+                                      isSelected 
+                                      ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20" 
+                                      : "bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100"
+                                   }`}
+                                 >
+                                    <span className="truncate">{item.label}</span>
+                                    {isSelected && <span className="text-white text-xs shrink-0 ml-1">✓</span>}
+                                 </button>
+                              );
+                           })}
+                        </div>
+                     </div>
+
+                  </div>
+                  
+                  {/* Drawer Footer */}
+                  <div className="p-6 pt-3 border-t border-slate-100 shrink-0 bg-white">
+                     <button 
+                       onClick={() => setIsFilterDrawerOpen(false)}
+                       className="w-full h-14 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl shadow-blue-600/20 flex items-center justify-center gap-2"
+                     >
+                        <span>Apply Filters</span>
+                        {totalDealsCount !== undefined && (
+                           <span className="bg-white/20 px-2 py-0.5 rounded-full text-[9px]">({totalDealsCount} Available)</span>
+                        )}
+                     </button>
+                  </div>
                </motion.div>
             </div>
          )}

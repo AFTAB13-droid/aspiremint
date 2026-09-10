@@ -590,27 +590,27 @@ export default function NewOrderPage() {
                         {/* Default Allocated Mediator */}
                         <div className="space-y-2 col-span-full">
                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Mediator Allocation</label>
-                            <div className="w-full min-h-[64px] rounded-[24px] bg-slate-50 border border-slate-200/80 px-5 md:px-6 py-3 flex items-center justify-between shadow-sm">
-                               <div className="flex items-center gap-3.5">
-                                  <div className="h-10 w-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-black text-base shrink-0 border border-amber-500/20 shadow-sm">
+                            <div className="w-full min-h-[64px] rounded-[24px] bg-slate-50 border border-slate-200/80 px-4 sm:px-6 py-3 flex items-center justify-between gap-3 overflow-hidden shadow-sm">
+                               <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
+                                  <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl sm:rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-black text-sm sm:text-base shrink-0 border border-amber-500/20 shadow-sm">
                                      ⭐
                                   </div>
-                                  <div className="min-w-0">
-                                     <p className="text-sm font-black text-slate-900 uppercase tracking-tight truncate flex items-center gap-2">
+                                  <div className="min-w-0 flex-1">
+                                     <p className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-tight truncate">
                                         {juhiUser ? (juhiUser.systemDisplayName || juhiUser.name) : "Juhi"}
                                      </p>
-                                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate">
+                                     <p className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate">
                                         Official Assigned Specialist
                                      </p>
                                   </div>
                                </div>
-                               <div className="flex items-center gap-2 shrink-0">
+                               <div className="flex items-center gap-1.5 shrink-0 pl-1 pr-1">
                                   {selectedDealDetails?.juhiCommission !== undefined && selectedDealDetails?.juhiCommission !== null && selectedDealDetails?.juhiCommission !== "N/A" && (
-                                     <span className="hidden sm:inline-block text-[9px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-200/60">
-                                        Commission: ₹{selectedDealDetails.juhiCommission}
+                                     <span className="hidden sm:inline-block text-[9px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full border border-blue-200/60">
+                                        ₹{selectedDealDetails.juhiCommission}
                                      </span>
                                   )}
-                                  <span className="text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full border border-emerald-200/60">
+                                  <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full border border-emerald-200/60">
                                      Default
                                   </span>
                                </div>

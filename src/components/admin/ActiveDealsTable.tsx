@@ -59,13 +59,25 @@ export function ActiveDealsTable({
       
       const matchBrand = brandFilter === "All Brands" || deal.brandName === brandFilter;
       
-      const matchReview = reviewTypeFilter === "All Types" || 
-                          (reviewTypeFilter === "Review" && deal.reviewType === "REVIEW") ||
-                          (reviewTypeFilter === "Rating" && deal.reviewType === "RATING") ||
-                          (reviewTypeFilter === "Order Only" && (deal.reviewType === "ORDER" || deal.reviewType === "ONLY_ORDER")) ||
-                          (reviewTypeFilter === "Submitted" && deal.reviewType === "SUBMITTED");
+      let matchReview = true;
+      if (reviewTypeFilter !== "All Types") {
+        const raw = (deal.reviewType || "").toUpperCase();
+        const rawTokens = raw.split(",").map((s: string) => s.trim()).filter(Boolean);
 
-      const matchDeal = dealTypeFilter === "All Deals" || deal.dealType === dealTypeFilter;
+        if (reviewTypeFilter === "Review") {
+          matchReview = rawTokens.includes("REVIEW") || (raw.includes("REVIEW") && !raw.includes("SUBMITTED"));
+        } else if (reviewTypeFilter === "Rating") {
+          matchReview = rawTokens.includes("RATING") || raw.includes("RATING");
+        } else if (reviewTypeFilter === "Order Only") {
+          matchReview = rawTokens.includes("ORDER") || rawTokens.includes("ONLY_ORDER") || rawTokens.includes("ONLY ORDER") || raw.includes("ORDER");
+        } else if (reviewTypeFilter === "Submitted") {
+          matchReview = rawTokens.includes("SUBMITTED") || raw.includes("SUBMITTED");
+        }
+      }
+
+      const matchDeal = dealTypeFilter === "All Deals" || 
+                        dealTypeFilter === "All Protocols" || 
+                        (deal.dealType || "").toLowerCase() === dealTypeFilter.toLowerCase();
 
       return matchSearch && matchBrand && matchReview && matchDeal;
     });
@@ -713,6 +725,7 @@ export function ActiveDealsTable({
       <div className="md:hidden">
         <MobileActiveDeals 
           deals={paginatedDeals} 
+          totalDealsCount={filteredDeals.length}
           loading={loading}
           isAdm={isAdm} 
           role={role || 'USER'} 
@@ -720,6 +733,12 @@ export function ActiveDealsTable({
           brandFilter={brandFilter}
           setBrandFilter={setBrandFilter}
           uniqueBrands={uniqueBrands}
+          dealTypeFilter={dealTypeFilter}
+          setDealTypeFilter={setDealTypeFilter}
+          dealTypeOptions={dealTypeOptions}
+          reviewTypeFilter={reviewTypeFilter}
+          setReviewTypeFilter={setReviewTypeFilter}
+          reviewTypeOptions={reviewTypeOptions}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           currentPage={currentPage}
