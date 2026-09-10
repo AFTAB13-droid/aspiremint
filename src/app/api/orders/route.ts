@@ -69,7 +69,15 @@ export async function POST(req: Request) {
       let finalMediatorId = mediatorId;
 
       if (!finalMediatorId) {
-        throw new Error('Mediator assignment is mandatory. Please select a specialist.');
+        const juhi = await User.findOne({
+          role: 'MEDIATOR',
+          name: { $regex: /juhi/i }
+        }).session(mongoSession);
+        if (juhi) {
+          finalMediatorId = juhi._id;
+        } else {
+          throw new Error('Mediator assignment is mandatory. Specialist not found.');
+        }
       }
 
       // Fetch the assigned mediator's details for commission calculation

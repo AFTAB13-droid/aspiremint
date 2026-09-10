@@ -162,6 +162,10 @@ export default function NewOrderPage() {
              return 0;
            });
            setMediators(sorted);
+           const juhi = sorted.find((m: any) => m.name?.toLowerCase().includes("juhi") || m.systemDisplayName?.toLowerCase().includes("juhi"));
+           if (juhi) {
+             setFormData(prev => ({ ...prev, mediatorId: juhi._id }));
+           }
         }
         if (profileJson.success) {
           setUserProfile(profileJson.data);
@@ -209,18 +213,24 @@ export default function NewOrderPage() {
     return availableProducts.find((pc: any) => pc.code === formData.productCode);
   }, [availableProducts, formData.productCode]);
 
-  const filteredMediators = useMemo(() => {
-    if (!selectedDealDetails) return mediators;
-    
-    const assignedIds = selectedDealDetails.assignedMediators?.map((m: any) => m.mediatorId?._id?.toString() || m.mediatorId?.toString()) || [];
-    const juhiObj = mediators.find(m => m.name.toLowerCase().includes("juhi"));
-    
-    if (juhiObj && assignedIds.length === 1 && assignedIds[0] === juhiObj._id?.toString()) {
-       return mediators.filter(m => m._id === juhiObj._id);
+  const juhiUser = useMemo(() => {
+    return mediators.find(m => m.name?.toLowerCase().includes("juhi") || m.systemDisplayName?.toLowerCase().includes("juhi"));
+  }, [mediators]);
+
+  // Auto-allocate Juhi and her commission whenever Juhi or deal details change
+  useEffect(() => {
+    if (juhiUser) {
+      setFormData(prev => {
+        const juhiComm = selectedDealDetails?.juhiCommission;
+        const isConfigured = juhiComm !== undefined && juhiComm !== null && juhiComm !== "N/A";
+        return {
+          ...prev,
+          mediatorId: juhiUser._id,
+          ...(isConfigured ? { lessAmount: juhiComm.toString() } : {})
+        };
+      });
     }
-    
-    return mediators;
-  }, [mediators, selectedDealDetails]);
+  }, [juhiUser, selectedDealDetails]);
 
   // Auto-switch protocol if current is out of stock
   useEffect(() => {
@@ -415,8 +425,8 @@ export default function NewOrderPage() {
     if (isUploading) return toast.error("Asset upload in progress");
     if (!isFormatValid) return toast.error(formatErrorMessage || "Invalid Order ID format");
     if (idExists) return toast.error("Please provide a unique Order ID");
-    if (checkingId) return toast.error("Verifying Order ID...");
-    if (!formData.mediatorId) return toast.error("Please select a Mediator Specialist");
+    const finalMediatorId = formData.mediatorId || juhiUser?._id;
+    if (!finalMediatorId) return toast.error("Mediator initialization in progress, please try again");
     
     setShowSubmitModal(true);
     setSubmitPhase(0);
@@ -445,7 +455,7 @@ export default function NewOrderPage() {
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, mediatorId: finalMediatorId }),
       });
 
       const json = await res.json();
@@ -577,64 +587,35 @@ export default function NewOrderPage() {
                            </div>
                         )}
 
-                        {/* Moved Mediator Selection here */}
+                        {/* Default Allocated Mediator */}
                         <div className="space-y-2 col-span-full">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Mediator Allocation (*)</label>
-                            <div className="relative group">
-                               <CustomDropdown
-                                  options={filteredMediators.map(m => m.systemDisplayName || m.name)}
-                                  value={
-                                     (() => {
-                                        const found = filteredMediators.find(m => m._id === formData.mediatorId);
-                                        return found ? (found.systemDisplayName || found.name) : "";
-                                     })()
-                                  }
-                                  onChange={(val) => {
-                                     if(val === "") {
-                                        handleInputChange({ target: { name: 'mediatorId', value: "" } } as any);
-                                        return;
-                                     }
-                                     const mediator = filteredMediators.find(m => (m.systemDisplayName || m.name) === val);
-                                     if (mediator) {
-                                        handleInputChange({ target: { name: 'mediatorId', value: mediator._id } } as any);
-                                        
-                                         // Auto-fill logic for Juhi
-                                         const juhiComm = selectedDealDetails?.juhiCommission;
-                                         const isConfigured = juhiComm !== undefined && juhiComm !== null && juhiComm !== "N/A";
-                                         if (mediator.name.toLowerCase().includes("juhi") && isConfigured) {
-                                            setFormData(prev => ({ ...prev, lessAmount: juhiComm.toString() }));
-                                            toast.success(`Allocated Juhi's standard commission: ₹${juhiComm}`, { icon: "💰" });
-                                         } else {
-                                            // Reset for non-Juhi mediators or if Juhi has no pre-set commission
-                                            setFormData(prev => ({ ...prev, lessAmount: "" }));
-                                            if (mediator.name.toLowerCase().includes("juhi")) {
-                                               toast("Juhi's commission not pre-configured. Enter manually.", { icon: "✍️" });
-                                            } else {
-                                               toast(`Add commission manually for ${mediator.systemDisplayName || mediator.name}`, { icon: "✍️" });
-                                            }
-                                         }
-                                     }
-                                  }}
-                                  placeholder="SELECT MEDIATOR SPECIALIST *"
-                                  searchable
-                                  className="w-full h-16 [&>button]:rounded-[24px] border-2 border-slate-100"
-                                  renderOption={(option) => {
-                                     const isJuhi = option.toLowerCase().includes("juhi");
-                                     if (isJuhi) {
-                                        return (
-                                           <div className="flex items-center w-full">
-                                              <span className="text-black font-black animate-pulse flex items-center gap-2">
-                                                <span>⭐</span>
-                                                {option}
-                                              </span>
-                                           </div>
-                                        );
-                                     }
-                                     return option;
-                                  }}
-                               />
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Mediator Allocation</label>
+                            <div className="w-full min-h-[64px] rounded-[24px] bg-slate-50 border border-slate-200/80 px-5 md:px-6 py-3 flex items-center justify-between shadow-sm">
+                               <div className="flex items-center gap-3.5">
+                                  <div className="h-10 w-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-black text-base shrink-0 border border-amber-500/20 shadow-sm">
+                                     ⭐
+                                  </div>
+                                  <div className="min-w-0">
+                                     <p className="text-sm font-black text-slate-900 uppercase tracking-tight truncate flex items-center gap-2">
+                                        {juhiUser ? (juhiUser.systemDisplayName || juhiUser.name) : "Juhi"}
+                                     </p>
+                                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate">
+                                        Official Assigned Specialist
+                                     </p>
+                                  </div>
+                               </div>
+                               <div className="flex items-center gap-2 shrink-0">
+                                  {selectedDealDetails?.juhiCommission !== undefined && selectedDealDetails?.juhiCommission !== null && selectedDealDetails?.juhiCommission !== "N/A" && (
+                                     <span className="hidden sm:inline-block text-[9px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-200/60">
+                                        Commission: ₹{selectedDealDetails.juhiCommission}
+                                     </span>
+                                  )}
+                                  <span className="text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full border border-emerald-200/60">
+                                     Default
+                                  </span>
+                               </div>
                             </div>
-                         </div>
+                        </div>
                      </div>
                   </div>
 
