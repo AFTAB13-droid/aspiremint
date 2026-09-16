@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import { Order, OrderStatus } from '@/modules/order/order.model';
+import { User } from '@/modules/user/user.model';
+import { sendOrderStatusEmail } from '@/services/emailService';
 
 export async function POST(req: Request) {
   try {
@@ -64,8 +66,8 @@ export async function POST(req: Request) {
       queryFilter.status = OrderStatus.UNDER_VERIFICATION;
     }
 
-    // Fetch orders first to get buyer information for notifications
-    const affectedOrders = await Order.find(queryFilter);
+    // Fetch orders first to get buyer information for notifications and emails
+    const affectedOrders = await Order.find(queryFilter).populate('buyer', 'name email');
     
     if (affectedOrders.length === 0) {
       return NextResponse.json({ success: false, message: 'No eligible orders found' }, { status: 404 });
@@ -83,7 +85,7 @@ export async function POST(req: Request) {
     try {
       const reason = note || (action === 'INVALIDATE' ? "Order invalidated by Admin." : "Bulk rejection processed by Admin.");
       const notifications = affectedOrders.map(order => ({
-        recipient: order.buyer,
+        recipient: (order.buyer as any)?._id || order.buyer,
         type: action === 'APPROVE' ? NotificationType.ORDER_APPROVED : (action === 'REJECT' ? NotificationType.ORDER_REJECTED : NotificationType.ORDER_INVALIDATED),
         title: action === 'APPROVE' ? "Refund Authorized" : (action === 'REJECT' ? "Refund Rejected" : "Order Invalidation Notice"),
         message: action === 'APPROVE' 
@@ -97,6 +99,43 @@ export async function POST(req: Request) {
       await Notification.insertMany(notifications);
     } catch (notifError) {
       console.error('Failed to send bulk notifications:', notifError);
+    }
+
+    // Send email notifications to buyers on Approval or Rejection
+    if (action === 'APPROVE' || action === 'REJECT') {
+      const emailTasks = affectedOrders.map(async (order) => {
+        const buyer: any = order.buyer;
+        const recipientEmail = buyer?.email || order.buyerEmail;
+        const recipientName = buyer?.name || order.reviewName || "Customer";
+        const refundAmt = order.refundDetails?.expectedPayout || order.amount;
+
+        if (recipientEmail) {
+          try {
+            if (action === 'APPROVE') {
+              await sendOrderStatusEmail(
+                recipientEmail,
+                recipientName,
+                order.aspireOrderId || order.userOrderId,
+                OrderStatus.REFUND_APPROVED,
+                refundAmt
+              );
+            } else if (action === 'REJECT') {
+              await sendOrderStatusEmail(
+                recipientEmail,
+                recipientName,
+                order.aspireOrderId || order.userOrderId,
+                OrderStatus.REFUND_REJECTED,
+                refundAmt,
+                note || "Bulk rejection processed by Admin."
+              );
+            }
+          } catch (emailErr) {
+            console.error(`Failed to send status update email for order ${order.aspireOrderId}:`, emailErr);
+          }
+        }
+      });
+
+      await Promise.allSettled(emailTasks);
     }
 
     return NextResponse.json({

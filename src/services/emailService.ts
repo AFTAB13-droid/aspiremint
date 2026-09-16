@@ -102,19 +102,32 @@ export const sendOrderStatusEmail = async (
   amount: number,
   note?: string
 ) => {
+  if (!email || typeof email !== "string" || !email.includes("@")) {
+    console.warn(`[sendOrderStatusEmail] Skipped sending email: invalid or missing recipient "${email}" for order ${orderId}`);
+    return null;
+  }
+
   const isApproved = status === "APPROVED" || status === "REFUND_APPROVED";
   
   let brandName = "Sponsor Brand";
   let productName = "Campaign Product";
   let productCode = "Code";
+  let displayOrderId = orderId;
 
   try {
     const { Order } = await import("@/modules/order/order.model");
-    const orderDoc = await Order.findOne({ aspireOrderId: orderId }).lean();
+    const orderDoc = await Order.findOne({
+      $or: [
+        { aspireOrderId: orderId },
+        { userOrderId: orderId }
+      ]
+    }).lean();
+
     if (orderDoc) {
       brandName = orderDoc.brandName || brandName;
       productName = orderDoc.reviewName || productName;
       productCode = orderDoc.productCode || productCode;
+      displayOrderId = orderDoc.userOrderId || orderDoc.aspireOrderId || orderId;
     }
   } catch (err) {
     console.warn("Could not load order details for status update email:", err);
@@ -130,13 +143,13 @@ export const sendOrderStatusEmail = async (
 
   const details = isApproved 
     ? [
-        { label: "Order ID", value: orderId },
+        { label: "Order ID", value: displayOrderId },
         { label: "Brand", value: brandName },
         { label: "Product", value: `${productName} (${productCode})` },
         { label: "Approved Amount", value: `₹${amount?.toLocaleString() || "0.00"}` }
       ]
     : [
-        { label: "Order ID", value: orderId },
+        { label: "Order ID", value: displayOrderId },
         { label: "Reason", value: note || "Mismatched screenshot evidence" },
         { label: "Mediator", value: "System Specialist" }
       ];
@@ -152,8 +165,8 @@ export const sendOrderStatusEmail = async (
     from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
     subject: isApproved
-      ? `✓ Refund Approved: Order ${orderId}`
-      : `Refund Rejected: Order ${orderId}`,
+      ? `✓ Refund Approved: Order ${displayOrderId}`
+      : `Refund Rejected: Order ${displayOrderId}`,
     html: renderSimpleEmail(title, headerBg, headerColor, body),
   });
 };
@@ -211,6 +224,11 @@ export const sendRefundSubmittedEmail = async (email: string, name: string, orde
 };
 
 export const sendOrderPaymentEmail = async (email: string, name: string, orderId: string, paymentData: any) => {
+  if (!email || typeof email !== "string" || !email.includes("@")) {
+    console.warn(`[sendOrderPaymentEmail] Skipped sending email: invalid or missing recipient "${email}" for order ${orderId}`);
+    return null;
+  }
+
   const payer = paymentData.paidByName || "System Specialist";
   const amountStr = typeof paymentData.paidAmount === 'number'
     ? `₹${paymentData.paidAmount.toLocaleString()}`

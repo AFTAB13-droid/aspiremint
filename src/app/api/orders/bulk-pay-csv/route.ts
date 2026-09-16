@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import { Order, OrderStatus } from '@/modules/order/order.model';
+import { User } from '@/modules/user/user.model';
 import { sendOrderPaymentEmail } from '@/services/emailService';
 import { NotificationService } from '@/services/notification.service';
 import { NotificationType } from '@/modules/notification/notification.model';
@@ -35,10 +36,10 @@ export async function POST(req: Request) {
 
       if (!orderId) continue;
 
-      // Find the order that is REFUND_APPROVED
+      // Find the order that is REFUND_APPROVED or APPROVED
       const query: any = {
         _id: orderId,
-        status: OrderStatus.REFUND_APPROVED
+        status: { $in: [OrderStatus.REFUND_APPROVED, OrderStatus.APPROVED] }
       };
 
       if (role === 'MEDIATOR') {
@@ -86,30 +87,33 @@ export async function POST(req: Request) {
       );
 
       const buyer: any = order.buyer;
-      if (buyer) {
-        const buyerId = buyer._id?.toString() || buyer.toString();
-        completedBuyers.add(buyerId);
+      if (buyer || order.buyerEmail) {
+        const buyerId = (buyer?._id || buyer)?.toString() || order.buyer?.toString();
+        if (buyerId) completedBuyers.add(buyerId);
         const finalAmt = typeof paidAmount === 'number' && !isNaN(paidAmount) ? paidAmount : (order.refundDetails?.expectedPayout || order.amount);
 
-        try {
-          await NotificationService.create({
-            recipient: buyerId,
-            type: NotificationType.REFUND_COMPLETED,
-            title: "Refund Paid",
-            message: `Your refund of ₹${finalAmt} has been successfully paid by ${finalPayerName}.`,
-            metadata: { orderId: order._id },
-            actionUrl: `/app/orders/${order._id}`
-          });
-        } catch (nErr) {
-          console.error('CSV Bulk pay notif error:', nErr);
+        if (buyerId) {
+          try {
+            await NotificationService.create({
+              recipient: buyerId,
+              type: NotificationType.REFUND_COMPLETED,
+              title: "Refund Paid",
+              message: `Your refund of ₹${finalAmt} has been successfully paid by ${finalPayerName}.`,
+              metadata: { orderId: order._id },
+              actionUrl: `/app/orders/${order._id}`
+            });
+          } catch (nErr) {
+            console.error('CSV Bulk pay notif error:', nErr);
+          }
         }
 
         const recipientEmail = buyer?.email || order.buyerEmail;
+        const recipientName = buyer?.name || order.reviewName || "Customer";
         if (recipientEmail) {
           try {
             await sendOrderPaymentEmail(
               recipientEmail,
-              buyer?.name || "Customer",
+              recipientName,
               order.aspireOrderId || order.userOrderId,
               {
                 transactionId: finalTransactionId,
@@ -132,7 +136,6 @@ export async function POST(req: Request) {
     // Update buyers completed orders stats
     if (completedBuyers.size > 0) {
       try {
-        const { User } = await import('@/modules/user/user.model');
         await User.updateMany(
           { _id: { $in: Array.from(completedBuyers) } },
           { $inc: { totalCompletedOrders: 1 } }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { Order, OrderStatus } from '@/modules/order/order.model';
+import { User } from '@/modules/user/user.model';
 import { Wallet } from '@/modules/wallet/wallet.model';
 import { Transaction, TransactionType, TransactionCategory } from '@/modules/wallet/transaction.model';
 import { Notification, NotificationType } from '@/modules/notification/notification.model';
@@ -572,6 +573,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       // --- EMAIL NOTIFICATIONS & DEPENDENCIES ---
       const buyer: any = order.buyer;
       const mediator: any = order.mediator;
+      const recipientEmail = buyer?.email || order.buyerEmail || updatedOrder.buyerEmail;
+      const recipientName = buyer?.name || order.reviewName || updatedOrder.reviewName || "Customer";
 
       if (status === OrderStatus.COMPLETED) {
           const payerName = role === "MEDIATOR" 
@@ -580,7 +583,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
           const refundAmt = updatedOrder.refundDetails?.expectedPayout || updatedOrder.amount;
 
           await NotificationService.create({
-            recipient: updatedOrder.buyer.toString(),
+            recipient: (updatedOrder.buyer as any)?._id?.toString() || updatedOrder.buyer?.toString(),
             type: NotificationType.REFUND_COMPLETED,
             title: "Refund Paid",
             message: `Your refund of ₹${refundAmt} has been successfully paid by ${payerName}.`,
@@ -591,25 +594,29 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         }
 
       if (status === OrderStatus.UNDER_VERIFICATION || status === OrderStatus.REFUND_FORM_SUBMITTED) {
-         try {
-            await sendRefundSubmittedEmail(buyer.email, buyer.name, updatedOrder);
-         } catch (mailErr) {
-            console.error("Refund Submitted Email Error:", mailErr);
+         if (recipientEmail) {
+           try {
+              await sendRefundSubmittedEmail(recipientEmail, recipientName, updatedOrder);
+           } catch (mailErr) {
+              console.error("Refund Submitted Email Error:", mailErr);
+           }
          }
       }
       
       if (status === OrderStatus.REFUND_APPROVED || status === OrderStatus.APPROVED || status === OrderStatus.REFUND_REJECTED) {
-         try {
-            await sendOrderStatusEmail(
-              buyer.email, 
-              buyer.name, 
-              order.aspireOrderId, 
-              status, 
-              updatedOrder.refundDetails?.expectedPayout || order.amount, 
-              status === OrderStatus.REFUND_REJECTED ? (body["refundDetails.rejectionNote"] || "Verification failed") : undefined
-            );
-         } catch (mailErr) {
-            console.error("Status Update Email Error:", mailErr);
+         if (recipientEmail) {
+           try {
+              await sendOrderStatusEmail(
+                recipientEmail, 
+                recipientName, 
+                order.aspireOrderId || updatedOrder.userOrderId, 
+                status, 
+                updatedOrder.refundDetails?.expectedPayout || order.amount, 
+                status === OrderStatus.REFUND_REJECTED ? (body["refundDetails.rejectionNote"] || "Verification failed") : undefined
+              );
+           } catch (mailErr) {
+              console.error("Status Update Email Error:", mailErr);
+           }
          }
       }
 
@@ -619,12 +626,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             : (role === "SUBADMIN" ? `SubAdmin ${session.user.name}` : (session.user.name || "Admin Desk"));
          const refundAmt = updatedOrder.refundDetails?.expectedPayout || updatedOrder.amount;
 
-         const recipientEmail = buyer?.email || order.buyerEmail || updatedOrder.buyerEmail;
          if (recipientEmail) {
             try {
                await sendOrderPaymentEmail(
                   recipientEmail,
-                  buyer?.name || "Customer",
+                  recipientName,
                   order.aspireOrderId || updatedOrder.userOrderId,
                   {
                      transactionId: updatedOrder.paymentDetails?.transactionId,

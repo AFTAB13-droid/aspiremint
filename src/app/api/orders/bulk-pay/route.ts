@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import { Order, OrderStatus } from '@/modules/order/order.model';
+import { User } from '@/modules/user/user.model';
 import { sendOrderPaymentEmail } from '@/services/emailService';
 import { NotificationService } from '@/services/notification.service';
 import { NotificationType } from '@/modules/notification/notification.model';
@@ -28,11 +29,11 @@ export async function POST(req: Request) {
     await connectToDatabase();
 
     // Verification Logic:
-    // 1. Orders must be REFUND_APPROVED.
+    // 1. Orders must be REFUND_APPROVED or APPROVED.
     // 2. If user is a MEDIATOR, they must be assigned to the order.
     const query: any = {
       _id: { $in: orderIds },
-      status: OrderStatus.REFUND_APPROVED
+      status: { $in: [OrderStatus.REFUND_APPROVED, OrderStatus.APPROVED] }
     };
 
     if (role === 'MEDIATOR') {
@@ -77,7 +78,6 @@ export async function POST(req: Request) {
 
     // Update Badge Counts efficiently
     try {
-      const { User } = await import('@/modules/user/user.model');
       const buyerIds = Array.from(new Set(ordersToComplete.map(o => (o.buyer as any)?._id?.toString() || o.buyer?.toString()).filter(Boolean)));
       if (buyerIds.length > 0) {
         await User.updateMany(
@@ -89,17 +89,16 @@ export async function POST(req: Request) {
       console.error('Failed to update buyer counts:', countError);
     }
 
-    // Trigger in-app notifications and refund paid emails
+    // Trigger in-app notifications and refund paid emails (fully awaited)
     const finalPayerName = paidBy || actorName;
     const finalTxId = updateData['paymentDetails.transactionId'];
 
-    (async () => {
-      for (const ord of ordersToComplete) {
-        const buyer: any = ord.buyer;
-        if (!buyer) continue;
-        const buyerId = buyer._id?.toString() || buyer.toString();
-        const refundAmt = ord.refundDetails?.expectedPayout || ord.amount;
+    const notifyAndEmailTasks = ordersToComplete.map(async (ord) => {
+      const buyer: any = ord.buyer;
+      const buyerId = buyer?._id?.toString() || buyer?.toString() || ord.buyer?.toString();
+      const refundAmt = ord.refundDetails?.expectedPayout || ord.amount;
 
+      if (buyerId) {
         try {
           await NotificationService.create({
             recipient: buyerId,
@@ -112,29 +111,32 @@ export async function POST(req: Request) {
         } catch (notifErr) {
           console.error("Bulk-pay notification error:", notifErr);
         }
+      }
 
-        const recipientEmail = buyer?.email || ord.buyerEmail;
-        if (recipientEmail) {
-          try {
-            await sendOrderPaymentEmail(
-              recipientEmail,
-              buyer?.name || "Customer",
-              ord.aspireOrderId || ord.userOrderId,
-              {
-                transactionId: finalTxId,
-                paidAmount: refundAmt,
-                paidAt: new Date(),
-                paidByName: finalPayerName,
-                brandName: ord.brandName,
-                productName: ord.reviewName
-              }
-            );
-          } catch (emailErr) {
-            console.error("Bulk-pay email error:", emailErr);
-          }
+      const recipientEmail = buyer?.email || ord.buyerEmail;
+      const recipientName = buyer?.name || ord.reviewName || "Customer";
+      if (recipientEmail) {
+        try {
+          await sendOrderPaymentEmail(
+            recipientEmail,
+            recipientName,
+            ord.aspireOrderId || ord.userOrderId,
+            {
+              transactionId: finalTxId,
+              paidAmount: refundAmt,
+              paidAt: new Date(),
+              paidByName: finalPayerName,
+              brandName: ord.brandName,
+              productName: ord.reviewName
+            }
+          );
+        } catch (emailErr) {
+          console.error(`Bulk-pay email error for order ${ord.aspireOrderId}:`, emailErr);
         }
       }
-    })().catch(e => console.error("Bulk-pay background notification error:", e));
+    });
+
+    await Promise.allSettled(notifyAndEmailTasks);
 
     return NextResponse.json({
       success: true,
