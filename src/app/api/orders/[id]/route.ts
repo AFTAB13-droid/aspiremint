@@ -609,7 +609,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
               await sendOrderStatusEmail(
                 recipientEmail, 
                 recipientName, 
-                order.aspireOrderId || updatedOrder.userOrderId, 
+                updatedOrder.userOrderId || order.userOrderId || order.aspireOrderId, 
                 status, 
                 updatedOrder.refundDetails?.expectedPayout || order.amount, 
                 status === OrderStatus.REFUND_REJECTED ? (body["refundDetails.rejectionNote"] || "Verification failed") : undefined
@@ -631,14 +631,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
                await sendOrderPaymentEmail(
                   recipientEmail,
                   recipientName,
-                  order.aspireOrderId || updatedOrder.userOrderId,
+                  updatedOrder.userOrderId || order.userOrderId || order.aspireOrderId,
                   {
+                     userOrderId: updatedOrder.userOrderId || order.userOrderId,
                      transactionId: updatedOrder.paymentDetails?.transactionId,
                      paidAmount: refundAmt,
                      paidAt: updatedOrder.paymentDetails?.paidAt || new Date(),
                      paidByName: payerName,
-                     brandName: updatedOrder.brandName,
-                     productName: updatedOrder.reviewName
+                     brandName: updatedOrder.brandName || order.brandName,
+                     productCode: updatedOrder.productCode || order.productCode
                   }
                );
             } catch (mailErr) {

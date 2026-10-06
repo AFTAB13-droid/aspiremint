@@ -114,14 +114,15 @@ export async function POST(req: Request) {
             await sendOrderPaymentEmail(
               recipientEmail,
               recipientName,
-              order.aspireOrderId || order.userOrderId,
+              order.userOrderId || order.aspireOrderId,
               {
+                userOrderId: order.userOrderId,
                 transactionId: finalTransactionId,
                 paidAmount: finalAmt,
                 paidAt: finalPaidAt,
                 paidByName: finalPayerName,
                 brandName: order.brandName,
-                productName: order.reviewName
+                productCode: order.productCode
               }
             );
           } catch (eErr) {

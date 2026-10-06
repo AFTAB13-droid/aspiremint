@@ -115,7 +115,7 @@ export async function POST(req: Request) {
               await sendOrderStatusEmail(
                 recipientEmail,
                 recipientName,
-                order.aspireOrderId || order.userOrderId,
+                order.userOrderId || order.aspireOrderId,
                 OrderStatus.REFUND_APPROVED,
                 refundAmt
               );
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
               await sendOrderStatusEmail(
                 recipientEmail,
                 recipientName,
-                order.aspireOrderId || order.userOrderId,
+                order.userOrderId || order.aspireOrderId,
                 OrderStatus.REFUND_REJECTED,
                 refundAmt,
                 note || "Bulk rejection processed by Admin."

@@ -125,7 +125,6 @@ export const sendOrderStatusEmail = async (
 
     if (orderDoc) {
       brandName = orderDoc.brandName || brandName;
-      productName = orderDoc.reviewName || productName;
       productCode = orderDoc.productCode || productCode;
       displayOrderId = orderDoc.userOrderId || orderDoc.aspireOrderId || orderId;
     }
@@ -145,7 +144,7 @@ export const sendOrderStatusEmail = async (
     ? [
         { label: "Order ID", value: displayOrderId },
         { label: "Brand", value: brandName },
-        { label: "Product", value: `${productName} (${productCode})` },
+        { label: "Product Code", value: productCode },
         { label: "Approved Amount", value: `₹${amount?.toLocaleString() || "0.00"}` }
       ]
     : [
@@ -229,15 +228,41 @@ export const sendOrderPaymentEmail = async (email: string, name: string, orderId
     return null;
   }
 
+  let finalOrderId = paymentData.userOrderId || orderId;
+  let finalBrandName = paymentData.brandName;
+  let finalProductCode = paymentData.productCode;
+
+  try {
+    const { Order } = await import("@/modules/order/order.model");
+    const orderDoc = await Order.findOne({
+      $or: [
+        { aspireOrderId: orderId },
+        { userOrderId: orderId }
+      ]
+    }).lean();
+
+    if (orderDoc) {
+      finalOrderId = orderDoc.userOrderId || orderDoc.aspireOrderId || finalOrderId;
+      finalBrandName = finalBrandName || orderDoc.brandName;
+      finalProductCode = finalProductCode || orderDoc.productCode;
+    }
+  } catch (err) {
+    console.warn("Could not load order details for payment email:", err);
+  }
+
+  if (!finalProductCode && paymentData.productName && paymentData.productName !== paymentData.reviewName) {
+    finalProductCode = paymentData.productName;
+  }
+
   const payer = paymentData.paidByName || "System Specialist";
   const amountStr = typeof paymentData.paidAmount === 'number'
     ? `₹${paymentData.paidAmount.toLocaleString()}`
     : `₹${paymentData.paidAmount || "0.00"}`;
 
   const details = [
-    { label: "Order ID", value: orderId },
-    ...(paymentData.brandName ? [{ label: "Brand", value: paymentData.brandName }] : []),
-    ...(paymentData.productName ? [{ label: "Product", value: paymentData.productName }] : []),
+    { label: "Order ID", value: finalOrderId },
+    ...(finalBrandName ? [{ label: "Brand", value: finalBrandName }] : []),
+    ...(finalProductCode ? [{ label: "Product Code", value: finalProductCode }] : []),
     { label: "Refund Amount", value: amountStr },
     { label: "Paid By", value: payer },
     { label: "Transaction ID", value: paymentData.transactionId || "System Auto-gen" },
@@ -255,7 +280,7 @@ export const sendOrderPaymentEmail = async (email: string, name: string, orderId
   return transporter.sendMail({
     from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
-    subject: `✓ Refund Paid: ${amountStr} for Order #${orderId} by ${payer}`,
+    subject: `✓ Refund Paid: ${amountStr} for Order #${finalOrderId} by ${payer}`,
     html: renderSimpleEmail("Refund Paid Successfully", "#28a745", "#ffffff", body),
   });
 };

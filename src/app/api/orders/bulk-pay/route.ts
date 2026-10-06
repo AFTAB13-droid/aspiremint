@@ -120,18 +120,19 @@ export async function POST(req: Request) {
           await sendOrderPaymentEmail(
             recipientEmail,
             recipientName,
-            ord.aspireOrderId || ord.userOrderId,
+            ord.userOrderId || ord.aspireOrderId,
             {
+              userOrderId: ord.userOrderId,
               transactionId: finalTxId,
               paidAmount: refundAmt,
               paidAt: new Date(),
               paidByName: finalPayerName,
               brandName: ord.brandName,
-              productName: ord.reviewName
+              productCode: ord.productCode
             }
           );
         } catch (emailErr) {
-          console.error(`Bulk-pay email error for order ${ord.aspireOrderId}:`, emailErr);
+          console.error(`Bulk-pay email error for order ${ord.userOrderId || ord.aspireOrderId}:`, emailErr);
         }
       }
     });
