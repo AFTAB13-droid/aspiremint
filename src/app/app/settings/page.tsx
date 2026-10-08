@@ -1208,17 +1208,32 @@ export default function SettingsPage() {
                              </div>
 
                              <div className="space-y-1">
-                                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Direct Mail</label>
-                                <div className="relative opacity-60">
-                                   <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300">
+                                <div className="flex items-center justify-between ml-1">
+                                   <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Direct Mail</label>
+                                   <button
+                                     type="button"
+                                     onClick={() => setIsChangeEmailModalOpen(true)}
+                                     className="text-[8px] font-black text-indigo-600 hover:text-indigo-700 uppercase tracking-wider flex items-center gap-1 active:scale-95 transition-colors"
+                                   >
+                                     Change Mail
+                                   </button>
+                                </div>
+                                <div className="relative group">
+                                   <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
                                       <Mail className="w-4 h-4" />
                                    </div>
                                    <input 
                                      disabled type="email" value={formData.email}
-                                     className="w-full h-11 pl-9 pr-10 bg-slate-100 rounded-xl shadow-inner font-bold text-xs outline-none cursor-not-allowed border border-transparent text-slate-800"
+                                     className="w-full h-11 pl-9 pr-20 bg-slate-50 rounded-xl shadow-inner font-bold text-xs outline-none cursor-not-allowed border border-slate-100 text-slate-700"
                                    />
-                                   <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                                      <Lock className="w-3.5 h-3.5 text-slate-300" />
+                                   <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                                      <button
+                                        type="button"
+                                        onClick={() => setIsChangeEmailModalOpen(true)}
+                                        className="px-2.5 py-1 rounded-lg bg-indigo-50 active:bg-indigo-100 text-indigo-600 text-[8px] font-black uppercase tracking-wider border border-indigo-100/60 shadow-sm transition-all"
+                                      >
+                                        Update
+                                      </button>
                                    </div>
                                 </div>
                              </div>

@@ -8,7 +8,6 @@ import {
   Check, ArrowRight, ShieldCheck, HelpCircle
 } from "lucide-react";
 import toast from "react-hot-toast";
-import * as XLSX from "xlsx";
 
 interface CsvBulkVerificationModalProps {
   isOpen: boolean;
@@ -104,7 +103,59 @@ export function CsvBulkVerificationModal({
 
   if (!isOpen) return null;
 
-  // 1. Download CSV / Excel Verification Sheet
+  // Native RFC-4180 CSV Parser
+  const parseCSV = (text: string): string[][] => {
+    const lines: string[][] = [];
+    let row: string[] = [];
+    let inQuotes = false;
+    let currentToken = "";
+
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const nextChar = text[i + 1];
+
+      if (inQuotes) {
+        if (char === '"' && nextChar === '"') {
+          currentToken += '"';
+          i++; // skip escaped quote
+        } else if (char === '"') {
+          inQuotes = false;
+        } else {
+          currentToken += char;
+        }
+      } else {
+        if (char === '"') {
+          inQuotes = true;
+        } else if (char === ',') {
+          row.push(currentToken.trim());
+          currentToken = "";
+        } else if (char === '\r' || char === '\n') {
+          row.push(currentToken.trim());
+          currentToken = "";
+          if (row.length > 0 && row.some(cell => cell !== "")) {
+            lines.push(row);
+          }
+          row = [];
+          if (char === '\r' && nextChar === '\n') {
+            i++; // skip newline char
+          }
+        } else {
+          currentToken += char;
+        }
+      }
+    }
+
+    if (currentToken || row.length > 0) {
+      row.push(currentToken.trim());
+      if (row.some(cell => cell !== "")) {
+        lines.push(row);
+      }
+    }
+
+    return lines;
+  };
+
+  // 1. Download CSV Verification Sheet (BOM-encoded for seamless Excel / Sheets compatibility)
   const handleDownloadSheet = () => {
     if (filteredOrders.length === 0) {
       toast.error("No orders in 'Under Verification' match your selected filters.");
@@ -147,26 +198,45 @@ export function CsvBulkVerificationModal({
       ];
     });
 
-    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Under_Verification");
+    const csvContent = [
+      headers.join(","),
+      ...dataRows.map(row => row.map(cell => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
 
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
     const dateStr = new Date().toISOString().slice(0, 10);
-    const fileName = `AspireMint_Bulk_Verification_${selectedBrand.replace(/\s+/g, '_')}_${dateStr}.xlsx`;
-    XLSX.writeFile(workbook, fileName);
+    const fileName = `AspireMint_Bulk_Verification_${selectedBrand.replace(/\s+/g, '_')}_${dateStr}.csv`;
+    link.setAttribute("href", url);
+    link.setAttribute("download", fileName);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
     toast.success(`Downloaded ${filteredOrders.length} orders for bulk verification!`);
   };
 
-  // 2. Parse & Validate Uploaded File
+  // 2. Parse & Validate Uploaded File (.csv native, .xlsx dynamic)
   const handleFileUpload = async (uploadedFile: File) => {
     setFile(uploadedFile);
     try {
-      const data = await uploadedFile.arrayBuffer();
-      const workbook = XLSX.read(data, { type: "array" });
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-      const rawRows: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      let rawRows: any[][] = [];
+
+      const isExcel = uploadedFile.name.endsWith(".xlsx") || uploadedFile.name.endsWith(".xls");
+      if (isExcel) {
+        const XLSX = await import("xlsx");
+        const data = await uploadedFile.arrayBuffer();
+        const workbook = XLSX.read(data, { type: "array" });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      } else {
+        const text = await uploadedFile.text();
+        rawRows = parseCSV(text);
+      }
 
       if (rawRows.length < 2) {
         toast.error("The uploaded file is empty or missing data rows.");
@@ -250,7 +320,7 @@ export function CsvBulkVerificationModal({
       toast.success(`Parsed ${parsed.length} rows successfully!`);
     } catch (err: any) {
       console.error("Error reading file:", err);
-      toast.error("Failed to parse file. Please upload a valid .xlsx or .csv sheet.");
+      toast.error("Failed to parse file. Please upload a valid .csv or .xlsx sheet.");
     }
   };
 
