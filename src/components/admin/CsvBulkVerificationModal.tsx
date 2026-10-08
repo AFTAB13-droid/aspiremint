@@ -101,7 +101,39 @@ export function CsvBulkVerificationModal({
     });
   }, [verifyingOrders, selectedBrand, startDate, endDate, selectedReviewType, selectedDealType]);
 
-  if (!isOpen) return null;
+  // Upload summary counters (unconditional hook execution)
+  const stats = useMemo(() => {
+    let toApprove = 0;
+    let toReject = 0;
+    let errors = 0;
+    let skipped = 0;
+
+    parsedRows.forEach(r => {
+      if (!r.isValid) errors++;
+      else if (r.action === "APPROVE") toApprove++;
+      else if (r.action === "REJECT") toReject++;
+      else skipped++;
+    });
+
+    return {
+      total: parsedRows.length,
+      toApprove,
+      toReject,
+      errors,
+      skipped,
+      validActionCount: toApprove + toReject
+    };
+  }, [parsedRows]);
+
+  // Filtered rows for the preview table (unconditional hook execution)
+  const previewRows = useMemo(() => {
+    return parsedRows.filter(r => {
+      if (previewFilter === "VALID") return r.isValid && (r.action === "APPROVE" || r.action === "REJECT");
+      if (previewFilter === "ERRORS") return !r.isValid;
+      if (previewFilter === "SKIPPED") return r.isValid && r.action === "SKIP";
+      return true;
+    });
+  }, [parsedRows, previewFilter]);
 
   // Native RFC-4180 CSV Parser
   const parseCSV = (text: string): string[][] => {
@@ -324,40 +356,6 @@ export function CsvBulkVerificationModal({
     }
   };
 
-  // Upload summary counters
-  const stats = useMemo(() => {
-    let toApprove = 0;
-    let toReject = 0;
-    let errors = 0;
-    let skipped = 0;
-
-    parsedRows.forEach(r => {
-      if (!r.isValid) errors++;
-      else if (r.action === "APPROVE") toApprove++;
-      else if (r.action === "REJECT") toReject++;
-      else skipped++;
-    });
-
-    return {
-      total: parsedRows.length,
-      toApprove,
-      toReject,
-      errors,
-      skipped,
-      validActionCount: toApprove + toReject
-    };
-  }, [parsedRows]);
-
-  // Filtered rows for the preview table
-  const previewRows = useMemo(() => {
-    return parsedRows.filter(r => {
-      if (previewFilter === "VALID") return r.isValid && (r.action === "APPROVE" || r.action === "REJECT");
-      if (previewFilter === "ERRORS") return !r.isValid;
-      if (previewFilter === "SKIPPED") return r.isValid && r.action === "SKIP";
-      return true;
-    });
-  }, [parsedRows, previewFilter]);
-
   // 3. Confirm & Execute Bulk Verification
   const handleConfirmProcessing = async () => {
     if (stats.validActionCount === 0) {
@@ -405,6 +403,8 @@ export function CsvBulkVerificationModal({
       setIsProcessing(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 md:p-6">

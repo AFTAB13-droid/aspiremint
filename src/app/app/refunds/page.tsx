@@ -1001,13 +1001,15 @@ export default function RefundsPage() {
         loading={isProcessing}
       />
 
-      <CsvBulkVerificationModal
-        isOpen={isCsvVerifyModalOpen}
-        onClose={() => setCsvVerifyModalOpen(false)}
-        orders={orders}
-        brands={allBrands}
-        onSuccess={fetchRefunds}
-      />
+      {isCsvVerifyModalOpen && (
+        <CsvBulkVerificationModal
+          isOpen={isCsvVerifyModalOpen}
+          onClose={() => setCsvVerifyModalOpen(false)}
+          orders={orders}
+          brands={allBrands}
+          onSuccess={fetchRefunds}
+        />
+      )}
     </div>
   );
 }
