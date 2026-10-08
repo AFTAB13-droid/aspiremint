@@ -519,31 +519,61 @@ export default function OrderDetailsPage() {
              )}
 
              {/* Refund Info (Accountability Section) */}
-             {order.status === 'COMPLETED' && (
+             {(order.status === 'COMPLETED' || order.status === 'REFUNDED') && (
                 <div className="rounded-[32px] border border-emerald-100 bg-emerald-50/20 p-8 shadow-sm relative overflow-hidden">
                    <div className="absolute top-0 right-0 h-24 w-24 bg-emerald-500/10 blur-[40px] rounded-full -mr-12 -mt-12" />
-                   <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-6 font-mono">Refund Details</h4>
+                   <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-6 font-mono">Disbursement Details</h4>
                    
                    <div className="space-y-5 relative z-10">
                       <div className="p-4 rounded-2xl bg-white border border-emerald-50 shadow-sm">
-                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Paid By</p>
-                         <p className="text-sm font-black text-slate-900 uppercase tracking-tight">Paid By: {order.paymentDetails?.paidByName || "System Disbursed"}</p>
+                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Paid By / Disbursed By</p>
+                         <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{order.paymentDetails?.paidByName || "System Disbursed"}</p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
                          <div className="p-4 rounded-2xl bg-white border border-emerald-50 shadow-sm">
                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Clearance Date</p>
                             <p className="text-xs font-black text-slate-900 uppercase tracking-tighter">
-                               {order.updatedAt ? new Date(order.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                               {(order.paymentDetails?.paidAt || order.updatedAt) ? new Date(order.paymentDetails?.paidAt || order.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
                             </p>
                          </div>
                          <div className="p-4 rounded-2xl bg-white border border-emerald-50 shadow-sm">
                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Clearance Time</p>
                             <p className="text-xs font-black text-slate-900 uppercase tracking-tighter">
-                               {order.updatedAt ? new Date(order.updatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A'}
+                               {(order.paymentDetails?.paidAt || order.updatedAt) ? new Date(order.paymentDetails?.paidAt || order.updatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A'}
                             </p>
                          </div>
                       </div>
+
+                      {order.paymentDetails?.transactionId && (
+                         <div className="p-4 rounded-2xl bg-white border border-emerald-50 shadow-sm flex items-center justify-between">
+                            <div>
+                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Transaction Ref (UTR)</p>
+                               <p className="text-xs font-black font-mono text-slate-900">{order.paymentDetails.transactionId}</p>
+                            </div>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(order.paymentDetails.transactionId);
+                                toast.success("UTR Copied");
+                              }}
+                              className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-slate-600 transition-colors"
+                              title="Copy UTR"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            </button>
+                         </div>
+                      )}
+
+                      {order.paymentDetails?.paymentScreenshot && (
+                         <div className="p-4 rounded-2xl bg-white border border-emerald-50 shadow-sm">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Payment Receipt</p>
+                            <div className="aspect-[16/9] rounded-xl overflow-hidden border border-slate-100 cursor-pointer" onClick={() => window.open(order.paymentDetails.paymentScreenshot, '_blank')}>
+                               <img src={order.paymentDetails.paymentScreenshot} className="w-full h-full object-cover" alt="Receipt" />
+                            </div>
+                         </div>
+                      )}
                    </div>
                 </div>
              )}
@@ -745,6 +775,88 @@ export default function OrderDetailsPage() {
                   <p className="text-[9px] font-black uppercase text-slate-600 mb-1.5">REFUND AMOUNT</p>
                   <p className="text-3xl font-black">₹{order.refundDetails.expectedPayout?.toLocaleString() || '0'}</p>
                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Payment Settlement & Clearance Details (Mobile) */}
+          {(order.status === 'COMPLETED' || order.status === 'REFUNDED') && (
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-950 p-6 md:p-8 rounded-[36px] text-white shadow-2xl shadow-emerald-950/40 border border-emerald-500/30 relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-36 w-36 bg-emerald-500/15 blur-[50px] rounded-full pointer-events-none" />
+              
+              <div className="flex items-center justify-between mb-6 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-inner">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400 font-mono">Disbursement Status</p>
+                    <h4 className="text-base font-black uppercase text-white tracking-tight">Payment Settled</h4>
+                  </div>
+                </div>
+                <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  Cleared
+                </span>
+              </div>
+
+              <div className="space-y-4 relative z-10">
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Paid By / Disbursed By</p>
+                  <p className="text-sm font-black text-white uppercase tracking-tight">
+                    {order.paymentDetails?.paidByName || "System Disbursed"}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Payment Date</p>
+                    <p className="text-xs font-black text-white uppercase tracking-tight font-mono">
+                      {(order.paymentDetails?.paidAt || order.updatedAt) 
+                        ? new Date(order.paymentDetails?.paidAt || order.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                        : 'N/A'}
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Payment Time</p>
+                    <p className="text-xs font-black text-white uppercase tracking-tight font-mono">
+                      {(order.paymentDetails?.paidAt || order.updatedAt) 
+                        ? new Date(order.paymentDetails?.paidAt || order.updatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+                        : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+
+                {order.paymentDetails?.transactionId && (
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm flex items-center justify-between">
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Transaction Ref (UTR)</p>
+                      <p className="text-xs font-black font-mono text-emerald-300 tracking-tight">{order.paymentDetails.transactionId}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(order.paymentDetails.transactionId);
+                        toast.success("UTR Copied");
+                      }}
+                      className="h-8 w-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 transition-all active:scale-95"
+                      title="Copy UTR"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+
+                {order.paymentDetails?.paymentScreenshot && (
+                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Payment Receipt</p>
+                    <div className="aspect-[16/9] rounded-xl overflow-hidden border border-white/10 cursor-pointer" onClick={() => window.open(order.paymentDetails.paymentScreenshot, '_blank')}>
+                      <img src={order.paymentDetails.paymentScreenshot} className="w-full h-full object-cover" alt="Payment Receipt" />
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}

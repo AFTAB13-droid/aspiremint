@@ -500,7 +500,7 @@ export function UserTableView({ orders, onRefund, onViewDetails, onNewOrder, ref
                             <>
                               <span className="text-[10px] font-black text-slate-900 uppercase leading-none">Paid By: {order.paymentDetails?.paidByName || "System"}</span>
                               <span className="text-[8px] font-bold text-slate-400 uppercase mt-1">
-                                  {order.updatedAt ? new Date(order.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) + " " + new Date(order.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                                  {(order.paymentDetails?.paidAt || order.updatedAt) ? new Date(order.paymentDetails?.paidAt || order.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) + " • " + new Date(order.paymentDetails?.paidAt || order.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                               </span>
                             </>
                         ) : (
@@ -642,12 +642,21 @@ export function UserTableView({ orders, onRefund, onViewDetails, onNewOrder, ref
                      )}
                   </div>
                </div>
-               {showRefundOnly && order.status === 'COMPLETED' && (
-                  <div className="flex flex-col gap-0.5 mt-2 col-span-2 p-3 bg-emerald-50 rounded-xl border border-emerald-100/50">
-                     <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest mb-1 leading-none">Settlement Cleared By</span>
+               {showRefundOnly && (order.status === 'COMPLETED' || order.status === 'REFUNDED') && (
+                  <div className="flex flex-col gap-1 mt-2 col-span-2 p-3 bg-emerald-50 rounded-xl border border-emerald-100/60">
                      <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-black text-slate-900 uppercase truncate">Paid By: {order.paymentDetails?.paidByName || "System"}</span>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">{order.updatedAt ? new Date(order.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : ''}</span>
+                        <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest leading-none">Settlement Cleared</span>
+                        <span className="text-[8px] font-black text-slate-400 uppercase font-mono">
+                           {(order.paymentDetails?.paidAt || order.updatedAt) ? (
+                              new Date(order.paymentDetails?.paidAt || order.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                           ) : ''}
+                        </span>
+                     </div>
+                     <div className="flex items-center justify-between mt-0.5">
+                        <span className="text-[10px] font-black text-slate-900 uppercase truncate">Paid By: {order.paymentDetails?.paidByName || "System"}</span>
+                        <span className="text-[9px] font-bold text-slate-500 uppercase">
+                           {(order.paymentDetails?.paidAt || order.updatedAt) ? new Date(order.paymentDetails?.paidAt || order.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}
+                        </span>
                      </div>
                   </div>
                 )}

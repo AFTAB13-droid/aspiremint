@@ -27,6 +27,28 @@ export function UserDossierModal({ user, onClose, onUpdate }: UserDossierModalPr
     const parts = name.split(" ");
     return parts.map(p => p.length > 2 ? `${p[0]}***${p.slice(-1)}` : `${p[0]}*`).join(" ");
   };
+
+  const maskUpiId = (upi: string) => {
+    if (!upi) return "N/A";
+    const parts = upi.split("@");
+    if (parts.length < 2) return "****";
+    const username = parts[0];
+    const maskedUser = username.length > 2 ? `${username.slice(0, 2)}***` : `${username[0]}***`;
+    return `${maskedUser}@${parts[1]}`;
+  };
+
+  const maskAccNumber = (acc: string) => {
+    if (!acc) return "N/A";
+    if (acc.length <= 4) return `•••• ${acc}`;
+    return `•••• ${acc.slice(-4)}`;
+  };
+
+  const handleCopy = (text: string, label: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copied`);
+  };
+
   const [role, setRole] = useState(user.role || 'USER');
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -295,6 +317,164 @@ export function UserDossierModal({ user, onClose, onUpdate }: UserDossierModalPr
                </div>
             </div>
           )}
+
+          {/* Payment & Banking Credentials */}
+          {(() => {
+            const paymentData = exData?.paymentDetails || user.paymentDetails || {};
+            const hasUpi = Boolean(paymentData.upiId);
+            const hasBank = Boolean(
+              paymentData.accountNumber ||
+              paymentData.bankName ||
+              paymentData.accountHolder ||
+              paymentData.ifscCode ||
+              paymentData.branchName ||
+              paymentData.bankDetails
+            );
+            const hasPaymentData = hasUpi || hasBank;
+
+            return (
+              <div className="space-y-4 bg-slate-900/5 p-6 rounded-[36px] border border-slate-100 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-600/5 blur-2xl rounded-full -mr-16 -mt-16 pointer-events-none" />
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-1.5 bg-emerald-600 rounded-full" />
+                    <div>
+                      <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-900 leading-none">Payment & Banking Profile</h3>
+                      <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Settlement Destination Profile</p>
+                    </div>
+                  </div>
+                  {hasPaymentData ? (
+                    <span className="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Linked
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded-full text-[8px] font-black uppercase tracking-widest">
+                      Unlinked
+                    </span>
+                  )}
+                </div>
+
+                {hasPaymentData ? (
+                  <div className="space-y-3 pt-2">
+                    {/* UPI ID */}
+                    {paymentData.upiId && (
+                      <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">UPI Identification (VPA)</span>
+                          <span className="text-sm font-black text-indigo-600 font-mono tracking-tight truncate block">
+                            {isSubAdmin ? maskUpiId(paymentData.upiId) : paymentData.upiId}
+                          </span>
+                        </div>
+                        {!isSubAdmin && (
+                          <button
+                            onClick={() => handleCopy(paymentData.upiId, "UPI ID")}
+                            className="h-9 w-9 rounded-xl bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 text-slate-400 flex items-center justify-center border border-slate-100 transition-all active:scale-95 shrink-0"
+                            title="Copy UPI ID"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Bank Account Details */}
+                    {hasBank && (
+                      <div className="p-5 bg-white rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-50 pb-3">
+                          <div>
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Bank Name</span>
+                            <span className="text-xs font-black text-slate-900 uppercase tracking-tight">
+                              {paymentData.bankName || "Unspecified Bank"}
+                            </span>
+                          </div>
+                          {paymentData.branchName && (
+                            <div className="text-right">
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Branch</span>
+                              <span className="text-xs font-bold text-slate-600 uppercase tracking-tight">
+                                {paymentData.branchName}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100/60">
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Account Holder</span>
+                            <span className="text-xs font-black text-slate-900 uppercase truncate block">
+                              {isSubAdmin ? maskName(paymentData.accountHolder || "") : (paymentData.accountHolder || "N/A")}
+                            </span>
+                          </div>
+
+                          <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100/60 flex items-center justify-between">
+                            <div className="min-w-0">
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Account Number</span>
+                              <span className="text-xs font-black text-slate-900 font-mono tracking-tight truncate block">
+                                {isSubAdmin ? maskAccNumber(paymentData.accountNumber || "") : (paymentData.accountNumber || "N/A")}
+                              </span>
+                            </div>
+                            {!isSubAdmin && paymentData.accountNumber && (
+                              <button
+                                onClick={() => handleCopy(paymentData.accountNumber, "Account Number")}
+                                className="h-7 w-7 rounded-lg bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center border border-slate-200/50 transition-all shrink-0 ml-2"
+                                title="Copy Account Number"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+
+                          {paymentData.ifscCode && (
+                            <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100/60 flex items-center justify-between sm:col-span-2">
+                              <div className="min-w-0">
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">IFSC Code</span>
+                                <span className="text-xs font-black text-slate-900 font-mono uppercase tracking-wider block">
+                                  {paymentData.ifscCode}
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => handleCopy(paymentData.ifscCode, "IFSC Code")}
+                                className="h-7 w-7 rounded-lg bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center border border-slate-200/50 transition-all shrink-0 ml-2"
+                                title="Copy IFSC Code"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                              </button>
+                            </div>
+                          )}
+
+                          {paymentData.bankDetails && !paymentData.accountNumber && (
+                            <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100/60 sm:col-span-2">
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Bank Notes / Details</span>
+                              <span className="text-xs font-medium text-slate-700 block whitespace-pre-wrap">
+                                {paymentData.bankDetails}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-6 bg-white rounded-2xl border border-slate-100 text-center shadow-sm">
+                    <div className="h-10 w-10 mx-auto mb-2 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                    </div>
+                    <p className="text-[11px] font-black uppercase tracking-tight text-slate-900">No Payment Details Configured</p>
+                    <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider">User has not registered UPI ID or Bank account credentials yet</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           <div className="space-y-6 bg-slate-900/5 p-6 rounded-[36px] border border-slate-100 relative overflow-hidden group">
              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/5 blur-2xl rounded-full -mr-16 -mt-16 pointer-events-none" />
