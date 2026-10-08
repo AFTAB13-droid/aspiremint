@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { BulkPaymentModal } from "@/components/admin/BulkPaymentModal";
+import { CsvBulkVerificationModal } from "@/components/admin/CsvBulkVerificationModal";
 import { RefundPayersModal } from "@/components/mediator/RefundPayersModal";
 import { CsvBulkPaymentModal } from "@/components/mediator/CsvBulkPaymentModal";
 import { FileSpreadsheet } from "lucide-react";
@@ -33,6 +34,7 @@ export default function RefundsPage() {
   const [isBulkModalOpen, setBulkModalOpen] = useState(false);
   const [isPayersModalOpen, setPayersModalOpen] = useState(false);
   const [isCsvModalOpen, setCsvModalOpen] = useState(false);
+  const [isCsvVerifyModalOpen, setCsvVerifyModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [payers, setPayers] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -299,15 +301,25 @@ export default function RefundsPage() {
               ))}
            </div>
            
-           <div className="flex-1 w-full md:w-auto flex justify-center md:justify-end">
-              <div className="flex flex-wrap items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md w-fit">
+           <div className="flex-1 w-full md:w-auto flex flex-wrap items-center justify-center md:justify-end gap-2.5">
+              {activeTab === "VERIFYING" && (
+                <button
+                  onClick={() => setCsvVerifyModalOpen(true)}
+                  className="h-11 px-4 md:px-5 bg-slate-900 border border-slate-900 shadow-sm rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-slate-800 transition-all flex items-center justify-center gap-2 active:scale-95 shrink-0"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                  <span>CSV Bulk Verification</span>
+                </button>
+              )}
+
+              <div className="flex flex-wrap items-center gap-2 bg-white px-3 py-1.5 rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md w-fit">
                  <div className="relative">
                     <input 
                        type="text" 
                        placeholder="Search..." 
                        value={searchQuery}
                        onChange={(e) => setSearchQuery(e.target.value)}
-                       className="pl-8 pr-3 py-2.5 bg-slate-50 border-none rounded-xl text-[10px] font-black uppercase placeholder:text-slate-300 focus:ring-1 focus:ring-blue-500 w-40 transition-all"
+                       className="pl-8 pr-3 py-2 bg-slate-50 border-none rounded-xl text-[10px] font-black uppercase placeholder:text-slate-300 focus:ring-1 focus:ring-blue-500 w-36 transition-all"
                     />
                     <svg className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                  </div>
@@ -318,7 +330,7 @@ export default function RefundsPage() {
                     onChange={(val) => setBrandFilter(val)}
                     placeholder="Select Brand"
                     searchable={true}
-                    className="w-40"
+                    className="w-36"
                  />
 
                  {(searchQuery || brandFilter !== "ALL BRANDS" || filterDate) && (
@@ -987,6 +999,14 @@ export default function RefundsPage() {
         payers={payers}
         onConfirm={handleCsvBulkPay}
         loading={isProcessing}
+      />
+
+      <CsvBulkVerificationModal
+        isOpen={isCsvVerifyModalOpen}
+        onClose={() => setCsvVerifyModalOpen(false)}
+        orders={orders}
+        brands={allBrands}
+        onSuccess={fetchRefunds}
       />
     </div>
   );

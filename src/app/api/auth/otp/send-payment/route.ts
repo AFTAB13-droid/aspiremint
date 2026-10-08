@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import connectToDatabase from "@/lib/db";
+import { User } from "@/modules/user/user.model";
 import { sendOTPEmail } from "@/services/emailService";
 import { storeOtp } from "@/services/otpService";
 
@@ -11,7 +13,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
-    const email = session.user.email;
+    await connectToDatabase();
+    const userQuery = session.user.id 
+      ? { _id: session.user.id } 
+      : { email: session.user.email?.toLowerCase().trim() };
+
+    const dbUser = await User.findOne(userQuery);
+    const email = (dbUser?.email || session.user.email)?.toLowerCase().trim();
+
+    if (!email) {
+      return NextResponse.json({ success: false, message: "User email not found" }, { status: 400 });
+    }
 
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();

@@ -4,7 +4,10 @@ import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import { Order, OrderStatus } from '@/modules/order/order.model';
 import { User } from '@/modules/user/user.model';
-import { sendOrderStatusEmail } from '@/services/emailService';
+import { sendOrderStatusEmail, dispatchInBatches } from '@/services/emailService';
+
+export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   try {
@@ -101,9 +104,9 @@ export async function POST(req: Request) {
       console.error('Failed to send bulk notifications:', notifError);
     }
 
-    // Send email notifications to buyers on Approval or Rejection
+    // Send email notifications to buyers on Approval or Rejection (in robust concurrent batches)
     if (action === 'APPROVE' || action === 'REJECT') {
-      const emailTasks = affectedOrders.map(async (order) => {
+      await dispatchInBatches(affectedOrders, 15, async (order) => {
         const buyer: any = order.buyer;
         const recipientEmail = buyer?.email || order.buyerEmail;
         const recipientName = buyer?.name || order.reviewName || "Customer";
@@ -130,12 +133,10 @@ export async function POST(req: Request) {
               );
             }
           } catch (emailErr) {
-            console.error(`Failed to send status update email for order ${order.aspireOrderId}:`, emailErr);
+            console.error(`Failed to send status update email for order ${order.aspireOrderId || order.userOrderId}:`, emailErr);
           }
         }
       });
-
-      await Promise.allSettled(emailTasks);
     }
 
     return NextResponse.json({

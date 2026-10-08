@@ -15,7 +15,11 @@ export async function GET(req: Request) {
 
     await connectToDatabase();
     
-    const user = await User.findOne({ email: session.user.email }).select('-password');
+    const userQuery = session.user.id 
+      ? { _id: session.user.id } 
+      : { email: session.user.email?.toLowerCase().trim() };
+      
+    const user = await User.findOne(userQuery).select('-password');
     if (!user) {
       return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
     }
@@ -57,7 +61,11 @@ export async function PUT(req: Request) {
                              bankDetails !== undefined;
 
     await connectToDatabase();
-    const dbUser = await User.findOne({ email: session.user.email });
+    const userQuery = session.user.id 
+      ? { _id: session.user.id } 
+      : { email: session.user.email?.toLowerCase().trim() };
+
+    const dbUser = await User.findOne(userQuery);
     if (!dbUser) {
       return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
     }
@@ -70,7 +78,7 @@ export async function PUT(req: Request) {
           return NextResponse.json({ success: false, message: 'OTP verification required for payment updates' }, { status: 400 });
         }
 
-        const normalizedEmail = session.user.email.trim().toLowerCase();
+        const normalizedEmail = (dbUser.email || session.user.email).trim().toLowerCase();
         const storedOtp = await getOtp(`payment_update_otp:${normalizedEmail}`);
         if (!storedOtp || String(storedOtp) !== String(otp).trim()) {
           return NextResponse.json({ success: false, message: 'Invalid or expired security code' }, { status: 400 });
@@ -102,7 +110,7 @@ export async function PUT(req: Request) {
     updatePayload.isProfileComplete = true;
 
     const user = await User.findOneAndUpdate(
-      { email: session.user.email },
+      userQuery,
       { $set: updatePayload },
       { new: true }
     );

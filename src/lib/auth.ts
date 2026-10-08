@@ -174,6 +174,9 @@ export const authOptions: NextAuthOptions = {
       }
       
       if (trigger === "update" && session) {
+        if (session.email) {
+          token.email = session.email;
+        }
         token = { ...token, ...session };
       }
 
@@ -183,6 +186,9 @@ export const authOptions: NextAuthOptions = {
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        if (token.email) {
+          session.user.email = token.email as string;
+        }
         (session.user as any).avatar = (token.avatar as string) || (token.image as string) || "";
         session.user.image = (token.avatar as string) || (token.image as string) || "";
         session.user.isProfileComplete = token.isProfileComplete as boolean;

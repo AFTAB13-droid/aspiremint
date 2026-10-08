@@ -4,9 +4,12 @@ import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import { Order, OrderStatus } from '@/modules/order/order.model';
 import { User } from '@/modules/user/user.model';
-import { sendOrderPaymentEmail } from '@/services/emailService';
+import { sendOrderPaymentEmail, dispatchInBatches } from '@/services/emailService';
 import { NotificationService } from '@/services/notification.service';
 import { NotificationType } from '@/modules/notification/notification.model';
+
+export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   try {
@@ -89,11 +92,11 @@ export async function POST(req: Request) {
       console.error('Failed to update buyer counts:', countError);
     }
 
-    // Trigger in-app notifications and refund paid emails (fully awaited)
+    // Trigger in-app notifications and refund paid emails in controlled concurrent batches
     const finalPayerName = paidBy || actorName;
     const finalTxId = updateData['paymentDetails.transactionId'];
 
-    const notifyAndEmailTasks = ordersToComplete.map(async (ord) => {
+    await dispatchInBatches(ordersToComplete, 15, async (ord) => {
       const buyer: any = ord.buyer;
       const buyerId = buyer?._id?.toString() || buyer?.toString() || ord.buyer?.toString();
       const refundAmt = ord.refundDetails?.expectedPayout || ord.amount;
@@ -136,8 +139,6 @@ export async function POST(req: Request) {
         }
       }
     });
-
-    await Promise.allSettled(notifyAndEmailTasks);
 
     return NextResponse.json({
       success: true,

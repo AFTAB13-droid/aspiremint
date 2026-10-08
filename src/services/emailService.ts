@@ -2,18 +2,36 @@ import nodemailer from "nodemailer";
 
 export const transporter = nodemailer.createTransport({
   pool: true,
-  maxConnections: 5,
+  maxConnections: 10,
   maxMessages: 100,
-  rateLimit: 10,
+  rateLimit: 25,
   host: process.env.SMTP_HOST || "smtp.zeptomail.in",
   port: Number(process.env.SMTP_PORT) || 587,
   auth: {
     user: process.env.SMTP_USER || "emailapikey",
     pass: process.env.SMTP_PASS,
   },
-  connectionTimeout: 5000,
-  socketTimeout: 10000,
+  connectionTimeout: 8000,
+  socketTimeout: 15000,
 });
+
+export async function dispatchInBatches<T>(
+  items: T[],
+  batchSize: number,
+  taskFn: (item: T, index: number) => Promise<any>,
+  delayBetweenBatchesMs: number = 50
+): Promise<PromiseSettledResult<any>[]> {
+  const results: PromiseSettledResult<any>[] = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    const chunk = items.slice(i, i + batchSize);
+    const chunkResults = await Promise.allSettled(chunk.map((item, idx) => taskFn(item, i + idx)));
+    results.push(...chunkResults);
+    if (i + batchSize < items.length && delayBetweenBatchesMs > 0) {
+      await new Promise((res) => setTimeout(res, delayBetweenBatchesMs));
+    }
+  }
+  return results;
+}
 
 if (!process.env.SMTP_PASS) {
   console.warn("WARNING: SMTP_PASS is not set in environment variables.");
@@ -59,7 +77,7 @@ export const sendOTPEmail = async (
   email: string, 
   name: string, 
   otp: string, 
-  context: "LOGIN" | "PAYMENT" | "PASSWORD_RESET" = "LOGIN"
+  context: "LOGIN" | "PAYMENT" | "PASSWORD_RESET" | "EMAIL_CHANGE" = "LOGIN"
 ) => {
   let subject = `Security OTP: ${otp}`;
   let title = "Identity Verification";
@@ -75,6 +93,11 @@ export const sendOTPEmail = async (
     subject = `Password Reset OTP: ${otp}`;
     title = "Password Reset Request";
     intro = "You have requested to reset your password. Please use the following code.";
+  } else if (context === "EMAIL_CHANGE") {
+    subject = `Email Verification Code: ${otp} - AspireMint`;
+    title = "Verify New Email Address";
+    headerBg = "#0284c7"; // Blue/Sky
+    intro = "You have requested to update the registered email address for your AspireMint account. Please use the verification code below to confirm this email.";
   }
 
   const body = `
@@ -89,6 +112,36 @@ export const sendOTPEmail = async (
   return transporter.sendMail({
     from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
+    subject,
+    html: renderSimpleEmail(title, headerBg, "#ffffff", body),
+  });
+};
+
+export const sendEmailChangeNotice = async (
+  oldEmail: string,
+  newEmail: string,
+  name: string
+) => {
+  if (!oldEmail || !oldEmail.includes("@")) return null;
+
+  const subject = "Security Alert: Account Email Address Changed - AspireMint";
+  const title = "Account Security Alert";
+  const headerBg = "#dc2626"; // Alert red
+  const body = `
+    Hi <b>${name}</b>,<br><br>
+    The primary email address for your AspireMint account has been successfully changed.<br><br>
+    ${renderTable([
+      { label: "Previous Email", value: oldEmail },
+      { label: "New Email", value: newEmail },
+      { label: "Updated At", value: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) + " IST" }
+    ])}
+    All future order notifications, refund updates, and account communication will now be sent to <b>${newEmail}</b>.<br><br>
+    <b>Did not request this change?</b> If you did not authorize this change, please contact our support team immediately.
+  `;
+
+  return transporter.sendMail({
+    from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
+    to: oldEmail,
     subject,
     html: renderSimpleEmail(title, headerBg, "#ffffff", body),
   });

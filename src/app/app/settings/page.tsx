@@ -14,6 +14,7 @@ import toast from "react-hot-toast";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { UserBadge } from "@/components/ui/UserBadge";
 import { AvatarPickerModal } from "@/components/ui/AvatarPickerModal";
+import { ChangeEmailModal } from "@/components/ui/ChangeEmailModal";
 import { getUserAvatar } from "@/data/avatars";
 
 function getDeviceInfo(deviceString: string) {
@@ -159,6 +160,14 @@ export default function SettingsPage() {
   const [originalData, setOriginalData] = useState<any>(null);
   const [checkingRefund, setCheckingRefund] = useState(false);
   const [eligibleRefundAmount, setEligibleRefundAmount] = useState<number | null>(null);
+  const [isChangeEmailModalOpen, setIsChangeEmailModalOpen] = useState(false);
+
+  const handleEmailChanged = async (updatedEmail: string) => {
+    setFormData(prev => ({ ...prev, email: updatedEmail }));
+    setOriginalData((prev: any) => ({ ...prev, email: updatedEmail }));
+    await update({ email: updatedEmail });
+    toast.success("Account email updated and active session refreshed!");
+  };
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -694,17 +703,32 @@ export default function SettingsPage() {
                              </div>
 
                              <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Direct Mail</label>
-                                <div className="relative group opacity-60">
-                                   <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300">
+                                <div className="flex items-center justify-between ml-1">
+                                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Direct Mail</label>
+                                   <button
+                                     type="button"
+                                     onClick={() => setIsChangeEmailModalOpen(true)}
+                                     className="text-[10px] font-black text-indigo-600 hover:text-indigo-700 uppercase tracking-wider flex items-center gap-1 transition-colors hover:underline"
+                                   >
+                                     Change Mail
+                                   </button>
+                                </div>
+                                <div className="relative group">
+                                   <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">
                                       <Mail className="w-5 h-5" />
                                    </div>
                                    <input 
                                      disabled type="email" value={formData.email}
-                                     className="w-full h-16 pl-14 pr-6 bg-slate-50 border-none rounded-[24px] shadow-inner font-bold text-sm outline-none cursor-not-allowed"
+                                     className="w-full h-16 pl-14 pr-28 bg-slate-50 border-none rounded-[24px] shadow-inner font-bold text-sm outline-none cursor-not-allowed text-slate-700"
                                    />
-                                   <div className="absolute right-5 top-1/2 -translate-y-1/2">
-                                      <Lock className="w-4 h-4 text-slate-300" />
+                                   <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                      <button
+                                        type="button"
+                                        onClick={() => setIsChangeEmailModalOpen(true)}
+                                        className="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-[10px] font-black uppercase tracking-wider transition-all active:scale-95 border border-indigo-100/60 shadow-sm"
+                                      >
+                                        Update
+                                      </button>
                                    </div>
                                 </div>
                              </div>
@@ -1583,6 +1607,14 @@ export default function SettingsPage() {
         onClose={() => setIsAvatarModalOpen(false)} 
         currentAvatar={formData.avatar} 
         onSelect={handleSaveAvatar} 
+      />
+
+      <ChangeEmailModal
+        isOpen={isChangeEmailModalOpen}
+        onClose={() => setIsChangeEmailModalOpen(false)}
+        currentEmail={formData.email}
+        onSuccess={handleEmailChanged}
+        isAdm={isAdm}
       />
     </div>
   );
