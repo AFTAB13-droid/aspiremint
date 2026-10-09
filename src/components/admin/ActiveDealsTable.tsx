@@ -25,7 +25,63 @@ interface ActiveDealsTableProps {
 export function ActiveDealsTable({ 
   deals, loading, searchQuery, setSearchQuery, onRefresh, isAdm, role, isJuhi, isArchived 
 }: ActiveDealsTableProps) {
-  const [currentPage, setCurrentPage] = useState(1);
+  // Initialize currentPage with persistence (URL search params or sessionStorage)
+  const [currentPage, setCurrentPageState] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const urlPage = new URLSearchParams(window.location.search).get("page");
+      if (urlPage && !isNaN(Number(urlPage)) && Number(urlPage) > 0) {
+        return Number(urlPage);
+      }
+      const stored = sessionStorage.getItem("active_deals_page");
+      if (stored && !isNaN(Number(stored)) && Number(stored) > 0) {
+        return Number(stored);
+      }
+    }
+    return 1;
+  });
+
+  const setCurrentPage = (pageOrFn: number | ((prev: number) => number)) => {
+    setCurrentPageState(prev => {
+      const newPage = typeof pageOrFn === "function" ? pageOrFn(prev) : pageOrFn;
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("active_deals_page", String(newPage));
+        const url = new URL(window.location.href);
+        url.searchParams.set("page", String(newPage));
+        window.history.replaceState({}, "", url.toString());
+      }
+      return newPage;
+    });
+  };
+
+  // Sync state if user navigates back/forward via browser history
+  useEffect(() => {
+    const handlePopState = () => {
+      const urlPage = new URLSearchParams(window.location.search).get("page");
+      if (urlPage && !isNaN(Number(urlPage)) && Number(urlPage) > 0) {
+        setCurrentPageState(Number(urlPage));
+      } else {
+        const stored = sessionStorage.getItem("active_deals_page");
+        if (stored && !isNaN(Number(stored)) && Number(stored) > 0) {
+          setCurrentPageState(Number(stored));
+        }
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  // Sync URL if currentPage is initialized from sessionStorage without query param
+  useEffect(() => {
+    if (typeof window !== "undefined" && currentPage > 1) {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get("page") !== String(currentPage)) {
+        url.searchParams.set("page", String(currentPage));
+        window.history.replaceState({}, "", url.toString());
+      }
+    }
+  }, [currentPage]);
+
   const [itemsPerPage, setItemsPerPage] = useState(5); // Optimized for mobile viewport height
 
   useEffect(() => {
@@ -111,6 +167,13 @@ export function ActiveDealsTable({
   ];
 
   const totalPages = Math.ceil(filteredDeals.length / itemsPerPage);
+
+  useEffect(() => {
+    if (!loading && deals.length > 0 && totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [loading, deals.length, totalPages, currentPage]);
+
   const paginatedDeals = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return filteredDeals.slice(start, start + itemsPerPage);
@@ -353,12 +416,32 @@ export function ActiveDealsTable({
                      </div>
                      <div>
                         <div className="flex items-center gap-2">
-                           <Link href={`/app/activedeals/${deal.productCode || deal._id}`} className="text-sm font-black text-slate-900 uppercase tracking-tight group-hover:text-indigo-600 transition-colors hover:underline">{deal.productCode}</Link>
+                           <Link 
+                              href={`/app/activedeals/${deal.productCode || deal._id}?page=${currentPage}`}
+                              onClick={() => {
+                                if (typeof window !== "undefined") {
+                                  sessionStorage.setItem("active_deals_page", String(currentPage));
+                                  sessionStorage.setItem("active_deals_scroll", String(window.scrollY));
+                                }
+                              }}
+                              className="text-sm font-black text-slate-900 uppercase tracking-tight group-hover:text-indigo-600 transition-colors hover:underline"
+                            >
+                              {deal.productCode}
+                            </Link>
                            {deal.createdAt && (
                              <span className="text-[9px] font-bold text-slate-300 ml-1">Posted: {formatTimeAgo(deal.createdAt)}</span>
                            )}
                         </div>
-                        <Link href={`/app/activedeals/${deal.productCode || deal._id}`} className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 group-hover:text-indigo-500 transition-colors block">
+                        <Link 
+                           href={`/app/activedeals/${deal.productCode || deal._id}?page=${currentPage}`}
+                           onClick={() => {
+                             if (typeof window !== "undefined") {
+                               sessionStorage.setItem("active_deals_page", String(currentPage));
+                               sessionStorage.setItem("active_deals_scroll", String(window.scrollY));
+                             }
+                           }}
+                           className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 group-hover:text-indigo-500 transition-colors block"
+                         >
                            {deal.productDetails}
                         </Link>
                         {boughtText && !isOut && (
@@ -653,7 +736,7 @@ export function ActiveDealsTable({
             {paginatedDeals.length === 0 && (
               <tr>
                 <td colSpan={10} className="px-8 py-20 text-center">
-                  <p className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em]">No manifestations found matching your criteria</p>
+                  <p className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em]">No active deals found matching your criteria</p>
                 </td>
               </tr>
             )}
@@ -770,7 +853,7 @@ export function ActiveDealsTable({
                 
                 <div className="space-y-2">
                   <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">
-                    {isArchived || dealToDelete?.isActive === false ? "Purge Archived Deal" : "Manage Manifest Lifecycle"}
+                    {isArchived || dealToDelete?.isActive === false ? "Purge Archived Deal" : "Manage Deal Lifecycle"}
                   </h3>
                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-4">
                     {isArchived || dealToDelete?.isActive === false ? (

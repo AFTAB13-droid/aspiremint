@@ -66,12 +66,99 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     if (displayPayout === undefined || displayPayout === null) displayPayout = "N/A";
 
+    // Fetch up to 4 related active deals with active stock (remainingSlots > 0)
+    let relatedDealsQuery: any = {
+      _id: { $ne: (deal as any)._id },
+      isActive: true,
+      remainingSlots: { $gt: 0 }
+    };
+
+    if (user.role === 'MEDIATOR' && !isJuhi) {
+      relatedDealsQuery.$or = [
+        { "assignedMediators.mediatorId": user.id },
+        { "assignedMediators.isAll": true }
+      ];
+    }
+
+    // 1. Same brand deals first
+    let relatedDocs: any[] = await ActiveDeal.find({
+      ...relatedDealsQuery,
+      brandName: (deal as any).brandName
+    })
+      .sort({ createdAt: -1 })
+      .limit(4)
+      .lean();
+
+    // 2. If fewer than 4, fill with same marketplace deals
+    if (relatedDocs.length < 4) {
+      const existingIds = [(deal as any)._id, ...relatedDocs.map((d: any) => d._id)];
+      const moreDocs = await ActiveDeal.find({
+        ...relatedDealsQuery,
+        _id: { $nin: existingIds },
+        marketplace: (deal as any).marketplace
+      })
+        .sort({ remainingSlots: -1, createdAt: -1 })
+        .limit(4 - relatedDocs.length)
+        .lean();
+
+      relatedDocs = [...relatedDocs, ...moreDocs];
+    }
+
+    // 3. If still fewer than 4, fill with any other active deals
+    if (relatedDocs.length < 4) {
+      const existingIds = [(deal as any)._id, ...relatedDocs.map((d: any) => d._id)];
+      const generalDocs = await ActiveDeal.find({
+        ...relatedDealsQuery,
+        _id: { $nin: existingIds }
+      })
+        .sort({ remainingSlots: -1, createdAt: -1 })
+        .limit(4 - relatedDocs.length)
+        .lean();
+
+      relatedDocs = [...relatedDocs, ...generalDocs];
+    }
+
+    const sanitizedRelatedDeals = relatedDocs.map((rel: any) => {
+      let relDisplayPayout: any = "N/A";
+      if (user.role === 'MEDIATOR') {
+        const medConfig = rel.assignedMediators?.find((m: any) => m.mediatorId?.toString() === user.id);
+        relDisplayPayout = medConfig ? medConfig.commission : rel.commission;
+      } else {
+        relDisplayPayout = rel.assignedMediators?.[0]?.commission;
+        if (relDisplayPayout === undefined || relDisplayPayout === null) relDisplayPayout = rel.commission;
+      }
+      if (isJuhi) {
+        relDisplayPayout = rel.juhiCommission;
+      }
+      if (relDisplayPayout === undefined || relDisplayPayout === null) relDisplayPayout = "N/A";
+
+      return {
+        _id: rel._id.toString(),
+        productCode: rel.productCode,
+        productDetails: rel.productDetails,
+        brandName: rel.brandName,
+        marketplace: rel.marketplace,
+        dealType: rel.dealType,
+        reviewType: rel.reviewType,
+        productImage: rel.productImage || "",
+        productLink: rel.productLink || "",
+        totalSlots: rel.totalSlots,
+        remainingSlots: rel.remainingSlots,
+        createdAt: rel.createdAt,
+        userRemarks: rel.userRemarks || "",
+        mediatorRemarks: rel.mediatorRemarks || "",
+        displayPayout: user.role === 'USER' ? undefined : relDisplayPayout,
+        juhiCommission: rel.juhiCommission === undefined || rel.juhiCommission === null ? "N/A" : rel.juhiCommission
+      };
+    });
+
     const sanitizedDeal = {
       ...deal,
       commission: isAdmin ? (deal as any).commission : undefined,
       productImage: (deal as any).productImage || "",
       displayPayout: user.role === 'USER' ? undefined : displayPayout,
-      juhiCommission: (deal as any).juhiCommission === undefined || (deal as any).juhiCommission === null ? "N/A" : (deal as any).juhiCommission
+      juhiCommission: (deal as any).juhiCommission === undefined || (deal as any).juhiCommission === null ? "N/A" : (deal as any).juhiCommission,
+      relatedDeals: sanitizedRelatedDeals
     };
 
     return NextResponse.json({ success: true, data: sanitizedDeal });

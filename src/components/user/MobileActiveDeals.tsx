@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatTimeAgo } from "@/utils/formatTimeAgo";
@@ -41,6 +41,29 @@ export function MobileActiveDeals({
   const router = useRouter();
   const [selectedRemark, setSelectedRemark] = useState<string | null>(null);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+
+  // Restore scroll position when returning from deal detail page
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedScroll = sessionStorage.getItem("active_deals_scroll");
+      if (savedScroll && !isNaN(Number(savedScroll))) {
+        const scrollVal = Number(savedScroll);
+        const timer = setTimeout(() => {
+          window.scrollTo({ top: scrollVal, behavior: "smooth" });
+          sessionStorage.removeItem("active_deals_scroll");
+        }, 120);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, []);
+
+  const handleOpenDeal = (deal: any) => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("active_deals_page", String(currentPage));
+      sessionStorage.setItem("active_deals_scroll", String(window.scrollY));
+    }
+    router.push(`/app/activedeals/${deal.productCode || deal._id}?page=${currentPage}`);
+  };
 
   // Stats for the mobile header
   const totalSlots = deals.reduce((sum, d) => sum + (d.remainingSlots || 0), 0);
@@ -84,7 +107,7 @@ export function MobileActiveDeals({
             <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             <input 
               type="text" 
-              placeholder="Search Manifests..." 
+              placeholder="Search Active Deals..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-transparent border-none outline-none text-[10px] font-black text-slate-700 w-full placeholder:text-slate-300 uppercase tracking-widest"
@@ -388,7 +411,7 @@ export function MobileActiveDeals({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
-              onClick={() => router.push(`/app/activedeals/${deal.productCode || deal._id}`)}
+              onClick={() => handleOpenDeal(deal)}
               className="relative bg-white rounded-[32px] p-5 border border-slate-100 shadow-sm overflow-hidden group active:scale-[0.98] transition-all cursor-pointer hover:border-indigo-200"
             >
               {/* Background Accent */}
@@ -429,7 +452,17 @@ export function MobileActiveDeals({
                 {/* Core Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <Link href={`/app/activedeals/${deal.productCode || deal._id}`} className="text-[13px] font-black text-slate-900 uppercase tracking-tight break-all leading-tight hover:text-blue-600 transition-colors">
+                    <Link 
+                      href={`/app/activedeals/${deal.productCode || deal._id}?page=${currentPage}`} 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (typeof window !== "undefined") {
+                          sessionStorage.setItem("active_deals_page", String(currentPage));
+                          sessionStorage.setItem("active_deals_scroll", String(window.scrollY));
+                        }
+                      }}
+                      className="text-[13px] font-black text-slate-900 uppercase tracking-tight break-all leading-tight hover:text-blue-600 transition-colors"
+                    >
                       {deal.productCode}
                     </Link>
                     <span className="text-[8px] font-black text-slate-300 uppercase whitespace-nowrap mt-1 shrink-0">{formatTimeAgo(deal.createdAt)}</span>
@@ -437,7 +470,17 @@ export function MobileActiveDeals({
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 truncate">{deal.brandName}</p>
                   
                   {deal.productDetails && (
-                     <Link href={`/app/activedeals/${deal.productCode || deal._id}`} className="text-[10px] font-black text-slate-700 uppercase tracking-tight mt-1 leading-relaxed break-words line-clamp-2 block hover:text-blue-600 transition-colors">
+                     <Link 
+                       href={`/app/activedeals/${deal.productCode || deal._id}?page=${currentPage}`} 
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         if (typeof window !== "undefined") {
+                           sessionStorage.setItem("active_deals_page", String(currentPage));
+                           sessionStorage.setItem("active_deals_scroll", String(window.scrollY));
+                         }
+                       }}
+                       className="text-[10px] font-black text-slate-700 uppercase tracking-tight mt-1 leading-relaxed break-words line-clamp-2 block hover:text-blue-600 transition-colors"
+                     >
                        {deal.productDetails}
                      </Link>
                    )}
@@ -460,7 +503,17 @@ export function MobileActiveDeals({
               {/* Manifest Details Context Row */}
               <div className="mt-4 flex items-center justify-between px-1">
                  <div className="flex items-center gap-3">
-                    <Link href={`/app/activedeals/${deal.productCode || deal._id}`} className="flex items-center gap-1.5 group/link">
+                    <Link 
+                      href={`/app/activedeals/${deal.productCode || deal._id}?page=${currentPage}`} 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (typeof window !== "undefined") {
+                          sessionStorage.setItem("active_deals_page", String(currentPage));
+                          sessionStorage.setItem("active_deals_scroll", String(window.scrollY));
+                        }
+                      }}
+                      className="flex items-center gap-1.5 group/link"
+                    >
                        <div className="h-7 w-7 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center border border-indigo-100 group-hover/link:bg-indigo-600 group-hover/link:text-white transition-all">
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                        </div>
@@ -517,7 +570,7 @@ export function MobileActiveDeals({
 
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">STOCKS</span>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">LIVE STOCKS</span>
                   </div>
                   <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tight border ${status.style}`}>
                     {status.text}
@@ -729,7 +782,7 @@ export function MobileActiveDeals({
 
       {deals.length === 0 && (
         <div className="py-20 text-center">
-            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No active manifests found</p>
+            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No active deals found</p>
         </div>
       )}
     </div>

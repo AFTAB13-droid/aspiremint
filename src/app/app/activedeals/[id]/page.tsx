@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { formatTimeAgo } from "@/utils/formatTimeAgo";
 import { 
-  ArrowLeft, Share2, Copy, Check, ExternalLink, Sparkles, 
+  ArrowLeft, ArrowRight, Share2, Copy, Check, ExternalLink, Sparkles, 
   Flame, ShoppingBag, Info, AlertTriangle, MessageSquare, 
   Clock, Tag, ShieldCheck, DollarSign, Send
 } from "lucide-react";
@@ -29,6 +29,35 @@ export default function SingleDealDetailPage() {
   const [copied, setCopied] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [returnUrl, setReturnUrl] = useState("/app/activedeals");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const searchPage = new URLSearchParams(window.location.search).get("page");
+      const savedPage = searchPage || sessionStorage.getItem("active_deals_page");
+      if (savedPage && !isNaN(Number(savedPage)) && Number(savedPage) > 0) {
+        setReturnUrl(`/app/activedeals?page=${savedPage}`);
+      }
+    }
+  }, []);
+
+  const handleGoBack = () => {
+    if (typeof window !== "undefined") {
+      const searchPage = new URLSearchParams(window.location.search).get("page");
+      const savedPage = searchPage || sessionStorage.getItem("active_deals_page");
+      const targetUrl = savedPage && !isNaN(Number(savedPage)) && Number(savedPage) > 0
+        ? `/app/activedeals?page=${savedPage}`
+        : "/app/activedeals";
+
+      if (window.history.length > 1) {
+        router.back();
+      } else {
+        router.push(targetUrl);
+      }
+    } else {
+      router.push("/app/activedeals");
+    }
+  };
 
   useEffect(() => {
     if (dealId) {
@@ -44,14 +73,14 @@ export default function SingleDealDetailPage() {
       if (json.success) {
         if (!json.data.isActive && role !== "ADMIN") {
           toast.error("This campaign has been archived and is no longer available.");
-          router.push("/app/activedeals");
+          router.push(returnUrl);
           return;
         }
         setDeal(json.data);
       } else {
         if (role !== "ADMIN") {
           toast.error("This campaign has been archived and is no longer available.");
-          router.push("/app/activedeals");
+          router.push(returnUrl);
           return;
         }
         toast.error(json.message || "Failed to load deal details");
@@ -165,11 +194,11 @@ export default function SingleDealDetailPage() {
           <AlertTriangle className="w-10 h-10" />
         </div>
         <div>
-          <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Deal Manifest Not Found</h2>
+          <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Deal Not Found</h2>
           <p className="text-xs font-bold text-slate-400 mt-2 uppercase tracking-widest">The deal link may have expired or been removed from active inventory.</p>
         </div>
         <button
-          onClick={() => router.push("/app/activedeals")}
+          onClick={() => router.push(returnUrl)}
           className="px-8 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all"
         >
           Return to Active Deals
@@ -190,18 +219,12 @@ export default function SingleDealDetailPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-3 sm:py-6 pb-28 space-y-4 sm:space-y-8 overflow-x-hidden">
+    <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-3 sm:py-6 pb-32 space-y-5 sm:space-y-8 overflow-x-hidden">
       {/* Dynamic Header & Breadcrumbs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/70 backdrop-blur-md p-3.5 sm:p-5 rounded-[24px] sm:rounded-[28px] border border-slate-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/70 backdrop-blur-md p-3.5 sm:p-5 rounded-[24px] sm:rounded-[28px] border border-slate-100 shadow-sm w-full">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => {
-              if (typeof window !== "undefined" && window.history.length > 2 && document.referrer && document.referrer.includes(window.location.host)) {
-                router.back();
-              } else {
-                router.push("/app/activedeals");
-              }
-            }}
+            onClick={handleGoBack}
             className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all active:scale-95 shadow-sm shrink-0"
             title="Go Back"
           >
@@ -209,7 +232,7 @@ export default function SingleDealDetailPage() {
           </button>
           <div>
             <div className="flex items-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">
-              <Link href="/app/activedeals" className="hover:text-indigo-600 transition-colors">Active Deals</Link>
+              <Link href={returnUrl} className="hover:text-indigo-600 transition-colors">Active Deals</Link>
               <span>/</span>
               <span className="text-indigo-600">{deal.brandName}</span>
             </div>
@@ -261,11 +284,11 @@ export default function SingleDealDetailPage() {
       </div>
 
       {/* Main Single Deal View Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 w-full">
         
         {/* Left Section: Product Image Showcase */}
-        <div className="lg:col-span-5 space-y-4 sm:space-y-6">
-          <div className="relative bg-white rounded-[32px] sm:rounded-[36px] p-4 sm:p-6 border border-slate-100 shadow-sm overflow-hidden group">
+        <div className="lg:col-span-5 space-y-4 sm:space-y-6 w-full">
+          <div className="relative bg-white rounded-[26px] sm:rounded-[36px] p-3.5 sm:p-6 border border-slate-100 shadow-sm overflow-hidden group w-full">
             {/* Background Accent */}
             <div className={`absolute top-0 right-0 w-48 h-48 blur-3xl opacity-10 pointer-events-none ${isOut ? 'bg-rose-500' : 'bg-indigo-500'}`} />
 
@@ -361,8 +384,8 @@ export default function SingleDealDetailPage() {
         </div>
 
         {/* Right Section: Core Specifications, Inventory & CTA */}
-        <div className="lg:col-span-7 space-y-4 sm:space-y-6">
-          <div className="bg-white rounded-[32px] sm:rounded-[36px] p-5 sm:p-8 border border-slate-100 shadow-sm space-y-5 sm:space-y-6">
+        <div className="lg:col-span-7 space-y-4 sm:space-y-6 w-full">
+          <div className="bg-white rounded-[26px] sm:rounded-[36px] p-4 sm:p-8 border border-slate-100 shadow-sm space-y-5 sm:space-y-6 w-full">
             
             {/* Title & Product Code Bar */}
             <div className="space-y-3 pb-6 border-b border-slate-100">
@@ -393,11 +416,11 @@ export default function SingleDealDetailPage() {
             </div>
 
             {/* Inventory & Stock Real-time Tracker */}
-            <div className="space-y-4 p-6 bg-slate-50/70 rounded-[28px] border border-slate-100">
+            <div className="space-y-4 p-4 sm:p-6 bg-slate-50/70 rounded-[24px] sm:rounded-[28px] border border-slate-100 w-full">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className={`h-3 w-3 rounded-full ${isOut ? 'bg-rose-500' : 'bg-emerald-500'} animate-pulse`} />
-                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest">Realtime Manifest Stock</h3>
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest">LIVE STOCKS</h3>
                 </div>
 
                 <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border ${
@@ -568,6 +591,205 @@ export default function SingleDealDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* "You May Also Like" / Related Deals Carousel Section */}
+      {deal?.relatedDeals && deal.relatedDeals.length > 0 && (
+        <div className="w-full space-y-4 pt-6 sm:pt-10 border-t border-slate-100/90">
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-500 text-white flex items-center justify-center shadow-md shadow-rose-500/20">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
+                  You May Also Like
+                  <span className="text-[8px] font-black uppercase tracking-wider text-rose-600 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-full">
+                    Recommended
+                  </span>
+                </h3>
+                <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                  Handpicked live deals from {deal.brandName} & trending categories with active stock
+                </p>
+              </div>
+            </div>
+
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-wider">
+              <Flame className="w-3.5 h-3.5 text-orange-500" />
+              <span>{deal.relatedDeals.length} Deals Live</span>
+            </div>
+          </div>
+
+          {/* Cards Container: Smooth horizontal swipeable carousel on mobile with snap, 4-column responsive grid on desktop */}
+          <div className="w-full">
+            <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory no-scrollbar -mx-2 px-2 sm:mx-0 sm:px-0">
+              {deal.relatedDeals.map((rel: any) => {
+                const relIsHot = rel.createdAt && (Date.now() - new Date(rel.createdAt).getTime() < 24 * 60 * 60 * 1000);
+                const relIsHurry = rel.remainingSlots > 0 && rel.remainingSlots < 4;
+                const relIsLimited = rel.remainingSlots >= 4 && rel.remainingSlots < 7;
+                const relIsOut = rel.remainingSlots <= 0;
+                const relConsumed = (rel.totalSlots || 0) - (rel.remainingSlots || 0);
+
+                const getStockInfo = () => {
+                  if (relIsOut) return { text: "Sold Out", style: "bg-rose-50 text-rose-500 border-rose-100" };
+                  if (relIsHurry) return { text: "Few Slots Left!", style: "bg-rose-50 text-rose-600 border-rose-200 animate-pulse" };
+                  if (relIsLimited) return { text: "Limited Stock", style: "bg-orange-50 text-orange-600 border-orange-200" };
+                  return { text: "Stock Available", style: "bg-emerald-50 text-emerald-600 border-emerald-100" };
+                };
+                const stockInfo = getStockInfo();
+
+                return (
+                  <div
+                    key={rel._id}
+                    onClick={() => router.push(`/app/activedeals/${rel.productCode || rel._id}${returnUrl.includes('?') ? '?' + returnUrl.split('?')[1] : ''}`)}
+                    className="min-w-[85vw] sm:min-w-[320px] md:min-w-0 flex-1 snap-center bg-white rounded-[26px] p-4 sm:p-4.5 border border-slate-100 hover:border-indigo-200 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden active:scale-[0.99]"
+                  >
+                    {/* Hot Deal Badge */}
+                    {relIsHot && (
+                      <div className="absolute top-0 left-0 bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[7px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-br-xl shadow-xs z-10">
+                        HOT DEAL
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      {/* Top Row: Thumbnail + Product Info */}
+                      <div className={`flex gap-3 ${relIsHot ? 'pt-2' : ''}`}>
+                        <div className="relative h-18 w-18 sm:h-20 sm:w-20 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden shrink-0 shadow-inner">
+                          {rel.productImage ? (
+                            <img
+                              src={rel.productImage?.includes('cloudinary.com') ? rel.productImage.replace('/image/upload/', '/image/upload/q_auto,f_auto,w_250,c_fill/') : rel.productImage}
+                              alt={rel.productDetails}
+                              loading="lazy"
+                              decoding="async"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-300">
+                              <ShoppingBag className="w-6 h-6 opacity-30" />
+                            </div>
+                          )}
+                          <div className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white flex items-center justify-center shadow-xs ${relIsOut ? 'bg-rose-500' : 'bg-emerald-500'}`}>
+                            <div className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                          </div>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest block truncate">
+                            {rel.brandName}
+                          </span>
+                          <h4 className="text-xs font-black text-slate-900 uppercase tracking-tight truncate group-hover:text-indigo-600 transition-colors">
+                            {rel.productCode}
+                          </h4>
+                          <p className="text-[10px] font-bold text-slate-600 line-clamp-2 mt-0.5 leading-snug">
+                            {rel.productDetails}
+                          </p>
+
+                          <div className="flex items-center gap-1.5 mt-2">
+                            <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tight border ${
+                              rel.marketplace === 'Amazon' ? "bg-orange-50 text-orange-600 border-orange-100" :
+                              rel.marketplace === 'Flipkart' ? "bg-blue-50 text-blue-600 border-blue-100" :
+                              "bg-slate-50 text-slate-600 border-slate-100"
+                            }`}>
+                              {rel.marketplace}
+                            </span>
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest px-1.5 py-0.5 rounded bg-slate-50 border border-slate-100">
+                              {rel.dealType}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Live Stocks Progress Section */}
+                      <div className="space-y-1.5 pt-1 border-t border-slate-100/70">
+                        <div className="flex items-center justify-between text-[9px]">
+                          <span className="font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                            LIVE STOCKS
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-md font-black uppercase tracking-tight text-[8px] border ${stockInfo.style}`}>
+                            {stockInfo.text}
+                          </span>
+                        </div>
+
+                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-700 ${relIsOut ? 'bg-rose-500' : relIsHurry ? 'bg-rose-600' : relIsLimited ? 'bg-orange-500' : 'bg-blue-600'}`}
+                            style={{ width: `${Math.min(100, Math.max(0, ((rel.remainingSlots || 0) / (rel.totalSlots || 1)) * 100))}%` }}
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between text-[8px] font-bold text-slate-400 pt-0.5">
+                          <span>{rel.remainingSlots || 0} / {rel.totalSlots || 0} Slots Remaining</span>
+                          {relConsumed > 5 && (
+                            <span className="text-orange-600 font-black">🔥 {relConsumed} Claimed</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Commission / Payout Row */}
+                      <div className="pt-1 flex items-center justify-between">
+                        {role === 'USER' ? (
+                          <div className="flex items-center gap-1.5 bg-indigo-50/60 px-2.5 py-1 rounded-xl border border-indigo-100/60">
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Comm./Less:</span>
+                            {rel.juhiCommission === undefined || rel.juhiCommission === null || rel.juhiCommission === "N/A" ? (
+                              <span className="text-[10px] font-black text-indigo-600">Ask Juhi</span>
+                            ) : Number(rel.juhiCommission) === 0 ? (
+                              <span className="text-[10px] font-black text-emerald-600">Full Refund</span>
+                            ) : (
+                              <span className={`text-[10px] font-black ${Number(rel.juhiCommission) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                {Number(rel.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(rel.juhiCommission))}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Payout:</span>
+                            <span className={`text-[11px] font-black ${Number(rel.displayPayout) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                              {rel.displayPayout !== "N/A" ? `${Number(rel.displayPayout) >= 0 ? '+' : '-'}₹${Math.abs(Number(rel.displayPayout))}` : "N/A"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Bottom Action Row */}
+                    <div className="pt-3 mt-2 border-t border-slate-100 flex items-center gap-2">
+                      {rel.productLink && (
+                        <a
+                          href={rel.productLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-8.5 px-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 flex items-center gap-1 text-[8px] font-black uppercase tracking-wider transition-all shadow-2xs hover:scale-105 active:scale-95 shrink-0"
+                          title={`Open ${rel.marketplace} Link`}
+                        >
+                          <ExternalLink className="w-3 h-3 text-blue-600" />
+                          <span>Link</span>
+                        </a>
+                      )}
+
+                      {role === 'USER' && rel.remainingSlots > 0 ? (
+                        <Link
+                          href={`/app/orders/new?brand=${encodeURIComponent(rel.brandName)}&product=${rel.productCode}&dealType=${rel.dealType}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-8.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-wider shadow-md shadow-blue-600/20 active:scale-95 transition-all flex-1"
+                        >
+                          <span>Fill Form</span>
+                          <ShoppingBag className="w-3 h-3" />
+                        </Link>
+                      ) : (
+                        <div className="h-8.5 px-3 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white flex items-center justify-center gap-1 text-[8px] font-black uppercase tracking-wider transition-all flex-1 shadow-2xs">
+                          <span>View Deal</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Sticky Bottom Action Bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-t border-slate-100 p-4 shadow-[0_-8px_20px_rgba(0,0,0,0.05)]">

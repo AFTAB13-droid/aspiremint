@@ -176,7 +176,7 @@ export default function ActiveDealsPage() {
              >
                 <div className="text-right">
                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{activeTab === "DEALS" ? "Global Coverage" : "Archived Count"}</p>
-                   <p className="text-lg font-black text-slate-900 mt-1">{deals.length} <span className="text-[10px] text-slate-400 tracking-normal">{activeTab === "DEALS" ? "Active Manifests" : "Archived"}</span></p>
+                   <p className="text-lg font-black text-slate-900 mt-1">{deals.length} <span className="text-[10px] text-slate-400 tracking-normal">{activeTab === "DEALS" ? "Live Deals" : "Archived"}</span></p>
                 </div>
                 {activeTab === "DEALS" && (
                   <>
