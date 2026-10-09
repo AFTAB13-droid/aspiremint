@@ -613,180 +613,378 @@ export default function SingleDealDetailPage() {
               </div>
             </div>
 
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-wider">
               <Flame className="w-3.5 h-3.5 text-orange-500" />
               <span>{deal.relatedDeals.length} Deals Live</span>
             </div>
           </div>
 
-          {/* Cards Container: Smooth horizontal swipeable carousel on mobile with snap, 4-column responsive grid on desktop */}
-          <div className="w-full">
-            <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory no-scrollbar -mx-2 px-2 sm:mx-0 sm:px-0">
-              {deal.relatedDeals.map((rel: any) => {
-                const relIsHot = rel.createdAt && (Date.now() - new Date(rel.createdAt).getTime() < 24 * 60 * 60 * 1000);
-                const relIsHurry = rel.remainingSlots > 0 && rel.remainingSlots < 4;
-                const relIsLimited = rel.remainingSlots >= 4 && rel.remainingSlots < 7;
-                const relIsOut = rel.remainingSlots <= 0;
-                const relConsumed = (rel.totalSlots || 0) - (rel.remainingSlots || 0);
+          {/* MOBILE VIEW (md:hidden): Re-architected full-comfort swipeable card layout matching MobileActiveDeals */}
+          <div className="flex md:hidden gap-3.5 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory no-scrollbar -mx-2 px-2">
+            {deal.relatedDeals.map((rel: any, idx: number) => {
+              const relIsHot = rel.createdAt && (Date.now() - new Date(rel.createdAt).getTime() < 24 * 60 * 60 * 1000);
+              const relIsHurry = rel.remainingSlots > 0 && rel.remainingSlots < 4;
+              const relIsLimited = rel.remainingSlots >= 4 && rel.remainingSlots < 7;
+              const relIsOut = rel.remainingSlots <= 0;
 
-                const getStockInfo = () => {
-                  if (relIsOut) return { text: "Sold Out", style: "bg-rose-50 text-rose-500 border-rose-100" };
-                  if (relIsHurry) return { text: "Few Slots Left!", style: "bg-rose-50 text-rose-600 border-rose-200 animate-pulse" };
-                  if (relIsLimited) return { text: "Limited Stock", style: "bg-orange-50 text-orange-600 border-orange-200" };
-                  return { text: "Stock Available", style: "bg-emerald-50 text-emerald-600 border-emerald-100" };
-                };
-                const stockInfo = getStockInfo();
+              const getStockInfo = () => {
+                if (relIsOut) return { text: "Out of Stock", style: "bg-rose-50 text-rose-500 border-rose-100" };
+                if (relIsHurry) return { text: "Hurry up! Few slots left only", style: "bg-rose-50 text-rose-600 border-rose-200 animate-pulse shadow-xs" };
+                if (relIsLimited) return { text: "Limited Stock", style: "bg-orange-50 text-orange-600 border-orange-200" };
+                return { text: "Stock Available", style: "bg-emerald-50 text-emerald-600 border-emerald-100" };
+              };
+              const stockInfo = getStockInfo();
 
-                return (
-                  <div
-                    key={rel._id}
-                    onClick={() => router.push(`/app/activedeals/${rel.productCode || rel._id}${returnUrl.includes('?') ? '?' + returnUrl.split('?')[1] : ''}`)}
-                    className="min-w-[85vw] sm:min-w-[320px] md:min-w-0 flex-1 snap-center bg-white rounded-[26px] p-4 sm:p-4.5 border border-slate-100 hover:border-indigo-200 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden active:scale-[0.99]"
-                  >
-                    {/* Hot Deal Badge */}
-                    {relIsHot && (
-                      <div className="absolute top-0 left-0 bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[7px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-br-xl shadow-xs z-10">
-                        HOT DEAL
-                      </div>
-                    )}
+              return (
+                <div
+                  key={`mob-rel-${rel._id || idx}`}
+                  onClick={() => router.push(`/app/activedeals/${rel.productCode || rel._id}${returnUrl.includes('?') ? '?' + returnUrl.split('?')[1] : ''}`)}
+                  className="w-[88vw] max-w-[340px] shrink-0 snap-center relative bg-white rounded-[28px] p-4.5 border border-slate-100 shadow-sm overflow-hidden group active:scale-[0.98] transition-all cursor-pointer hover:border-indigo-200"
+                >
+                  {/* Subtle Background Accent */}
+                  <div className={`absolute top-0 right-0 w-28 h-28 blur-3xl opacity-[0.03] pointer-events-none -mr-8 -mt-8 ${relIsOut ? 'bg-rose-500' : 'bg-blue-500'}`} />
 
-                    <div className="space-y-3">
-                      {/* Top Row: Thumbnail + Product Info */}
-                      <div className={`flex gap-3 ${relIsHot ? 'pt-2' : ''}`}>
-                        <div className="relative h-18 w-18 sm:h-20 sm:w-20 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden shrink-0 shadow-inner">
-                          {rel.productImage ? (
-                            <img
-                              src={rel.productImage?.includes('cloudinary.com') ? rel.productImage.replace('/image/upload/', '/image/upload/q_auto,f_auto,w_250,c_fill/') : rel.productImage}
-                              alt={rel.productDetails}
-                              loading="lazy"
-                              decoding="async"
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-300">
-                              <ShoppingBag className="w-6 h-6 opacity-30" />
-                            </div>
-                          )}
-                          <div className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white flex items-center justify-center shadow-xs ${relIsOut ? 'bg-rose-500' : 'bg-emerald-500'}`}>
-                            <div className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-                          </div>
-                        </div>
+                  {/* Hot Deal Badge */}
+                  {relIsHot && !relIsOut && (
+                    <div className="absolute top-0 left-0 bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-br-2xl shadow-xs z-10">
+                      HOT DEAL
+                    </div>
+                  )}
 
-                        <div className="flex-1 min-w-0">
-                          <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest block truncate">
-                            {rel.brandName}
-                          </span>
-                          <h4 className="text-xs font-black text-slate-900 uppercase tracking-tight truncate group-hover:text-indigo-600 transition-colors">
-                            {rel.productCode}
-                          </h4>
-                          <p className="text-[10px] font-bold text-slate-600 line-clamp-2 mt-0.5 leading-snug">
-                            {rel.productDetails}
-                          </p>
-
-                          <div className="flex items-center gap-1.5 mt-2">
-                            <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tight border ${
-                              rel.marketplace === 'Amazon' ? "bg-orange-50 text-orange-600 border-orange-100" :
-                              rel.marketplace === 'Flipkart' ? "bg-blue-50 text-blue-600 border-blue-100" :
-                              "bg-slate-50 text-slate-600 border-slate-100"
-                            }`}>
-                              {rel.marketplace}
-                            </span>
-                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest px-1.5 py-0.5 rounded bg-slate-50 border border-slate-100">
-                              {rel.dealType}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Live Stocks Progress Section */}
-                      <div className="space-y-1.5 pt-1 border-t border-slate-100/70">
-                        <div className="flex items-center justify-between text-[9px]">
-                          <span className="font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                            <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                            LIVE STOCKS
-                          </span>
-                          <span className={`px-2 py-0.5 rounded-md font-black uppercase tracking-tight text-[8px] border ${stockInfo.style}`}>
-                            {stockInfo.text}
-                          </span>
-                        </div>
-
-                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-700 ${relIsOut ? 'bg-rose-500' : relIsHurry ? 'bg-rose-600' : relIsLimited ? 'bg-orange-500' : 'bg-blue-600'}`}
-                            style={{ width: `${Math.min(100, Math.max(0, ((rel.remainingSlots || 0) / (rel.totalSlots || 1)) * 100))}%` }}
+                  {/* Product Info Row */}
+                  <div className={`flex gap-3.5 ${relIsHot && !relIsOut ? 'mt-2.5' : ''}`}>
+                    {/* Fixed Square Image Thumbnail */}
+                    <div className="relative shrink-0">
+                      <div className="h-20 w-20 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden shadow-inner flex items-center justify-center">
+                        {rel.productImage ? (
+                          <img
+                            src={rel.productImage?.includes('cloudinary.com') ? rel.productImage.replace('/image/upload/', '/image/upload/q_auto,f_auto,w_250,c_fill/') : rel.productImage}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover"
                           />
-                        </div>
-
-                        <div className="flex items-center justify-between text-[8px] font-bold text-slate-400 pt-0.5">
-                          <span>{rel.remainingSlots || 0} / {rel.totalSlots || 0} Slots Remaining</span>
-                          {relConsumed > 5 && (
-                            <span className="text-orange-600 font-black">🔥 {relConsumed} Claimed</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Commission / Payout Row */}
-                      <div className="pt-1 flex items-center justify-between">
-                        {role === 'USER' ? (
-                          <div className="flex items-center gap-1.5 bg-indigo-50/60 px-2.5 py-1 rounded-xl border border-indigo-100/60">
-                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Comm./Less:</span>
-                            {rel.juhiCommission === undefined || rel.juhiCommission === null || rel.juhiCommission === "N/A" ? (
-                              <span className="text-[10px] font-black text-indigo-600">Ask Juhi</span>
-                            ) : Number(rel.juhiCommission) === 0 ? (
-                              <span className="text-[10px] font-black text-emerald-600">Full Refund</span>
-                            ) : (
-                              <span className={`text-[10px] font-black ${Number(rel.juhiCommission) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                {Number(rel.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(rel.juhiCommission))}
-                              </span>
-                            )}
-                          </div>
                         ) : (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Payout:</span>
-                            <span className={`text-[11px] font-black ${Number(rel.displayPayout) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                              {rel.displayPayout !== "N/A" ? `${Number(rel.displayPayout) >= 0 ? '+' : '-'}₹${Math.abs(Number(rel.displayPayout))}` : "N/A"}
-                            </span>
+                          <div className="w-full h-full flex items-center justify-center text-slate-300">
+                            <ShoppingBag className="w-7 h-7 opacity-30" />
                           </div>
                         )}
                       </div>
+                      <div className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-white flex items-center justify-center shadow-xs ${relIsOut ? 'bg-rose-500' : 'bg-emerald-500'}`}>
+                        <div className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                      </div>
                     </div>
 
-                    {/* Bottom Action Row */}
-                    <div className="pt-3 mt-2 border-t border-slate-100 flex items-center gap-2">
+                    {/* Details Column */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-1.5">
+                        <span className="text-[12px] font-black text-slate-900 uppercase tracking-tight break-all leading-tight group-hover:text-indigo-600 transition-colors">
+                          {rel.productCode}
+                        </span>
+                        {rel.createdAt && (
+                          <span className="text-[8px] font-black text-slate-300 uppercase whitespace-nowrap mt-0.5 shrink-0">
+                            {formatTimeAgo(rel.createdAt)}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 truncate">
+                        {rel.brandName}
+                      </p>
+
+                      {rel.productDetails && (
+                        <p className="text-[10px] font-black text-slate-700 uppercase tracking-tight mt-1 leading-relaxed break-words line-clamp-2">
+                          {rel.productDetails}
+                        </p>
+                      )}
+
+                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                        <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tight border ${
+                          rel.dealType === 'Original' ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                          rel.dealType === 'Exchange' ? "bg-blue-50 text-blue-600 border-blue-100" :
+                          "bg-indigo-50 text-indigo-600 border-indigo-100"
+                        }`}>
+                          {rel.dealType}
+                        </span>
+                        <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">
+                          {rel.marketplace}
+                        </span>
+                        {rel.reviewType && (
+                          <>
+                            <span className="text-slate-200 opacity-50">•</span>
+                            <span className="text-[8px] font-black text-indigo-400/70 uppercase tracking-widest">
+                              {rel.reviewType === "SUBMITTED" ? "REVIEW SUBMITTED" : rel.reviewType}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Context Links Row */}
+                  <div className="mt-3.5 flex items-center justify-between px-0.5">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 text-indigo-600">
+                        <div className="h-6 w-6 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center border border-indigo-100">
+                          <Sparkles className="w-3 h-3" />
+                        </div>
+                        <span className="text-[8px] font-black uppercase tracking-widest">Recommended</span>
+                      </div>
+
                       {rel.productLink && (
                         <a
                           href={rel.productLink}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="h-8.5 px-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 flex items-center gap-1 text-[8px] font-black uppercase tracking-wider transition-all shadow-2xs hover:scale-105 active:scale-95 shrink-0"
-                          title={`Open ${rel.marketplace} Link`}
+                          className="flex items-center gap-1 bg-slate-50 hover:bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-100 text-slate-500 transition-colors"
                         >
-                          <ExternalLink className="w-3 h-3 text-blue-600" />
-                          <span>Link</span>
+                          <ExternalLink className="w-3 h-3 text-blue-500" />
+                          <span className="text-[8px] font-black uppercase tracking-widest">Link</span>
                         </a>
                       )}
+                    </div>
+                  </div>
 
-                      {role === 'USER' && rel.remainingSlots > 0 ? (
-                        <Link
-                          href={`/app/orders/new?brand=${encodeURIComponent(rel.brandName)}&product=${rel.productCode}&dealType=${rel.dealType}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="h-8.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-wider shadow-md shadow-blue-600/20 active:scale-95 transition-all flex-1"
-                        >
-                          <span>Fill Form</span>
-                          <ShoppingBag className="w-3 h-3" />
-                        </Link>
+                  {/* Stock Bar (No real stock numbers) */}
+                  <div className="mt-3.5 space-y-1.5">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">LIVE STOCKS</span>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tight border ${stockInfo.style}`}>
+                        {stockInfo.text}
+                      </span>
+                    </div>
+
+                    <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ${relIsOut ? 'bg-rose-500' : relIsHurry ? 'bg-rose-600' : relIsLimited ? 'bg-orange-500' : 'bg-blue-600'}`}
+                        style={{ width: `${Math.min(100, Math.max(0, ((rel.remainingSlots || 0) / (rel.totalSlots || 1)) * 100))}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Bottom Row: Comm./Less & Action Button */}
+                  <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100/80">
+                    {role !== 'USER' ? (
+                      <div className="flex flex-col">
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Payout</p>
+                        {rel.displayPayout === "N/A" ? (
+                          <p className="text-xs font-black text-indigo-600 mt-1">N/A</p>
+                        ) : Number(rel.displayPayout) === 0 ? (
+                          <p className="text-xs font-black text-emerald-600 mt-1">Full Refund</p>
+                        ) : (
+                          <p className={`text-sm font-black tracking-tighter mt-0.5 ${Number(rel.displayPayout) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {Number(rel.displayPayout) >= 0 ? '+' : '-'}₹{Math.abs(Number(rel.displayPayout))}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col">
+                        <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest leading-none">Comm./Less</p>
+                        <div className="flex items-center gap-1.5 mt-1 bg-indigo-50/50 px-2 py-1 rounded-xl border border-indigo-100 shadow-xs self-start">
+                          <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                          {rel.juhiCommission === undefined || rel.juhiCommission === null || rel.juhiCommission === "N/A" ? (
+                            <span className="text-xs font-black text-indigo-600">Ask Juhi</span>
+                          ) : Number(rel.juhiCommission) === 0 ? (
+                            <span className="text-xs font-black text-emerald-600">Full Refund</span>
+                          ) : (
+                            <span className={`text-xs font-black ${Number(rel.juhiCommission) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                              {Number(rel.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(rel.juhiCommission))}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                      {role === 'USER' ? (
+                        rel.remainingSlots > 0 ? (
+                          <Link
+                            href={`/app/orders/new?brand=${encodeURIComponent(rel.brandName)}&product=${rel.productCode}&dealType=${rel.dealType}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-10 px-4 bg-blue-600 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/20 active:scale-95 transition-all"
+                          >
+                            <span>Fill Form</span>
+                            <ShoppingBag className="w-3.5 h-3.5" />
+                          </Link>
+                        ) : (
+                          <div className="h-10 px-4 bg-slate-50 border border-slate-100 text-slate-300 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center cursor-not-allowed">
+                            Sold Out
+                          </div>
+                        )
                       ) : (
-                        <div className="h-8.5 px-3 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white flex items-center justify-center gap-1 text-[8px] font-black uppercase tracking-wider transition-all flex-1 shadow-2xs">
+                        <div className="h-10 px-4 bg-indigo-50 text-indigo-600 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1 shadow-2xs">
                           <span>View Deal</span>
-                          <ArrowRight className="w-3 h-3" />
+                          <ArrowRight className="w-3.5 h-3.5" />
                         </div>
                       )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* DESKTOP / WEB VIEW (hidden md:grid): Preserved 4-column system without real stock numbers */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+            {deal.relatedDeals.map((rel: any) => {
+              const relIsHot = rel.createdAt && (Date.now() - new Date(rel.createdAt).getTime() < 24 * 60 * 60 * 1000);
+              const relIsHurry = rel.remainingSlots > 0 && rel.remainingSlots < 4;
+              const relIsLimited = rel.remainingSlots >= 4 && rel.remainingSlots < 7;
+              const relIsOut = rel.remainingSlots <= 0;
+
+              const getStockInfo = () => {
+                if (relIsOut) return { text: "Sold Out", style: "bg-rose-50 text-rose-500 border-rose-100" };
+                if (relIsHurry) return { text: "Few Slots Left!", style: "bg-rose-50 text-rose-600 border-rose-200 animate-pulse" };
+                if (relIsLimited) return { text: "Limited Stock", style: "bg-orange-50 text-orange-600 border-orange-200" };
+                return { text: "Stock Available", style: "bg-emerald-50 text-emerald-600 border-emerald-100" };
+              };
+              const stockInfo = getStockInfo();
+
+              return (
+                <div
+                  key={`desk-rel-${rel._id}`}
+                  onClick={() => router.push(`/app/activedeals/${rel.productCode || rel._id}${returnUrl.includes('?') ? '?' + returnUrl.split('?')[1] : ''}`)}
+                  className="bg-white rounded-[26px] p-4 sm:p-4.5 border border-slate-100 hover:border-indigo-200 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden active:scale-[0.99]"
+                >
+                  {/* Hot Deal Badge */}
+                  {relIsHot && (
+                    <div className="absolute top-0 left-0 bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[7px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-br-xl shadow-xs z-10">
+                      HOT DEAL
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    {/* Top Row: Thumbnail + Product Info */}
+                    <div className={`flex gap-3 ${relIsHot ? 'pt-2' : ''}`}>
+                      <div className="relative h-20 w-20 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden shrink-0 shadow-inner flex items-center justify-center">
+                        {rel.productImage ? (
+                          <img
+                            src={rel.productImage?.includes('cloudinary.com') ? rel.productImage.replace('/image/upload/', '/image/upload/q_auto,f_auto,w_250,c_fill/') : rel.productImage}
+                            alt={rel.productDetails}
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-300">
+                            <ShoppingBag className="w-6 h-6 opacity-30" />
+                          </div>
+                        )}
+                        <div className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white flex items-center justify-center shadow-xs ${relIsOut ? 'bg-rose-500' : 'bg-emerald-500'}`}>
+                          <div className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                        </div>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest block truncate">
+                          {rel.brandName}
+                        </span>
+                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-tight truncate group-hover:text-indigo-600 transition-colors">
+                          {rel.productCode}
+                        </h4>
+                        <p className="text-[10px] font-bold text-slate-600 line-clamp-2 mt-0.5 leading-snug">
+                          {rel.productDetails}
+                        </p>
+
+                        <div className="flex items-center gap-1.5 mt-2">
+                          <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tight border ${
+                            rel.marketplace === 'Amazon' ? "bg-orange-50 text-orange-600 border-orange-100" :
+                            rel.marketplace === 'Flipkart' ? "bg-blue-50 text-blue-600 border-blue-100" :
+                            "bg-slate-50 text-slate-600 border-slate-100"
+                          }`}>
+                            {rel.marketplace}
+                          </span>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest px-1.5 py-0.5 rounded bg-slate-50 border border-slate-100">
+                            {rel.dealType}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Live Stocks Progress Section (No raw numbers) */}
+                    <div className="space-y-1.5 pt-1 border-t border-slate-100/70">
+                      <div className="flex items-center justify-between text-[9px]">
+                        <span className="font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                          LIVE STOCKS
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-md font-black uppercase tracking-tight text-[8px] border ${stockInfo.style}`}>
+                          {stockInfo.text}
+                        </span>
+                      </div>
+
+                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${relIsOut ? 'bg-rose-500' : relIsHurry ? 'bg-rose-600' : relIsLimited ? 'bg-orange-500' : 'bg-blue-600'}`}
+                          style={{ width: `${Math.min(100, Math.max(0, ((rel.remainingSlots || 0) / (rel.totalSlots || 1)) * 100))}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Commission / Payout Row */}
+                    <div className="pt-1 flex items-center justify-between">
+                      {role === 'USER' ? (
+                        <div className="flex items-center gap-1.5 bg-indigo-50/60 px-2.5 py-1 rounded-xl border border-indigo-100/60">
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Comm./Less:</span>
+                          {rel.juhiCommission === undefined || rel.juhiCommission === null || rel.juhiCommission === "N/A" ? (
+                            <span className="text-[10px] font-black text-indigo-600">Ask Juhi</span>
+                          ) : Number(rel.juhiCommission) === 0 ? (
+                            <span className="text-[10px] font-black text-emerald-600">Full Refund</span>
+                          ) : (
+                            <span className={`text-[10px] font-black ${Number(rel.juhiCommission) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                              {Number(rel.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(rel.juhiCommission))}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Payout:</span>
+                          <span className={`text-[11px] font-black ${Number(rel.displayPayout) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {rel.displayPayout !== "N/A" ? `${Number(rel.displayPayout) >= 0 ? '+' : '-'}₹${Math.abs(Number(rel.displayPayout))}` : "N/A"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bottom Action Row */}
+                  <div className="pt-3 mt-2 border-t border-slate-100 flex items-center gap-2">
+                    {rel.productLink && (
+                      <a
+                        href={rel.productLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-8.5 px-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 flex items-center gap-1 text-[8px] font-black uppercase tracking-wider transition-all shadow-2xs hover:scale-105 active:scale-95 shrink-0"
+                        title={`Open ${rel.marketplace} Link`}
+                      >
+                        <ExternalLink className="w-3 h-3 text-blue-600" />
+                        <span>Link</span>
+                      </a>
+                    )}
+
+                    {role === 'USER' && rel.remainingSlots > 0 ? (
+                      <Link
+                        href={`/app/orders/new?brand=${encodeURIComponent(rel.brandName)}&product=${rel.productCode}&dealType=${rel.dealType}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-8.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-wider shadow-md shadow-blue-600/20 active:scale-95 transition-all flex-1"
+                      >
+                        <span>Fill Form</span>
+                        <ShoppingBag className="w-3 h-3" />
+                      </Link>
+                    ) : (
+                      <div className="h-8.5 px-3 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white flex items-center justify-center gap-1 text-[8px] font-black uppercase tracking-wider transition-all flex-1 shadow-2xs">
+                        <span>View Deal</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
