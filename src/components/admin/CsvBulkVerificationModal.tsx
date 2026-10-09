@@ -23,6 +23,7 @@ interface ParsedVerificationRow {
   brandName: string;
   dealType: string;
   userOrderId: string;
+  refundDate: string;
   amount: number;
   buyerMobile: string;
   currentStatus: string;
@@ -74,17 +75,22 @@ export function CsvBulkVerificationModal({
         return false;
       }
 
-      // 2. Date Range Filter
-      const orderDate = order.createdAt ? new Date(order.createdAt) : null;
-      if (startDate && orderDate) {
+      // 2. Date Range Filter - Filter by when Refund Form was submitted
+      const refundDate = order.refundDetails?.submittedAt
+        ? new Date(order.refundDetails.submittedAt)
+        : (order.updatedAt ? new Date(order.updatedAt) : null);
+
+      if (startDate) {
+        if (!refundDate) return false;
         const start = new Date(startDate);
         start.setHours(0, 0, 0, 0);
-        if (orderDate < start) return false;
+        if (refundDate < start) return false;
       }
-      if (endDate && orderDate) {
+      if (endDate) {
+        if (!refundDate) return false;
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
-        if (orderDate > end) return false;
+        if (refundDate > end) return false;
       }
 
       // 3. Review Type Filter
@@ -200,6 +206,7 @@ export function CsvBulkVerificationModal({
       "Brand Name",
       "Deal Type",
       "Order ID",
+      "Refund Form Submitted Date",
       "Refund Amount",
       "Buyer Number",
       "Status",
@@ -214,6 +221,17 @@ export function CsvBulkVerificationModal({
         : (ord.dealType === "Empty Box" ? (ord.amount + (ord.lessAmount || 0)) : (ord.amount - (ord.lessAmount || 0)));
 
       const buyerPhone = ord.buyer?.mobile || ord.mobile || "N/A";
+      const refundSubmittedAt = ord.refundDetails?.submittedAt || ord.updatedAt;
+      const refundDateStr = refundSubmittedAt
+        ? new Date(refundSubmittedAt).toLocaleString("en-IN", {
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
+          })
+        : "N/A";
 
       return [
         ord.aspireOrderId || "",
@@ -221,6 +239,7 @@ export function CsvBulkVerificationModal({
         ord.brandName || "",
         ord.dealType || "Original",
         ord.userOrderId || "",
+        refundDateStr,
         refundAmt || 0,
         buyerPhone,
         ord.status || "UNDER_VERIFICATION",
@@ -282,6 +301,29 @@ export function CsvBulkVerificationModal({
         if (ord.aspireOrderId) orderLookup.set(ord.aspireOrderId, ord);
       });
 
+      // Dynamically locate column indices from header row
+      const headerRow = (rawRows[0] || []).map((h: any) => String(h || "").trim().toLowerCase());
+
+      const getColIdx = (patterns: RegExp[], defaultIdx: number) => {
+        const found = headerRow.findIndex((h: string) => patterns.some(p => p.test(h)));
+        return found !== -1 ? found : defaultIdx;
+      };
+
+      const systemIdIdx = getColIdx([/system\s*id/i], 0);
+      const refIdIdx = getColIdx([/ref\s*id/i], 1);
+      const brandNameIdx = getColIdx([/brand/i], 2);
+      const dealTypeIdx = getColIdx([/deal\s*type/i], 3);
+      const userOrderIdIdx = getColIdx([/order\s*id/i], 4);
+      const refundDateIdx = getColIdx([/refund.*date/i, /submit.*date/i, /date/i], -1);
+
+      const hasDateCol = refundDateIdx !== -1;
+      const amountIdx = getColIdx([/refund\s*amount/i, /payout/i, /amount/i], hasDateCol ? 6 : 5);
+      const buyerMobileIdx = getColIdx([/buyer.*(num|phone|mobile)/i, /buyer/i, /mobile/i, /phone/i], hasDateCol ? 7 : 6);
+      const statusIdx = getColIdx([/status/i], hasDateCol ? 8 : 7);
+      const approveIdx = getColIdx([/approve/i], hasDateCol ? 9 : 8);
+      const rejectIdx = getColIdx([/reject/i], hasDateCol ? 10 : 9);
+      const reasonIdx = getColIdx([/reason/i], hasDateCol ? 11 : 10);
+
       const parsed: ParsedVerificationRow[] = [];
 
       // Start from index 1 to skip header
@@ -289,18 +331,19 @@ export function CsvBulkVerificationModal({
         const row = rawRows[i];
         if (!row || row.length === 0 || row.every(cell => !cell)) continue;
 
-        const systemId = String(row[0] || "").trim();
-        const refId = String(row[1] || "").trim();
-        const brandName = String(row[2] || "").trim();
-        const dealType = String(row[3] || "").trim();
-        const userOrderId = String(row[4] || "").trim();
-        const amount = Number(row[5]) || 0;
-        const buyerMobile = String(row[6] || "").trim();
-        const currentStatus = String(row[7] || "").trim();
+        const systemId = String(row[systemIdIdx] || "").trim();
+        const refId = String(row[refIdIdx] || "").trim();
+        const brandName = String(row[brandNameIdx] || "").trim();
+        const dealType = String(row[dealTypeIdx] || "").trim();
+        const userOrderId = String(row[userOrderIdIdx] || "").trim();
+        const refundDateInFile = refundDateIdx !== -1 ? String(row[refundDateIdx] || "").trim() : "";
+        const amount = Number(row[amountIdx]) || 0;
+        const buyerMobile = String(row[buyerMobileIdx] || "").trim();
+        const currentStatus = String(row[statusIdx] || "").trim();
 
-        const approveRaw = String(row[8] || "").trim().toUpperCase();
-        const rejectRaw = String(row[9] || "").trim().toUpperCase();
-        const reason = String(row[10] || "").trim();
+        const approveRaw = String(row[approveIdx] || "").trim().toUpperCase();
+        const rejectRaw = String(row[rejectIdx] || "").trim().toUpperCase();
+        const reason = String(row[reasonIdx] || "").trim();
 
         const isApprove = approveRaw === "YES" || approveRaw === "Y" || approveRaw === "APPROVE";
         const isReject = rejectRaw === "YES" || rejectRaw === "Y" || rejectRaw === "REJECT";
@@ -330,12 +373,27 @@ export function CsvBulkVerificationModal({
           action = "SKIP";
         }
 
+        const refundSubmittedAt = matchedOrder?.refundDetails?.submittedAt || matchedOrder?.updatedAt;
+        const resolvedRefundDate = refundDateInFile || (
+          refundSubmittedAt
+            ? new Date(refundSubmittedAt).toLocaleString("en-IN", {
+                year: "numeric",
+                month: "short",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true
+              })
+            : "N/A"
+        );
+
         parsed.push({
           systemId: systemId || matchedOrder?.aspireOrderId || "",
           refId: refId || matchedOrder?._id?.toString() || "",
           brandName: brandName || matchedOrder?.brandName || "",
           dealType: dealType || matchedOrder?.dealType || "",
           userOrderId: userOrderId || matchedOrder?.userOrderId || "",
+          refundDate: resolvedRefundDate,
           amount: amount || matchedOrder?.refundDetails?.expectedPayout || matchedOrder?.amount || 0,
           buyerMobile: buyerMobile || matchedOrder?.buyer?.mobile || "",
           currentStatus: currentStatus || matchedOrder?.status || "UNDER_VERIFICATION",
@@ -625,7 +683,7 @@ export function CsvBulkVerificationModal({
                   <div className="space-y-1.5">
                     <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1 flex items-center gap-1.5">
                       <Calendar className="w-3 h-3 text-slate-400" />
-                      From Date (Duration Start)
+                      Refund Form Submitted From (Start Date)
                     </label>
                     <input
                       type="date"
@@ -638,7 +696,7 @@ export function CsvBulkVerificationModal({
                   <div className="space-y-1.5">
                     <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1 flex items-center gap-1.5">
                       <Calendar className="w-3 h-3 text-slate-400" />
-                      To Date (Duration End)
+                      Refund Form Submitted To (End Date)
                     </label>
                     <input
                       type="date"
@@ -811,6 +869,7 @@ export function CsvBulkVerificationModal({
                           <th className="py-3 px-4">Order ID</th>
                           <th className="py-3 px-4">Brand</th>
                           <th className="py-3 px-4">Buyer Phone</th>
+                          <th className="py-3 px-4">Refund Submitted Date</th>
                           <th className="py-3 px-4">Refund Amount</th>
                           <th className="py-3 px-4">Action</th>
                           <th className="py-3 px-4">Rejection Reason / Note</th>
@@ -833,6 +892,9 @@ export function CsvBulkVerificationModal({
                             </td>
                             <td className="py-3 px-4 text-slate-600 font-mono">
                               {row.buyerMobile}
+                            </td>
+                            <td className="py-3 px-4 text-slate-600 font-mono text-[10px] whitespace-nowrap">
+                              {row.refundDate}
                             </td>
                             <td className="py-3 px-4 font-bold text-slate-900">
                               ₹{row.amount.toLocaleString()}

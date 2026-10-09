@@ -55,6 +55,9 @@ export async function getOtp(key: string): Promise<string | null> {
   try {
     const val = await withTimeout(redis.get(key));
     if (val !== null && val !== undefined) {
+      if (typeof val === "object") {
+        return JSON.stringify(val);
+      }
       return String(val).trim();
     }
   } catch (redisError: any) {

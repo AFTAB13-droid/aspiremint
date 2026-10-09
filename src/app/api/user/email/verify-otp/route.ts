@@ -49,23 +49,35 @@ export async function POST(req: Request) {
     }
 
     let parsedData: { otp: string; newEmail: string };
-    try {
-      parsedData = JSON.parse(storedDataRaw);
-    } catch {
+    if (typeof storedDataRaw === "object" && storedDataRaw !== null) {
+      parsedData = storedDataRaw as any;
+    } else {
+      try {
+        parsedData = typeof storedDataRaw === "string" ? JSON.parse(storedDataRaw) : storedDataRaw;
+      } catch (parseErr) {
+        console.error("[Email Change OTP Parse Error]:", parseErr, "Raw data:", storedDataRaw);
+        return NextResponse.json({
+          success: false,
+          message: "Corrupted verification session. Please request a new code."
+        }, { status: 400 });
+      }
+    }
+
+    if (!parsedData || !parsedData.otp || !parsedData.newEmail) {
       return NextResponse.json({
         success: false,
         message: "Corrupted verification session. Please request a new code."
       }, { status: 400 });
     }
 
-    if (parsedData.newEmail !== normalizedNewEmail) {
+    if (parsedData.newEmail.toLowerCase().trim() !== normalizedNewEmail) {
       return NextResponse.json({
         success: false,
         message: "Email mismatch. This verification code was issued for a different email address."
       }, { status: 400 });
     }
 
-    if (parsedData.otp !== cleanOtp) {
+    if (String(parsedData.otp).trim() !== cleanOtp) {
       return NextResponse.json({
         success: false,
         message: "Invalid verification code. Please check your inbox and try again."

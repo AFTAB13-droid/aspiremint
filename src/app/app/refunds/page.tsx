@@ -227,7 +227,8 @@ export default function RefundsPage() {
         order.paymentDetails?.paidByName?.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesBrand = brandFilter === "ALL BRANDS" || order.brandName === brandFilter;
-      const matchesDate = !filterDate || (order.updatedAt && new Date(order.updatedAt).toISOString().split('T')[0] === filterDate);
+      const refundSubmittedDate = order.refundDetails?.submittedAt || order.updatedAt;
+      const matchesDate = !filterDate || (refundSubmittedDate && new Date(refundSubmittedDate).toISOString().split('T')[0] === filterDate);
       
       let matchesTab = true;
       if (role === "ADMIN") {
@@ -442,7 +443,9 @@ export default function RefundsPage() {
                          <span className={`px-2.5 py-0.5 border rounded-full text-[8px] font-black uppercase tracking-widest whitespace-nowrap ${getStatusColor(order.status)}`}>
                            {getStatusLabel(order.status)}
                          </span>
-                         <span className="text-[8px] font-bold text-slate-300 mt-1 uppercase tracking-tight">{new Date(order.createdAt).toLocaleDateString()}</span>
+                         <span className="text-[8px] font-bold text-slate-400 mt-1 uppercase tracking-tight" title="Refund Form Submitted Date">
+                           {new Date(order.refundDetails?.submittedAt || order.updatedAt).toLocaleDateString()}
+                         </span>
                       </div>
                    </div>
 
