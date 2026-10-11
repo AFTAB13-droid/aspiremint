@@ -67,41 +67,41 @@ export function UserTableView({ orders, onRefund, onViewDetails, onNewOrder, ref
 
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'REFUND_FORM_PENDING': return 'bg-amber-100/50 text-amber-700 border-amber-200';
-      case 'UNDER_VERIFICATION': return 'bg-blue-100/50 text-blue-700 border-blue-200';
-      case 'REFUND_FORM_SUBMITTED': return 'bg-blue-100/50 text-blue-700 border-blue-200';
-      case 'REFUND_APPROVED': return 'bg-emerald-100/50 text-emerald-700 border-emerald-200';
-      case 'REFUND_REJECTED': return 'bg-rose-100/60 text-rose-700 border-rose-300 shadow-rose-100/20';
-      case 'APPROVED': return 'bg-emerald-100/50 text-emerald-700 border-emerald-200';
-      case 'PENDING_APPROVAL': return 'bg-amber-100/50 text-amber-700 border-amber-200';
-      case 'ESCROW_PAYMENT_PENDING': return 'bg-indigo-100/50 text-indigo-700 border-indigo-200';
-      case 'ACTIVE_ESCROW': return 'bg-purple-100/50 text-purple-700 border-purple-200 shadow-purple-100/20';
-      case 'COMPLETED': return 'bg-emerald-100/50 text-emerald-700 border-emerald-200';
-      case 'REFUNDED': return 'bg-emerald-100/50 text-emerald-700 border-emerald-200';
-      case 'DISPUTE_RAISED': return 'bg-rose-100/50 text-rose-700 border-rose-200';
-      case 'CANCELLED': return 'bg-slate-100 text-slate-500 border-slate-200';
+      case 'REFUND_FORM_PENDING': return 'bg-amber-100/50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-500/30';
+      case 'UNDER_VERIFICATION': return 'bg-blue-100/50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-500/30';
+      case 'REFUND_FORM_SUBMITTED': return 'bg-blue-100/50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-500/30';
+      case 'REFUND_APPROVED': return 'bg-emerald-100/50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-500/30';
+      case 'REFUND_REJECTED': return 'bg-rose-100/60 text-rose-700 border-rose-300 shadow-rose-100/20 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-500/30';
+      case 'APPROVED': return 'bg-emerald-100/50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-500/30';
+      case 'PENDING_APPROVAL': return 'bg-amber-100/50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-500/30';
+      case 'ESCROW_PAYMENT_PENDING': return 'bg-indigo-100/50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-indigo-500/30';
+      case 'ACTIVE_ESCROW': return 'bg-purple-100/50 text-purple-700 border-purple-200 shadow-purple-100/20 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-500/30';
+      case 'COMPLETED': return 'bg-emerald-100/50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-500/30';
+      case 'REFUNDED': return 'bg-emerald-100/50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-500/30';
+      case 'DISPUTE_RAISED': return 'bg-rose-100/50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-500/30';
+      case 'CANCELLED': return 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700';
       case 'INVALIDATED': return 'bg-red-950 text-white border-red-900 shadow-red-900/20 shadow-sm';
-      case 'REJECTED': return 'bg-rose-100/50 text-rose-700 border-rose-200';
-      default: return 'bg-slate-50 text-slate-500 border-slate-100';
+      case 'REJECTED': return 'bg-rose-100/50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-500/30';
+      default: return 'bg-slate-50 text-slate-500 border-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700';
     }
   };
 
   const getRowHighlight = (status: string) => {
     switch (status) {
-      case 'REFUND_REJECTED': return { bg: 'bg-rose-100/30', border: 'border-l-rose-500', text: 'text-rose-600' };
+      case 'REFUND_REJECTED': return { bg: 'bg-rose-100/30 dark:bg-[#1C1217] dark:hover:bg-[#25151D]', border: 'border-l-rose-500', text: 'text-rose-600 dark:text-rose-400' };
       case 'UNDER_VERIFICATION': 
-      case 'REFUND_FORM_SUBMITTED': return { bg: 'bg-blue-50/70', border: 'border-l-blue-500', text: 'text-blue-600' };
+      case 'REFUND_FORM_SUBMITTED': return { bg: 'bg-blue-50/70 dark:bg-[#101726] dark:hover:bg-[#162035]', border: 'border-l-blue-500', text: 'text-blue-600 dark:text-blue-400' };
       case 'REFUND_APPROVED': 
       case 'REFUNDED': 
       case 'APPROVED': 
-      case 'COMPLETED': return { bg: 'bg-emerald-50/60', border: 'border-l-emerald-500', text: 'text-emerald-600' };
+      case 'COMPLETED': return { bg: 'bg-emerald-50/60 dark:bg-[#0E1A1A] dark:hover:bg-[#142624]', border: 'border-l-emerald-500', text: 'text-emerald-600 dark:text-emerald-400' };
       case 'REFUND_FORM_PENDING': 
-      case 'PENDING_APPROVAL': return { bg: 'bg-amber-50/70', border: 'border-l-amber-500', text: 'text-amber-600' };
-      case 'ACTIVE_ESCROW': return { bg: 'bg-purple-50/60', border: 'border-l-purple-500', text: 'text-purple-600' };
-      case 'ESCROW_PAYMENT_PENDING': return { bg: 'bg-indigo-50/60', border: 'border-l-indigo-500', text: 'text-indigo-600' };
-      case 'DISPUTE_RAISED': return { bg: 'bg-rose-50/60', border: 'border-l-rose-400', text: 'text-rose-600' };
-      case 'INVALIDATED': return { bg: 'bg-red-50/70', border: 'border-l-red-900', text: 'text-red-900' };
-      default: return { bg: 'hover:bg-slate-50/50', border: 'border-l-transparent', text: 'text-slate-400' };
+      case 'PENDING_APPROVAL': return { bg: 'bg-amber-50/70 dark:bg-[#17161A] dark:hover:bg-[#211F24]', border: 'border-l-amber-500', text: 'text-amber-600 dark:text-amber-400' };
+      case 'ACTIVE_ESCROW': return { bg: 'bg-purple-50/60 dark:bg-[#161224] dark:hover:bg-[#1F1933]', border: 'border-l-purple-500', text: 'text-purple-600 dark:text-purple-400' };
+      case 'ESCROW_PAYMENT_PENDING': return { bg: 'bg-indigo-50/60 dark:bg-[#121626] dark:hover:bg-[#181F36]', border: 'border-l-indigo-500', text: 'text-indigo-600 dark:text-indigo-400' };
+      case 'DISPUTE_RAISED': return { bg: 'bg-rose-50/60 dark:bg-[#1C1217] dark:hover:bg-[#25151D]', border: 'border-l-rose-400', text: 'text-rose-600 dark:text-rose-400' };
+      case 'INVALIDATED': return { bg: 'bg-red-50/70 dark:bg-[#241014] dark:hover:bg-[#2F151A]', border: 'border-l-red-900', text: 'text-red-900 dark:text-red-400' };
+      default: return { bg: 'hover:bg-slate-50/50 dark:hover:bg-[#172138]', border: 'border-l-transparent', text: 'text-slate-400 dark:text-slate-500' };
     }
   };
 
@@ -426,21 +426,21 @@ export function UserTableView({ orders, onRefund, onViewDetails, onNewOrder, ref
       </AnimatePresence>
 
       {/* Table Content - Desktop Only */}
-      <div className="hidden md:block overflow-x-auto rounded-[32px] border border-slate-100 shadow-sm bg-white">
+      <div className="hidden md:block overflow-x-auto rounded-[32px] border border-slate-100 dark:border-slate-800/80 shadow-sm bg-white dark:bg-[#0E1526]">
         <div className="max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent pr-2 -mr-2">
           <table className="w-full text-left border-separate border-spacing-0">
             <thead>
               <tr className="sticky top-0 z-10 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-white first:rounded-tl-2xl">SR.</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-white">Order ID & P ID</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-white">Reviewer & Mediator</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-white">Dates</th>
-                {showRefundOnly && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-white">Refund</th>}
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-white first:rounded-tl-2xl text-center">Status</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 bg-white text-center last:rounded-tr-2xl">Action</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 bg-white dark:bg-[#0B101D] first:rounded-tl-2xl">SR.</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 bg-white dark:bg-[#0B101D]">Order ID & P ID</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 bg-white dark:bg-[#0B101D]">Reviewer & Mediator</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 bg-white dark:bg-[#0B101D]">Dates</th>
+                {showRefundOnly && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 bg-white dark:bg-[#0B101D]">Refund</th>}
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 bg-white dark:bg-[#0B101D] first:rounded-tl-2xl text-center">Status</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 bg-white dark:bg-[#0B101D] text-center last:rounded-tr-2xl">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {paginatedOrders.map((order, idx) => {
                 const highlight = getRowHighlight(order.status);
                 return (

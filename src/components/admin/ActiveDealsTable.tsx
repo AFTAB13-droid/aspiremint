@@ -299,27 +299,27 @@ export function ActiveDealsTable({
       </div>
       
       {/* Desktop Table Section */}
-      <div className="hidden md:block overflow-x-auto custom-scrollbar bg-white rounded-[32px] border border-slate-100 shadow-sm relative z-0">
+      <div className="hidden md:block overflow-x-auto custom-scrollbar bg-white dark:bg-[#0E1526] rounded-[32px] border border-slate-100 dark:border-slate-800/80 shadow-sm relative z-0">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-slate-50/50">
-              <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50">Deal Details</th>
+            <tr className="bg-slate-50/50 dark:bg-[#0B101D]">
+              <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 dark:border-slate-800/80">Deal Details</th>
               {role !== 'USER' && (
-                <th className="px-3 py-5 text-[10px] font-black text-emerald-600 uppercase tracking-widest border-b border-indigo-50 text-center w-12">Share</th>
+                <th className="px-3 py-5 text-[10px] font-black text-emerald-600 uppercase tracking-widest border-b border-indigo-50 dark:border-slate-800/80 text-center w-12">Share</th>
               )}
-              <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Protocol & Marketplace</th>
-              <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">STOCKS</th>
+              <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 dark:border-slate-800/80 text-center">Protocol & Marketplace</th>
+              <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 dark:border-slate-800/80 text-center">STOCKS</th>
               {role !== 'USER' ? (
-                <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Amount</th>
+                <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 dark:border-slate-800/80 text-center">Amount</th>
               ) : (
-                <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Commission/Less</th>
+                <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 dark:border-slate-800/80 text-center">Commission/Less</th>
               )}
-              <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Product Link</th>
-              {!isAdm && <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Remarks</th>}
-              <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 text-center">Action</th>
+              <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 dark:border-slate-800/80 text-center">Product Link</th>
+              {!isAdm && <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 dark:border-slate-800/80 text-center">Remarks</th>}
+              <th className="px-6 py-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest border-b border-indigo-50 dark:border-slate-800/80 text-center">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-indigo-50/20">
+          <tbody className="divide-y divide-indigo-50/20 dark:divide-slate-800/60">
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={`skeleton-${i}`}>
@@ -369,7 +369,7 @@ export function ActiveDealsTable({
               }
 
               return (
-              <tr key={deal._id} className="group hover:bg-indigo-50/20 transition-all duration-300 relative">
+              <tr key={deal._id} className="group hover:bg-indigo-50/20 dark:hover:bg-[#172138] transition-all duration-300 relative">
                 <td className="px-6 py-6">
                   {isHotDeal && !isOut && (
                     <div className="absolute top-0 left-0 bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded-br-lg shadow-sm z-10">
@@ -424,7 +424,7 @@ export function ActiveDealsTable({
                                   sessionStorage.setItem("active_deals_scroll", String(window.scrollY));
                                 }
                               }}
-                              className="text-sm font-black text-slate-900 uppercase tracking-tight group-hover:text-indigo-600 transition-colors hover:underline"
+                              className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors hover:underline"
                             >
                               {deal.productCode}
                             </Link>
@@ -522,25 +522,25 @@ export function ActiveDealsTable({
                               {deal.reviewSlots > 0 && (
                                 <>
                                   <span className="text-[9px] font-black text-slate-400">R:</span>
-                                  <span className="text-[9px] font-black text-slate-900">{deal.remainingReview || 0} / {deal.reviewSlots || 0}</span>
+                                  <span className="text-[9px] font-black text-slate-900 dark:text-slate-100">{deal.remainingReview || 0} / {deal.reviewSlots || 0}</span>
                                 </>
                               )}
                               {deal.ratingSlots > 0 && (
                                 <>
                                   <span className="text-[9px] font-black text-slate-400 ml-1">RT:</span>
-                                  <span className="text-[9px] font-black text-slate-900">{deal.remainingRating || 0} / {deal.ratingSlots || 0}</span>
+                                  <span className="text-[9px] font-black text-slate-900 dark:text-slate-100">{deal.remainingRating || 0} / {deal.ratingSlots || 0}</span>
                                 </>
                               )}
                               {deal.onlyOrderSlots > 0 && (
                                 <>
                                   <span className="text-[9px] font-black text-slate-400 ml-1">O:</span>
-                                  <span className="text-[9px] font-black text-slate-900">{deal.remainingOnly || 0} / {deal.onlyOrderSlots || 0}</span>
+                                  <span className="text-[9px] font-black text-slate-900 dark:text-slate-100">{deal.remainingOnly || 0} / {deal.onlyOrderSlots || 0}</span>
                                 </>
                               )}
                               {deal.submittedSlots > 0 && (
                                 <>
                                   <span className="text-[9px] font-black text-slate-400 ml-1">RS:</span>
-                                  <span className="text-[9px] font-black text-slate-900">{deal.remainingSubmitted || 0} / {deal.submittedSlots || 0}</span>
+                                  <span className="text-[9px] font-black text-slate-900 dark:text-slate-100">{deal.remainingSubmitted || 0} / {deal.submittedSlots || 0}</span>
                                 </>
                               )}
                            </div>
@@ -576,7 +576,7 @@ export function ActiveDealsTable({
                         href={deal.productLink} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="h-10 w-10 mx-auto rounded-xl bg-white border border-indigo-100 flex items-center justify-center text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all shadow-sm group/btn"
+                        className="h-10 w-10 mx-auto rounded-xl bg-white dark:bg-[#111827] border border-indigo-100 dark:border-slate-800/80 flex items-center justify-center text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all shadow-sm group/btn"
                       >
                          <svg className="w-4 h-4 group-hover/btn:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                       </a>

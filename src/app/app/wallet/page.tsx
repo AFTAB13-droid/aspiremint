@@ -697,7 +697,7 @@ export default function PassbookPage() {
                 )}
               </div>
 
-              <div className="bg-white border border-slate-100 rounded-[44px] shadow-sm overflow-hidden">
+              <div className="bg-white dark:bg-[#0E1526] border border-slate-100 dark:border-slate-800/80 rounded-[44px] shadow-sm overflow-hidden">
                 <AnimatePresence mode="wait">
                   
                   {/* TAB 1: PASSBOOK LEDGER JOURNAL */}
@@ -711,20 +711,20 @@ export default function PassbookPage() {
                     >
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="bg-slate-50/50 border-b border-slate-100">
+                          <tr className="bg-slate-50/50 dark:bg-[#0B101D] border-b border-slate-100 dark:border-slate-800/80">
                             <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest pl-10">Reconciliation Time</th>
                             <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Authorized By</th>
                             <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Memo Note</th>
                             <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right pr-10">Amount (Cr/Dr)</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-50 font-mono">
+                        <tbody className="divide-y divide-slate-50 dark:divide-slate-800/60 font-mono">
                           {displayedTransactions.map((tx) => {
                             const isCredit = tx.type === "CREDIT";
                             const txDateStr = formatDate(tx.createdAt);
                             const isFiltered = selectedLedgerDate === txDateStr;
                             return (
-                              <tr key={tx._id} className="hover:bg-slate-50/30 transition-colors">
+                              <tr key={tx._id} className="hover:bg-slate-50/30 dark:hover:bg-[#172138] transition-colors">
                                 <td className="p-6 pl-10">
                                   <div className="flex flex-col gap-0.5">
                                     <span 
@@ -732,7 +732,7 @@ export default function PassbookPage() {
                                       className={`text-xs font-black hover:underline cursor-pointer transition-colors ${
                                         isFiltered 
                                           ? "text-indigo-600 font-extrabold underline decoration-indigo-400 decoration-2" 
-                                          : "text-slate-900 hover:text-indigo-500"
+                                          : "text-slate-900 dark:text-slate-100 hover:text-indigo-500"
                                       }`}
                                       title="Click to filter by this date"
                                     >
@@ -749,7 +749,7 @@ export default function PassbookPage() {
                                       <span className="text-[8px] font-black bg-indigo-50 text-indigo-600 border border-indigo-100/60 px-2 py-0.5 rounded-md uppercase tracking-wider">
                                         {tx.sender?.role || "ADMIN"}
                                       </span>
-                                      <span className="text-xs font-black text-slate-800 uppercase">
+                                      <span className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase">
                                         {tx.sender?.name || "System Admin"}
                                       </span>
                                     </div>
@@ -759,7 +759,7 @@ export default function PassbookPage() {
                                   </div>
                                 </td>
                                 <td className="p-6">
-                                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block max-w-[200px] truncate">{tx.note || "Settlement Settlement"}</span>
+                                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block max-w-[200px] truncate">{tx.note || "Settlement Settlement"}</span>
                                 </td>
                                 <td className="p-6 text-right pr-10">
                                   <span className={`text-base font-black ${isCredit ? "text-emerald-500" : "text-amber-500"}`}>
@@ -793,26 +793,26 @@ export default function PassbookPage() {
                     >
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="bg-slate-50/50 border-b border-slate-100">
+                          <tr className="bg-slate-50/50 dark:bg-[#0B101D] border-b border-slate-100 dark:border-slate-800/80">
                             <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest pl-10">Creation Date</th>
                             <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Order Details</th>
                             <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Financial breakdown</th>
                             <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right pr-10">Total Liability Contribution</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-50 font-mono">
+                        <tbody className="divide-y divide-slate-50 dark:divide-slate-800/60 font-mono">
                           {displayedActiveOrders.map((order) => {
                             const orderDateStr = formatDate(order.createdAt);
                             const isFiltered = selectedLedgerDate === orderDateStr;
                             return (
-                              <tr key={order._id} className="hover:bg-slate-50/30 transition-colors">
+                              <tr key={order._id} className="hover:bg-slate-50/30 dark:hover:bg-[#172138] transition-colors">
                                 <td className="p-6 pl-10">
                                   <span 
                                     onClick={() => setSelectedLedgerDate(isFiltered ? null : orderDateStr)}
                                     className={`text-xs font-black hover:underline cursor-pointer transition-colors ${
                                       isFiltered 
                                         ? "text-indigo-600 font-extrabold underline decoration-indigo-400 decoration-2" 
-                                        : "text-slate-900 hover:text-indigo-500"
+                                        : "text-slate-900 dark:text-slate-100 hover:text-indigo-500"
                                     }`}
                                     title="Click to filter by this date"
                                   >
@@ -821,7 +821,7 @@ export default function PassbookPage() {
                                 </td>
                                 <td className="p-6">
                                   <div className="flex flex-col gap-0.5">
-                                    <span className="text-[10px] font-black text-slate-800 uppercase tracking-wider">{order.brandName}</span>
+                                    <span className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">{order.brandName}</span>
                                     <span className="text-[9px] font-black text-indigo-500">{order.aspireOrderId}</span>
                                     <span className="text-[8px] font-bold text-slate-400">Code: {order.productCode}</span>
                                   </div>
@@ -830,11 +830,11 @@ export default function PassbookPage() {
                                   <div className="space-y-0.5 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
                                     <div className="flex justify-between max-w-[180px]">
                                       <span>Refund Amount:</span>
-                                      <span className="text-slate-600">₹{((order as any).refundDetails?.expectedPayout ?? ((order as any).dealType === 'Empty Box' ? ((order as any).amount + ((order as any).lessAmount || 0)) : ((order as any).amount - ((order as any).lessAmount || 0)))).toLocaleString()}</span>
+                                      <span className="text-slate-600 dark:text-slate-300">₹{((order as any).refundDetails?.expectedPayout ?? ((order as any).dealType === 'Empty Box' ? ((order as any).amount + ((order as any).lessAmount || 0)) : ((order as any).amount - ((order as any).lessAmount || 0)))).toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between max-w-[180px]">
                                       <span>Mediator Earning:</span>
-                                      <span className="text-slate-600">+₹{(order.commission || 0).toLocaleString()}</span>
+                                      <span className="text-slate-600 dark:text-slate-300">+₹{(order.commission || 0).toLocaleString()}</span>
                                     </div>
                                   </div>
                                 </td>

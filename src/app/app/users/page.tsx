@@ -190,11 +190,11 @@ export default function AdminUserDirectory() {
       </div>
 
       {/* Users List (Table Style for Desktop) */}
-      <div className="hidden md:block rounded-[40px] border border-slate-100 bg-white shadow-xl shadow-slate-200/40 relative overflow-hidden">
+      <div className="hidden md:block rounded-[40px] border border-slate-100 dark:border-slate-800/80 bg-white dark:bg-[#0E1526] shadow-xl shadow-slate-200/40 relative overflow-hidden">
          <div className="max-h-[580px] overflow-y-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
                <thead className="sticky top-0 z-20">
-                  <tr className="bg-slate-50 border-b border-slate-100 shadow-sm">
+                  <tr className="bg-slate-50 dark:bg-[#0B101D] border-b border-slate-100 dark:border-slate-800/80 shadow-sm">
                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400 w-24 text-center">Indx</th>
                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">User Identity</th>
                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Role</th>
@@ -202,13 +202,13 @@ export default function AdminUserDirectory() {
                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
                   </tr>
                </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-50 dark:divide-slate-800/60">
                {users.map((user, idx) => (
                   <motion.tr 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     key={user._id} 
-                    className="group hover:bg-slate-50/50 transition-colors"
+                    className="group hover:bg-slate-50/50 dark:hover:bg-[#172138] transition-colors"
                   >
                      <td className="px-8 py-6 text-[11px] font-black text-center text-slate-400">
                         {idx + 1 + (currentPage - 1) * itemsPerPage}

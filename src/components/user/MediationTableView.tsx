@@ -82,29 +82,29 @@ export function MediationTableView({
       case 'APPROVED': return 'bg-emerald-100/50 text-emerald-700 border-emerald-200';
       case 'PENDING_APPROVAL': return 'bg-amber-100/50 text-amber-700 border-amber-200';
       case 'ESCROW_PAYMENT_PENDING': return 'bg-indigo-100/50 text-indigo-700 border-indigo-200';
-      case 'ACTIVE_ESCROW': return 'bg-purple-100/50 text-purple-700 border-purple-200 shadow-purple-100/20';
-      case 'COMPLETED': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-      case 'REFUNDED': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-      case 'DISPUTE_RAISED': return 'bg-rose-100/50 text-rose-700 border-rose-200';
-      case 'CANCELLED': return 'bg-rose-100/60 text-rose-700 border-rose-300 shadow-rose-100/20';
-      case 'REJECTED': return 'bg-rose-100/50 text-rose-700 border-rose-200';
-      default: return 'bg-slate-50 text-slate-500 border-slate-100';
+      case 'ACTIVE_ESCROW': return 'bg-purple-100/50 text-purple-700 border-purple-200 shadow-purple-100/20 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-500/30';
+      case 'COMPLETED': return 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-500/30';
+      case 'REFUNDED': return 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-500/30';
+      case 'DISPUTE_RAISED': return 'bg-rose-100/50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-500/30';
+      case 'CANCELLED': return 'bg-rose-100/60 text-rose-700 border-rose-300 shadow-rose-100/20 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-500/30';
+      case 'REJECTED': return 'bg-rose-100/50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-500/30';
+      default: return 'bg-slate-50 text-slate-500 border-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700';
     }
   };
  
   const getRowHighlight = (status: string) => {
     switch (status) {
       case 'REFUND_REJECTED': 
-      case 'CANCELLED': return { bg: 'bg-rose-100/30', border: 'border-l-rose-500', text: 'text-rose-600' };
+      case 'CANCELLED': return { bg: 'bg-rose-100/30 dark:bg-[#1C1217] dark:hover:bg-[#25151D]', border: 'border-l-rose-500', text: 'text-rose-600 dark:text-rose-400' };
       case 'UNDER_VERIFICATION': 
-      case 'REFUND_FORM_SUBMITTED': return { bg: 'bg-blue-50/70', border: 'border-l-blue-500', text: 'text-blue-600' };
-      case 'REFUND_APPROVED': return { bg: 'bg-emerald-100/30 hover:bg-emerald-100/50', border: 'border-l-emerald-500', text: 'text-emerald-700' };
+      case 'REFUND_FORM_SUBMITTED': return { bg: 'bg-blue-50/70 dark:bg-[#101726] dark:hover:bg-[#162035]', border: 'border-l-blue-500', text: 'text-blue-600 dark:text-blue-400' };
+      case 'REFUND_APPROVED': return { bg: 'bg-emerald-100/30 hover:bg-emerald-100/50 dark:bg-[#0E1A1A] dark:hover:bg-[#142624]', border: 'border-l-emerald-500', text: 'text-emerald-700 dark:text-emerald-400' };
       case 'REFUNDED': 
       case 'APPROVED': 
-      case 'COMPLETED': return { bg: 'bg-emerald-50/20 hover:bg-emerald-50/40', border: 'border-l-emerald-400', text: 'text-emerald-600' };
+      case 'COMPLETED': return { bg: 'bg-emerald-50/20 hover:bg-emerald-50/40 dark:bg-[#0E1A1A] dark:hover:bg-[#142624]', border: 'border-l-emerald-400', text: 'text-emerald-600 dark:text-emerald-400' };
       case 'REFUND_FORM_PENDING': 
-      case 'PENDING_APPROVAL': return { bg: 'bg-amber-50/70', border: 'border-l-amber-500', text: 'text-amber-600' };
-      default: return { bg: 'hover:bg-slate-50/50', border: 'border-l-transparent', text: 'text-slate-400' };
+      case 'PENDING_APPROVAL': return { bg: 'bg-amber-50/70 dark:bg-[#17161A] dark:hover:bg-[#211F24]', border: 'border-l-amber-500', text: 'text-amber-600 dark:text-amber-400' };
+      default: return { bg: 'hover:bg-slate-50/50 dark:hover:bg-[#172138]', border: 'border-l-transparent', text: 'text-slate-400 dark:text-slate-500' };
     }
   };
 

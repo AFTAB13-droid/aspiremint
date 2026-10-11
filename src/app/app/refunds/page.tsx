@@ -677,10 +677,10 @@ export default function RefundsPage() {
           </div>
 
           {/* Desktop View */}
-          <div className="hidden md:block overflow-hidden rounded-[32px] border border-slate-100 bg-white shadow-sm">
+          <div className="hidden md:block overflow-hidden rounded-[32px] border border-slate-100 dark:border-slate-800/80 bg-white dark:bg-[#0E1526] shadow-sm">
             <table className="w-full text-left border-separate border-spacing-0">
               <thead>
-                <tr className="bg-slate-50/50">
+                <tr className="bg-slate-50/50 dark:bg-[#0B101D]">
                   {role === "ADMIN" && activeTab === "VERIFYING" && (
                     <th className="px-6 py-5 w-10">
                       <input 
@@ -713,13 +713,13 @@ export default function RefundsPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/60">
                 {paginatedOrders.map((order) => {
                   const amount = order.refundDetails?.expectedPayout ?? (order.dealType === "Empty Box" ? (order.amount + (order.lessAmount || 0)) : (order.amount - (order.lessAmount || 0)));
                   return (
                     <motion.tr key={order._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                       onClick={() => router.push(`/app/orders/${order._id}`)}
-                      className="group transition-all hover:bg-slate-50/50 cursor-pointer"
+                      className="group transition-all hover:bg-slate-50/50 dark:hover:bg-[#172138] cursor-pointer"
                     >
                       {role === "ADMIN" && activeTab === "VERIFYING" && (
                         <td className="px-6 py-5 text-center" onClick={(e) => e.stopPropagation()}>

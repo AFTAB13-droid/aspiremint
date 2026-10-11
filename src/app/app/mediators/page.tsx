@@ -219,31 +219,31 @@ export default function AdminMediatorsHub() {
                <p className="text-xs font-black text-slate-300 uppercase tracking-[0.4em]">No Mediators Found</p>
             </motion.div>
           ) : activeTab === 'PENDING' ? (
-             <div className="bg-white border border-slate-100 rounded-[40px] overflow-hidden shadow-sm">
+             <div className="bg-white dark:bg-[#0E1526] border border-slate-100 dark:border-slate-800/80 rounded-[40px] overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                    <table className="w-full text-left border-collapse">
                       <thead>
-                         <tr className="bg-slate-50/50">
-                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Mediator Name</th>
-                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Contact Details</th>
-                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Status</th>
-                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">Actions</th>
+                         <tr className="bg-slate-50/50 dark:bg-[#0B101D]">
+                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80">Mediator Name</th>
+                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80">Contact Details</th>
+                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80">Status</th>
+                            <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800/80 text-right">Actions</th>
                          </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-50">
+                      <tbody className="divide-y divide-slate-50 dark:divide-slate-800/60">
                          {filteredMediators.map((med) => (
-                            <tr key={med._id} className="group hover:bg-slate-50/50 transition-colors">
+                            <tr key={med._id} className="group hover:bg-slate-50/50 dark:hover:bg-[#172138] transition-colors">
                                <td className="px-8 py-6">
                                   <div className="flex items-center gap-4">
                                      <div className="h-10 w-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500 font-bold text-xs uppercase">
                                         {(med.systemDisplayName || med.name).charAt(0)}
                                      </div>
-                                     <span className="text-sm font-black text-slate-900 uppercase tracking-tight">{med.systemDisplayName || med.name}</span>
+                                     <span className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">{med.systemDisplayName || med.name}</span>
                                   </div>
                                </td>
                                <td className="px-8 py-6">
                                   <div className="flex flex-col gap-1">
-                                     <span className="text-[10px] font-bold text-slate-600 lowercase">{med.email}</span>
+                                     <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 lowercase">{med.email}</span>
                                      <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{med.mobile}</span>
                                   </div>
                                </td>
