@@ -11,12 +11,189 @@
     --color-admin-bg: #0B0F19;
     --color-admin-card: #1A1F2E;
     --color-admin-accent: #8B5CF6; /* Purple */
+    --color-text-main: #0F172A;
+    --color-text-muted: #64748B;
+    --color-border: #E2E8F0;
+  }
+
+  .dark {
+    --color-background: #0B0F19;
+    --color-card: #131B2E;
+    --color-primary: #3B82F6;
+    --color-primary-hover: #2563EB;
+    --color-admin-bg: #0B0F19;
+    --color-admin-card: #131B2E;
+    --color-admin-accent: #A855F7;
+    --color-text-main: #F8FAFC;
+    --color-text-muted: #94A3B8;
+    --color-border: #1E293B;
   }
 }
 
 body {
   background-color: var(--color-background);
-  color: #0F172A; /* Slate 900 for high contrast text on white */
+  color: var(--color-text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ==================== GLOBAL DARK MODE ENGINE ==================== */
+
+.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  background-color: #0b0f19 !important;
+  color: #f8fafc;
+}
+
+/* Dark Mode Backgrounds */
+.dark .bg-white {
+  background-color: #131b2e !important;
+  color: #f8fafc;
+}
+
+.dark .bg-white\/90 {
+  background-color: rgba(19, 27, 46, 0.92) !important;
+}
+
+.dark .bg-white\/80 {
+  background-color: rgba(19, 27, 46, 0.85) !important;
+}
+
+.dark .bg-white\/70 {
+  background-color: rgba(19, 27, 46, 0.75) !important;
+}
+
+.dark .bg-white\/60 {
+  background-color: rgba(19, 27, 46, 0.65) !important;
+}
+
+.dark .bg-white\/50 {
+  background-color: rgba(19, 27, 46, 0.55) !important;
+}
+
+.dark .bg-white\/40 {
+  background-color: rgba(19, 27, 46, 0.45) !important;
+}
+
+.dark .bg-white\/20 {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.dark .bg-slate-50,
+.dark .bg-\[\#f8fafc\] {
+  background-color: #0b0f19 !important;
+}
+
+.dark .bg-slate-50\/50,
+.dark .bg-slate-50\/40,
+.dark .bg-slate-50\/60 {
+  background-color: rgba(19, 27, 46, 0.45) !important;
+}
+
+.dark .bg-slate-100 {
+  background-color: #1a2338 !important;
+}
+
+.dark .bg-slate-200 {
+  background-color: #242f49 !important;
+}
+
+.dark .hover\:bg-white:hover {
+  background-color: #1a2338 !important;
+}
+
+.dark .hover\:bg-slate-50:hover {
+  background-color: #162035 !important;
+}
+
+.dark .hover\:bg-slate-100:hover {
+  background-color: #242f49 !important;
+}
+
+/* Dark Mode Typography */
+.dark .text-slate-900 {
+  color: #f8fafc !important;
+}
+
+.dark .text-slate-800 {
+  color: #f1f5f9 !important;
+}
+
+.dark .text-slate-700 {
+  color: #cbd5e1 !important;
+}
+
+.dark .text-slate-600 {
+  color: #94a3b8 !important;
+}
+
+.dark .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+.dark .text-slate-400 {
+  color: #64748b !important;
+}
+
+.dark .text-slate-300 {
+  color: #475569 !important;
+}
+
+/* Dark Mode Borders & Dividers */
+.dark .border-slate-100,
+.dark .border-slate-50,
+.dark .border-slate-200,
+.dark .border-slate-200\/50,
+.dark .border-slate-200\/60,
+.dark .border-slate-200\/80 {
+  border-color: #1e293b !important;
+}
+
+.dark .divide-slate-50,
+.dark .divide-slate-100 {
+  border-color: #1e293b !important;
+}
+
+/* Form Controls & Inputs */
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),
+.dark textarea,
+.dark select {
+  background-color: #162035 !important;
+  color: #f8fafc !important;
+  border-color: #2a3754 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* Shadows in Dark Mode */
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-xl,
+.dark .shadow-2xl {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Modals & Backdrop Blur */
+.dark .bg-slate-900\/40,
+.dark .bg-black\/20 {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Scrollbar in Dark Mode */
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }
 
 /* Custom animations */
@@ -26,7 +203,6 @@ body {
   66% { transform: translate(-20px, 20px) scale(0.9); }
   100% { transform: translate(0px, 0px) scale(1); }
 }
-
 
 /* Custom Scrollbar Utility */
 .custom-scrollbar::-webkit-scrollbar {
@@ -54,10 +230,17 @@ body {
 }
 
 /* ==================== FESTIVE THEMES & APP-WIDE OVERRIDES ==================== */
+/* Safe Scoping: In Light Mode, festive themes have their original pastel background tints. */
+/* In Dark Mode, festive themes seamlessly adapt with deep obsidian dark backgrounds while */
+/* maintaining their signature vibrant celebratory accents and top decorative banners.     */
 
 /* --- 1. DIWALI THEME (Gold, Marigold Orange & Warm Amber) --- */
+:root:not(.dark) .theme-diwali,
+:root:not(.dark).theme-diwali {
+  --color-background: #fffbeb !important;
+}
+
 .theme-diwali {
-  --color-background: #fffbeb !important; /* Warm light yellow background */
   --color-primary: #ea580c !important;
   --color-primary-hover: #c2410c !important;
 }
@@ -90,9 +273,15 @@ body {
 }
 
 /* --- 2. INDEPENDENCE DAY & REPUBLIC DAY (Tricolor Green & Saffron) --- */
+:root:not(.dark) .theme-independence_day,
+:root:not(.dark).theme-independence_day,
+:root:not(.dark) .theme-republic_day,
+:root:not(.dark).theme-republic_day {
+  --color-background: #f0fdf4 !important;
+}
+
 .theme-independence_day, 
 .theme-republic_day {
-  --color-background: #f0fdf4 !important; /* Pale green-white background */
   --color-primary: #059669 !important;
   --color-primary-hover: #047857 !important;
 }
@@ -122,7 +311,7 @@ body {
 }
 .theme-independence_day .bg-indigo-600, 
 .theme-republic_day .bg-indigo-600 {
-  background-color: #ea580c !important; /* Saffron accents */
+  background-color: #ea580c !important;
 }
 .theme-independence_day .text-indigo-600, 
 .theme-republic_day .text-indigo-600 {
@@ -134,8 +323,12 @@ body {
 }
 
 /* --- 3. HOLI THEME (Vibrant Pink, Cyan & Splash) --- */
+:root:not(.dark) .theme-holi,
+:root:not(.dark).theme-holi {
+  --color-background: #fdf2f8 !important;
+}
+
 .theme-holi {
-  --color-background: #fdf2f8 !important; /* Soft pink background wash */
   --color-primary: #ec4899 !important;
   --color-primary-hover: #db2777 !important;
 }
@@ -157,8 +350,12 @@ body {
 }
 
 /* --- 4. RAKSHA BANDHAN THEME (Rose Pink & Royal Violet) --- */
+:root:not(.dark) .theme-rakhi,
+:root:not(.dark).theme-rakhi {
+  --color-background: #fff1f2 !important;
+}
+
 .theme-rakhi {
-  --color-background: #fff1f2 !important; /* Rose tint */
   --color-primary: #db2777 !important;
   --color-primary-hover: #be185d !important;
 }
@@ -175,9 +372,13 @@ body {
   background-color: #be185d !important;
 }
 
-/* --- 5. JANMASHTAMI THEME (Royal Peacock Teal & Gold) --- */
+/* --- 5. JANMASHTAMI THEME (Peacock Teal & Gold) --- */
+:root:not(.dark) .theme-janmashtami,
+:root:not(.dark).theme-janmashtami {
+  --color-background: #f0fdfa !important;
+}
+
 .theme-janmashtami {
-  --color-background: #f0fdfa !important; /* Soft teal background */
   --color-primary: #0f766e !important;
   --color-primary-hover: #115e59 !important;
 }
@@ -206,8 +407,12 @@ body {
 }
 
 /* --- 6. DUSSEHRA THEME (Crimson Red & Deep Gold) --- */
+:root:not(.dark) .theme-dussehra,
+:root:not(.dark).theme-dussehra {
+  --color-background: #fff7ed !important;
+}
+
 .theme-dussehra {
-  --color-background: #fff7ed !important; /* Orange tint background */
   --color-primary: #991b1b !important;
   --color-primary-hover: #7f1d1d !important;
 }
@@ -225,8 +430,12 @@ body {
 }
 
 /* --- 7. MUHARRAM THEME (Silent Slate-Green) --- */
+:root:not(.dark) .theme-muharram,
+:root:not(.dark).theme-muharram {
+  --color-background: #f8fafc !important;
+}
+
 .theme-muharram {
-  --color-background: #f8fafc !important; /* Neutral grey background */
   --color-primary: #0f766e !important;
   --color-primary-hover: #115e59 !important;
 }
@@ -240,8 +449,12 @@ body {
 }
 
 /* --- 8. EID THEME (Emerald Green & Golden Stars) --- */
+:root:not(.dark) .theme-eid,
+:root:not(.dark).theme-eid {
+  --color-background: #ecfdf5 !important;
+}
+
 .theme-eid {
-  --color-background: #ecfdf5 !important; /* Eid green background */
   --color-primary: #047857 !important;
   --color-primary-hover: #065f46 !important;
 }
@@ -270,14 +483,18 @@ body {
 }
 
 /* --- 9. NEW YEAR THEME (Midnight Obsidian & Gold Sparkles) --- */
-.theme-new_year {
+:root:not(.dark) .theme-new_year,
+:root:not(.dark).theme-new_year {
   --color-background: #f8fafc !important;
+}
+
+.theme-new_year {
   --color-primary: #d97706 !important;
   --color-primary-hover: #b45309 !important;
 }
 .theme-new_year .bg-blue-600, 
 .theme-new_year .bg-indigo-600 {
-  background-color: #0f172a !important; /* Midnight button */
+  background-color: #0f172a !important;
   border: 2px solid #d97706 !important;
 }
 .theme-new_year .text-blue-600, 
@@ -290,8 +507,12 @@ body {
 }
 
 /* --- 10. LEADERBOARD CHAMPION THEME (Golden Sparkle & Elite Amber) --- */
-.theme-champion {
+:root:not(.dark) .theme-champion,
+:root:not(.dark).theme-champion {
   --color-background: #fffdf5 !important;
+}
+
+.theme-champion {
   --color-primary: #d97706 !important;
   --color-primary-hover: #b45309 !important;
 }
@@ -324,12 +545,38 @@ body {
 .theme-champion .border-indigo-600 {
   border-color: #fbbf24 !important;
 }
-.theme-champion .bg-white {
+:root:not(.dark) .theme-champion .bg-white {
   box-shadow: 0 10px 30px -10px rgba(217, 119, 6, 0.15) !important;
   border-color: #fef3c7 !important;
 }
-.theme-champion .bg-white:hover {
+:root:not(.dark) .theme-champion .bg-white:hover {
   box-shadow: 0 15px 35px -8px rgba(217, 119, 6, 0.25) !important;
   border-color: #fde68a !important;
 }
 
+/* Dark Mode Festive Theme Protection (Prevents light theme collision) */
+.dark.theme-diwali,
+.dark .theme-diwali,
+.dark.theme-independence_day,
+.dark .theme-independence_day,
+.dark.theme-republic_day,
+.dark .theme-republic_day,
+.dark.theme-holi,
+.dark .theme-holi,
+.dark.theme-rakhi,
+.dark .theme-rakhi,
+.dark.theme-janmashtami,
+.dark .theme-janmashtami,
+.dark.theme-dussehra,
+.dark .theme-dussehra,
+.dark.theme-muharram,
+.dark .theme-muharram,
+.dark.theme-eid,
+.dark .theme-eid,
+.dark.theme-new_year,
+.dark .theme-new_year,
+.dark.theme-champion,
+.dark .theme-champion {
+  --color-background: #0B0F19 !important;
+  --color-card: #131B2E !important;
+}

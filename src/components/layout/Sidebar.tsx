@@ -9,6 +9,7 @@ import { Logo } from "@/components/common/Logo";
 import { UserBadge } from "@/components/ui/UserBadge";
 import { InstallPWA } from "@/components/ui/InstallPWA";
 import { getUserAvatar } from "@/data/avatars";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 interface NavLink {
   name: string;
@@ -390,6 +391,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Footer actions for mobile */}
         <div className="p-6 border-t border-blue-50/50 flex flex-col gap-3 relative z-10">
+           <div className="mb-1">
+             <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Theme Mode</div>
+             <ThemeToggle variant="pill" />
+           </div>
            <InstallPWA variant="mobile" />
            <Link href="/app/settings" onClick={() => setMobileOpen(false)} className="w-full">
               <button className="w-full h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all text-[11px] font-black uppercase tracking-[0.2em] border border-blue-100/50 shadow-sm">
@@ -579,10 +584,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* Common Action Footer */}
-      <div className={`pb-6 pt-4 mt-auto border-t border-slate-100 transition-all duration-300 space-y-1.5 relative z-10 ${collapsed ? 'px-3' : 'px-5'}`}>
+      <div className={`pb-6 pt-4 mt-auto border-t border-slate-100 transition-all duration-300 space-y-2 relative z-10 ${collapsed ? 'px-3' : 'px-5'}`}>
         {!collapsed && (
-          <div className="px-3 mb-3">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Account Control</h3>
+          <div className="px-2 mb-2">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Theme Mode</h3>
+            <ThemeToggle variant="pill" />
+          </div>
+        )}
+        {collapsed && (
+          <div className="flex justify-center mb-2">
+            <ThemeToggle variant="icon" />
           </div>
         )}
 

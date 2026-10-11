@@ -86,7 +86,7 @@ export default function DashboardLayout({
   const role = (session.user as any).role || "USER";
 
   return (
-    <div className={`flex h-[100dvh] w-full bg-[#f8fafc] overflow-hidden text-slate-900 transition-colors duration-500 ${themeClass}`}>
+    <div className={`flex h-[100dvh] w-full bg-[#f8fafc] dark:bg-[#0B0F19] overflow-hidden text-slate-900 dark:text-slate-100 transition-colors duration-500 ${themeClass}`}>
       <Sidebar 
         userRole={role} 
         isMobileOpen={isMobileOpen} 

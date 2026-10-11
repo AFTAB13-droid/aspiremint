@@ -8,6 +8,7 @@ import { Logo } from "@/components/common/Logo";
 import { NotificationSidebar } from "./NotificationSidebar";
 import { UserBadge } from "@/components/ui/UserBadge";
 import { getUserAvatar } from "@/data/avatars";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 interface HeaderProps {
   setMobileOpen: (open: boolean) => void;
@@ -199,7 +200,10 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
         </div>
       </div>
 
-      <div className="flex items-center gap-4 relative z-10">
+      <div className="flex items-center gap-2.5 sm:gap-4 relative z-10">
+        {/* Animated Theme Toggle (Web & Mobile) */}
+        <ThemeToggle variant="icon" />
+
         {/* Notification Bell - Enhanced */}
         <motion.button 
           onClick={() => setIsNotifOpen(true)}

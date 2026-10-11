@@ -19,8 +19,8 @@ export const Logo = ({ className = "", size = 40, variant = "blue" }: LogoProps)
       accent: "#f0f9ff"
     },
     dark: {
-      main: "#0f172a",
-      accent: "#1e293b"
+      main: "#38bdf8",
+      accent: "#e0f2fe"
     }
   };
 

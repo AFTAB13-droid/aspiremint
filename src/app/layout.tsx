@@ -9,6 +9,8 @@ import SplashController from "@/components/common/SplashController";
 import { GlobalNotificationPoller } from "@/components/layout/GlobalNotificationPoller";
 import FcmInitializer from "@/components/common/FcmInitializer";
 
+import { ThemeProvider } from "@/context/ThemeContext";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -31,18 +33,41 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} antialiased`}>
-        <AuthProvider>
-          <OfflineGuard>
-            <SplashController>
-              {children}
-              <FcmInitializer />
-              <NotificationToaster />
-              <GlobalNotificationPoller />
-            </SplashController>
-          </OfflineGuard>
-        </AuthProvider>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var saved = localStorage.getItem('aspiremint_theme');
+                  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  if (saved === 'dark' || (!saved && prefersDark)) {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.setAttribute('data-theme', 'light');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className={`${inter.className} antialiased transition-colors duration-300`}>
+        <ThemeProvider>
+          <AuthProvider>
+            <OfflineGuard>
+              <SplashController>
+                {children}
+                <FcmInitializer />
+                <NotificationToaster />
+                <GlobalNotificationPoller />
+              </SplashController>
+            </OfflineGuard>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

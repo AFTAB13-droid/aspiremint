@@ -16,6 +16,7 @@ import { UserBadge } from "@/components/ui/UserBadge";
 import { AvatarPickerModal } from "@/components/ui/AvatarPickerModal";
 import { ChangeEmailModal } from "@/components/ui/ChangeEmailModal";
 import { getUserAvatar } from "@/data/avatars";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 function getDeviceInfo(deviceString: string) {
   if (!deviceString) return { name: "Legacy Device", isMobile: false };
@@ -615,6 +616,20 @@ export default function SettingsPage() {
                       </div>
                    </div>
                 </motion.div>
+
+                {/* Appearance & Theme Card */}
+                <div className="bg-white dark:bg-[#131B2E] p-6 rounded-[36px] border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-2xl bg-amber-50 dark:bg-indigo-950/50 flex items-center justify-center text-amber-500 dark:text-indigo-400">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tight">App Theme Mode</h4>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Select Light or Dark view</p>
+                    </div>
+                  </div>
+                  <ThemeToggle variant="pill" />
+                </div>
             </div>
 
             {/* Main Form Area */}
@@ -1133,6 +1148,19 @@ export default function SettingsPage() {
               </div>
               <div className="shrink-0 flex items-center scale-90 origin-right">
                  <UserBadge ordersCount={totalCompletedOrders} align="right" showInfoIcon={false} />
+              </div>
+           </div>
+
+           {/* Mobile Theme Toggle Strip */}
+           <div className="bg-white dark:bg-[#131B2E] p-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-indigo-950/60 flex items-center justify-center text-amber-500 dark:text-indigo-400">
+                  <Sparkles className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Theme</span>
+              </div>
+              <div className="w-40">
+                <ThemeToggle variant="pill" />
               </div>
            </div>
 
