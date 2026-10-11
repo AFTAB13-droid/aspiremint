@@ -55,22 +55,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       let initialTheme: ThemeMode = "light";
       let initialResolved: ResolvedTheme = "light";
 
-      if (storedTheme === "dark" || storedTheme === "light" || storedTheme === "system") {
-        initialTheme = storedTheme;
-        initialResolved = storedTheme === "system" ? getSystemTheme() : storedTheme;
+      if (storedTheme === "dark") {
+        initialTheme = "dark";
+        initialResolved = "dark";
+      } else if (storedTheme === "system") {
+        initialTheme = "system";
+        initialResolved = getSystemTheme();
       } else {
-        // Check if dark class was already set by anti-flash script
-        const hasDarkClass = document.documentElement.classList.contains("dark");
-        if (hasDarkClass) {
-          initialTheme = "dark";
-          initialResolved = "dark";
-        } else {
-          const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          if (systemPrefersDark) {
-            initialTheme = "dark";
-            initialResolved = "dark";
-          }
-        }
+        // By default AspireMint is strictly LIGHT theme
+        initialTheme = "light";
+        initialResolved = "light";
       }
 
       setThemeState(initialTheme);

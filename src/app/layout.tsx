@@ -41,8 +41,9 @@ export default function RootLayout({
               (function() {
                 try {
                   var saved = localStorage.getItem('aspiremint_theme');
-                  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  if (saved === 'dark' || (!saved && prefersDark)) {
+                  // AspireMint default theme is strictly LIGHT!
+                  // Only apply dark if user has explicitly saved 'dark'.
+                  if (saved === 'dark') {
                     document.documentElement.classList.add('dark');
                     document.documentElement.setAttribute('data-theme', 'dark');
                   } else {

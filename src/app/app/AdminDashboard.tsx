@@ -144,14 +144,14 @@ export default function AdminDashboard({
             </Link>
 
             <Link href="/app/activedeals">
-               <motion.div variants={item} className="p-8 bg-indigo-50 rounded-[40px] border border-indigo-100 group hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden h-full">
+               <motion.div variants={item} className="p-8 bg-indigo-50 dark:bg-[#131B2E] rounded-[40px] border border-indigo-100 dark:border-slate-800/80 group hover:-translate-y-1 transition-all cursor-pointer relative overflow-hidden h-full">
                   <div className="flex items-center justify-between mb-6">
                      <div className="h-12 w-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/20">
                         <Zap className="w-6 h-6" />
                      </div>
-                     <ChevronRight className="w-5 h-5 text-indigo-300" />
+                     <ChevronRight className="w-5 h-5 text-indigo-300 dark:text-slate-500" />
                   </div>
-                  <h3 className="text-xl font-black text-indigo-950 uppercase tracking-tight">Active<br />Deals</h3>
+                  <h3 className="text-xl font-black text-indigo-950 dark:text-white uppercase tracking-tight">Active<br />Deals</h3>
                </motion.div>
             </Link>
          </motion.div>

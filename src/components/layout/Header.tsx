@@ -38,14 +38,14 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
   const rank = user?.leaderboardBadge?.rank;
 
   // Header background gradients according to reward rank
-  let headerBgClass = "bg-white/80 border-b-2 border-blue-200/60";
+  let headerBgClass = "bg-white/80 border-b-2 border-blue-200/60 dark:bg-[#0B101D]/90 dark:border-b dark:border-slate-800/80";
   if (isBadgeActive) {
     if (rank === 1) {
-      headerBgClass = "bg-gradient-to-r from-amber-50/90 via-amber-100/30 to-yellow-50/80 border-b-2 border-amber-300/60";
+      headerBgClass = "bg-gradient-to-r from-amber-50/90 via-amber-100/30 to-yellow-50/80 border-b-2 border-amber-300/60 dark:from-[#17130A]/90 dark:via-[#131722]/80 dark:to-[#17140B]/90 dark:border-b-2 dark:border-amber-500/30";
     } else if (rank === 2) {
-      headerBgClass = "bg-gradient-to-r from-slate-100/90 via-white to-slate-200/60 border-b-2 border-slate-300/60";
+      headerBgClass = "bg-gradient-to-r from-slate-100/90 via-white to-slate-200/60 border-b-2 border-slate-300/60 dark:from-[#131722]/90 dark:via-[#161D2E]/80 dark:to-[#131722]/90 dark:border-b-2 dark:border-slate-600/40";
     } else if (rank === 3) {
-      headerBgClass = "bg-gradient-to-r from-amber-50/40 via-white to-orange-50/50 border-b-2 border-orange-200/40";
+      headerBgClass = "bg-gradient-to-r from-amber-50/40 via-white to-orange-50/50 border-b-2 border-orange-200/40 dark:from-[#17100B]/90 dark:via-[#131722]/80 dark:to-[#17100B]/90 dark:border-b-2 dark:border-orange-500/30";
     }
   }
 
@@ -104,9 +104,9 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
   return (
     <header className={`sticky top-0 z-30 flex h-20 w-full items-center justify-between backdrop-blur-3xl px-6 lg:px-10 relative overflow-hidden transition-all duration-300 ${headerBgClass}`}>
       {/* Advanced Floral & Line Aesthetic Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-50">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-50 dark:opacity-10">
         {/* Soft Base Gradient */}
-        <div className={`absolute inset-0 bg-gradient-to-r ${
+        <div className={`absolute inset-0 bg-gradient-to-r dark:from-transparent dark:via-transparent dark:to-transparent ${
            isBadgeActive 
               ? rank === 1 
                  ? "from-amber-100/30 via-white to-yellow-100/20" 
@@ -116,7 +116,7 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
               : "from-sky-50/50 via-white to-blue-50/50"
         }`} />
         
-        <svg className={`absolute inset-0 w-full h-full ${
+        <svg className={`absolute inset-0 w-full h-full dark:text-indigo-400 ${
            isBadgeActive 
               ? rank === 1 
                  ? "text-amber-500" 
@@ -146,8 +146,8 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
         </svg>
 
         {/* Dynamic Glows */}
-        <div className="absolute -top-10 -right-20 w-80 h-40 bg-sky-200/30 rounded-full blur-[80px] animate-pulse" />
-        <div className="absolute -bottom-10 left-20 w-64 h-32 bg-blue-100/20 rounded-full blur-[60px]" />
+        <div className="absolute -top-10 -right-20 w-80 h-40 bg-sky-200/30 dark:bg-blue-600/10 rounded-full blur-[80px] animate-pulse" />
+        <div className="absolute -bottom-10 left-20 w-64 h-32 bg-blue-100/20 dark:bg-indigo-600/10 rounded-full blur-[60px]" />
       </div>
 
       <style jsx>{`
@@ -171,7 +171,7 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
         {/* Mobile Hamburger toggle */}
         <button
           onClick={() => setMobileOpen(true)}
-          className={`lg:hidden p-2.5 -ml-2 rounded-2xl bg-white/50 text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95 border border-slate-100/50 shadow-sm`}
+          className={`lg:hidden p-2.5 -ml-2 rounded-2xl bg-white/50 text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95 border border-slate-100/50 dark:bg-[#131B2E] dark:text-slate-300 dark:hover:bg-[#1A233A] dark:hover:text-blue-400 dark:border-slate-800/80 shadow-sm`}
         >
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -183,11 +183,11 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
           <div className="flex flex-col">
             <h2 className="text-[20px] sm:text-[22px] font-black tracking-tight leading-none group">
               {/* Desktop Always shows logo */}
-              <span className={`hidden lg:block bg-gradient-to-r bg-clip-text text-transparent from-blue-700 via-indigo-600 to-blue-600 animate-gradient-slow bg-[length:200%_auto]`}>
+              <span className={`hidden lg:block bg-gradient-to-r bg-clip-text text-transparent from-blue-700 via-indigo-600 to-blue-600 dark:from-blue-400 dark:via-indigo-300 dark:to-cyan-400 animate-gradient-slow bg-[length:200%_auto]`}>
                 AspireMint
               </span>
               {/* Mobile shows contextual title */}
-              <span className={`lg:hidden flex items-center gap-1.5 bg-gradient-to-r bg-clip-text text-transparent from-blue-700 to-indigo-600`}>
+              <span className={`lg:hidden flex items-center gap-1.5 bg-gradient-to-r bg-clip-text text-transparent from-blue-700 to-indigo-600 dark:from-blue-400 dark:to-indigo-300`}>
                 {getPageTitle()}
                 {user?.leaderboardBadge?.active && (
                   <span className="text-[9px] font-black uppercase bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white px-2 py-0.5 rounded-full border border-amber-300 shadow-sm animate-pulse ml-1 shrink-0">
@@ -209,13 +209,13 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
           onClick={() => setIsNotifOpen(true)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className={`relative h-12 w-12 flex items-center justify-center rounded-2xl text-slate-400 bg-white/50 hover:bg-white hover:text-blue-600 transition-all shadow-sm border border-slate-100/50 group overflow-visible`}
+          className={`relative h-12 w-12 flex items-center justify-center rounded-2xl text-slate-400 bg-white/50 hover:bg-white hover:text-blue-600 transition-all shadow-sm border border-slate-100/50 dark:bg-[#131B2E] dark:text-slate-300 dark:hover:bg-[#1A233A] dark:hover:text-blue-400 dark:border-slate-800/80 group overflow-visible`}
         >
           {unreadCount > 0 && (
             <motion.span 
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute -top-1.5 -right-1.5 h-6 min-w-[24px] px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-4 border-white shadow-lg shadow-red-200 z-20"
+              className="absolute -top-1.5 -right-1.5 h-6 min-w-[24px] px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-4 border-white dark:border-[#131B2E] shadow-lg shadow-red-200 z-20"
             >
               {unreadCount > 99 ? "99+" : unreadCount}
             </motion.span>
@@ -239,15 +239,15 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
         </motion.button>
 
 
-        <div className="h-8 w-[1px] bg-slate-200/50 mx-2 hidden lg:block"></div>
+        <div className="h-8 w-[1px] bg-slate-200/50 dark:bg-slate-800 mx-2 hidden lg:block"></div>
 
         {/* User Profile Summary - Refined */}
         <Link href="/app/settings" className="hidden lg:flex">
           <motion.div 
             whileHover={{ scale: 1.02, x: 2 }}
-            className={`flex items-center gap-3 cursor-pointer group bg-white/80 hover:bg-white p-1.5 pr-5 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all ${isAdm ? "hover:border-indigo-200" : "hover:border-blue-200"}`}
+            className={`flex items-center gap-3 cursor-pointer group bg-white/80 hover:bg-white p-1.5 pr-5 rounded-3xl border border-slate-100 dark:bg-[#131B2E] dark:hover:bg-[#1A233A] dark:border-slate-800/80 dark:hover:border-slate-700 shadow-sm hover:shadow-md transition-all ${isAdm ? "hover:border-indigo-200" : "hover:border-blue-200"}`}
           >
-            <div className={`h-[42px] w-[42px] overflow-hidden rounded-2xl border-2 border-white bg-slate-100 object-cover flex items-center justify-center font-black shadow-sm group-hover:shadow-md transition-all shrink-0`}>
+            <div className={`h-[42px] w-[42px] overflow-hidden rounded-2xl border-2 border-white bg-slate-100 dark:border-slate-700 dark:bg-slate-800 object-cover flex items-center justify-center font-black shadow-sm group-hover:shadow-md transition-all shrink-0`}>
               <img 
                 src={getUserAvatar(avatarOverride || user?.avatar || user?.image, user?.name)} 
                 alt={user?.name || "User"} 
@@ -256,7 +256,7 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
             </div>
             <div className="hidden text-left lg:block">
               <div className="flex items-center gap-2.5">
-                <p className="text-[15px] font-black text-slate-900 leading-none transition-colors group-hover:text-blue-600">{user?.name}</p>
+                <p className="text-[15px] font-black text-slate-900 dark:text-white leading-none transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">{user?.name}</p>
                 {user?.leaderboardBadge?.active && (
                   <span className="text-[9px] font-black px-1.5 py-0.5 bg-amber-500 text-white rounded-md uppercase tracking-tight animate-bounce" title="Monthly Leaderboard Winner!">
                     🏆 #{user.leaderboardBadge.rank}
@@ -267,7 +267,7 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
                 )}
               </div>
               <div className="mt-1.5">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] leading-none">{user?.role} ACCOUNT</p>
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-[0.15em] leading-none">{user?.role} ACCOUNT</p>
               </div>
             </div>
           </motion.div>

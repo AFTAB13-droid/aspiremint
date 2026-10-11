@@ -314,15 +314,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const getMobileSidebarContent = () => {
     return (
-      <div className="flex flex-col h-full bg-white relative overflow-hidden">
+      <div className="flex flex-col h-full bg-white dark:bg-[#0B101D] relative overflow-hidden">
         {getSidebarBackground()}
 
         {/* Header with Profile Info */}
-        <div className="px-6 pt-10 pb-6 border-b border-blue-50/50 relative z-10">
+        <div className="px-6 pt-10 pb-6 border-b border-blue-50/50 dark:border-slate-800/80 relative z-10">
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-200 to-indigo-200 p-0.5 shadow-md">
-                <div className="h-full w-full rounded-full bg-white flex items-center justify-center text-xl font-black text-slate-900 border-2 border-white overflow-hidden shadow-inner uppercase">
+              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-200 to-indigo-200 dark:from-blue-600 dark:to-indigo-600 p-0.5 shadow-md">
+                <div className="h-full w-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-xl font-black text-slate-900 dark:text-white border-2 border-white dark:border-slate-700 overflow-hidden shadow-inner uppercase">
                    <img 
                      src={getUserAvatar(effectiveAvatar, effectiveName)} 
                      alt="" 
@@ -331,14 +331,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Hello,</span>
-                <span className="text-2xl font-black text-slate-900 leading-none tracking-tight">
+                <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none mb-1">Hello,</span>
+                <span className="text-2xl font-black text-slate-900 dark:text-white leading-none tracking-tight">
                   {effectiveName?.split(' ')[0] || "User"}
                 </span>
                 <Link 
                   href="/app/settings" 
                   onClick={() => setMobileOpen(false)}
-                  className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mt-2.5 hover:text-indigo-600 transition-colors bg-blue-50/50 px-2 py-1 rounded-md self-start"
+                  className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mt-2.5 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors bg-blue-50/50 dark:bg-blue-950/40 px-2 py-1 rounded-md self-start border border-blue-100/30 dark:border-blue-900/30"
                 >
                   Edit Profile
                 </Link>
@@ -346,7 +346,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <button
               onClick={() => setMobileOpen(false)}
-              className="p-2 -mr-2 bg-slate-50 rounded-xl text-slate-400 hover:text-slate-600 active:scale-95 transition-all"
+              className="p-2 -mr-2 bg-slate-50 dark:bg-[#131B2E] rounded-xl text-slate-400 dark:text-slate-300 hover:text-slate-600 dark:hover:text-white active:scale-95 transition-all border border-transparent dark:border-slate-800"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -370,16 +370,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     whileTap={{ scale: 0.98 }}
                     className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all ${
                       isActive 
-                        ? "bg-blue-50 text-blue-600 shadow-sm border border-blue-100" 
-                        : "text-slate-500 active:bg-slate-50"
+                        ? "bg-blue-50 text-blue-600 shadow-sm border border-blue-100 dark:bg-gradient-to-r dark:from-indigo-600/25 dark:to-blue-600/15 dark:text-blue-300 dark:border-indigo-500/30" 
+                        : "text-slate-500 active:bg-slate-50 dark:text-slate-400 dark:active:bg-[#131B2E]"
                     }`}
                   >
                     <div className={`transition-transform ${isActive ? 'scale-110' : ''}`}>
                       {React.cloneElement(link.icon as React.ReactElement, { 
-                        className: `w-6 h-6 ${isActive ? 'text-blue-600' : 'text-slate-400'}` 
+                        className: `w-6 h-6 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}` 
                       })}
                     </div>
-                    <span className={`text-base font-bold tracking-tight ${isActive ? 'text-blue-700' : 'text-slate-600'}`}>
+                    <span className={`text-base font-bold tracking-tight ${isActive ? 'text-blue-700 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
                       {link.name}
                     </span>
                   </motion.div>
@@ -390,21 +390,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Footer actions for mobile */}
-        <div className="p-6 border-t border-blue-50/50 flex flex-col gap-3 relative z-10">
+        <div className="p-6 border-t border-blue-50/50 dark:border-slate-800/80 flex flex-col gap-3 relative z-10">
            <div className="mb-1">
-             <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Theme Mode</div>
+             <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">Theme Mode</div>
              <ThemeToggle variant="pill" />
            </div>
            <InstallPWA variant="mobile" />
            <Link href="/app/settings" onClick={() => setMobileOpen(false)} className="w-full">
-              <button className="w-full h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all text-[11px] font-black uppercase tracking-[0.2em] border border-blue-100/50 shadow-sm">
+              <button className="w-full h-14 bg-blue-50 text-blue-600 dark:bg-[#131B2E] dark:text-blue-400 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all text-[11px] font-black uppercase tracking-[0.2em] border border-blue-100/50 dark:border-slate-800 shadow-sm">
                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                  My Profile
               </button>
            </Link>
            <button 
              onClick={() => signOut({ callbackUrl: "/login" })}
-             className="w-full h-14 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all text-[11px] font-black uppercase tracking-[0.2em] border border-red-100/50"
+             className="w-full h-14 bg-red-50 text-red-500 dark:bg-red-950/20 dark:text-red-400 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all text-[11px] font-black uppercase tracking-[0.2em] border border-red-100/50 dark:border-red-900/40"
            >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
               Sign Out
@@ -416,10 +416,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const getSidebarBackground = () => (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-       {/* Soft Blue Base Gradient */}
-       <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-white to-blue-50/40" />
+       {/* Soft Blue Base Gradient in Light / Sleek Obsidian Cosmic in Dark */}
+       <div className="absolute inset-0 bg-gradient-to-br from-blue-50/60 via-white to-blue-50/40 dark:from-[#0B101D] dark:via-[#0E1526] dark:to-[#080D1A]" />
        
-       <svg className="absolute inset-0 w-full h-full text-blue-500" viewBox="0 0 400 800" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+       <svg className="absolute inset-0 w-full h-full text-blue-500 dark:text-indigo-400 dark:opacity-10" viewBox="0 0 400 800" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
           {/* Dense Flowing Lines */}
           <path d="M-50 100C100 200 200 0 450 100" stroke="currentColor" strokeWidth="2" strokeOpacity="0.2" />
           <path d="M-50 350C150 250 250 450 450 350" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.15" />
@@ -444,21 +444,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <circle cx="40" cy="780" r="50" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.25" />
        </svg>
        
-       {/* Soft Blue Glows */}
-       <div className="absolute top-0 right-0 w-96 h-96 bg-blue-100/40 rounded-full blur-[100px]" />
-       <div className="absolute bottom-20 left-0 w-72 h-72 bg-blue-100/30 rounded-full blur-[80px]" />
+       {/* Ambient Glows */}
+       <div className="absolute top-0 right-0 w-96 h-96 bg-blue-100/40 dark:bg-indigo-600/10 rounded-full blur-[100px]" />
+       <div className="absolute bottom-20 left-0 w-72 h-72 bg-blue-100/30 dark:bg-blue-600/10 rounded-full blur-[80px]" />
     </div>
   );
 
   const getSidebarContent = (collapsed: boolean) => (
-    <div className="flex h-full flex-col bg-white relative border-r border-blue-100/60">
+    <div className="flex h-full flex-col bg-white dark:bg-[#0B101D] relative border-r border-blue-100/60 dark:border-slate-800/80">
       {getSidebarBackground()}
 
       {/* Desktop Toggle Button */}
       {setCollapsed && (
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className={`absolute -right-3 top-8 hidden lg:flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm z-50 transition-transform duration-300 ${isAdm ? "hover:text-indigo-500" : "hover:text-blue-500"}`}
+          className={`absolute -right-3 top-8 hidden lg:flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 dark:bg-[#131B2E] dark:border-slate-700/80 dark:text-slate-300 dark:hover:text-blue-400 dark:hover:border-blue-500/50 shadow-sm z-50 transition-transform duration-300 ${isAdm ? "hover:text-indigo-500" : "hover:text-blue-500"}`}
           style={{ transform: collapsed ? 'rotate(180deg)' : 'rotate(0deg)' }}
         >
           <svg className="h-4 w-4 block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -468,12 +468,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       {/* Brand Header */}
-      <div className={`flex h-24 items-center border-b border-slate-50/50 transition-all duration-300 relative z-10 ${collapsed ? 'justify-center px-0' : 'justify-between px-8'}`}>
+      <div className={`flex h-24 items-center border-b border-slate-50/50 dark:border-slate-800/60 transition-all duration-300 relative z-10 ${collapsed ? 'justify-center px-0' : 'justify-between px-8'}`}>
         <div className="flex items-center gap-4 overflow-hidden">
           <Logo size={48} variant="blue" className="shrink-0 drop-shadow-blue" />
           <div className={`flex flex-col transition-opacity duration-300 ${collapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}>
-            <span className="text-xl font-black tracking-tight text-slate-900 leading-none">AspireMint</span>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mt-1">
+            <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white leading-none">AspireMint</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400 mt-1">
                {userRole === "ADMIN" ? "Admin Panel" : userRole === "MEDIATOR" ? "Mediator Panel" : "Buyers Panel"}
             </span>
           </div>
@@ -481,7 +481,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Mobile Close Button */}
         <button
           onClick={() => setMobileOpen(false)}
-          className={`lg:hidden p-2 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors ${collapsed ? 'hidden' : 'block'}`}
+          className={`lg:hidden p-2 rounded-xl text-slate-400 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#131B2E] hover:text-slate-600 dark:hover:text-slate-200 transition-colors ${collapsed ? 'hidden' : 'block'}`}
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -529,12 +529,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   whileTap={{ scale: 0.97 }}
                   className={`group relative flex items-center justify-center rounded-2xl py-4 transition-all duration-300 ${isActive
                       ? isAdm 
-                        ? "bg-indigo-500/10 text-indigo-700 border border-indigo-100/50"
-                        : "bg-blue-500/10 text-blue-700 border border-blue-100/50"
-                      : "text-slate-500 hover:bg-white border border-transparent"
+                        ? "bg-indigo-500/10 text-indigo-700 border border-indigo-100/50 dark:bg-indigo-600/20 dark:text-indigo-300 dark:border-indigo-500/40 dark:shadow-[0_0_15px_rgba(99,102,241,0.2)]"
+                        : "bg-blue-500/10 text-blue-700 border border-blue-100/50 dark:bg-blue-600/20 dark:text-blue-300 dark:border-blue-500/40 dark:shadow-[0_0_15px_rgba(59,130,246,0.2)]"
+                      : "text-slate-500 hover:bg-white border border-transparent dark:text-slate-400 dark:hover:bg-[#131B2E] dark:hover:text-slate-200 dark:hover:border-slate-800/80"
                     }`}
                 >
-                  <div className={`shrink-0 transition-all duration-300 ${isActive ? (isAdm ? "text-indigo-600" : "text-blue-600") : 'group-hover:scale-110'}`}>
+                  <div className={`shrink-0 transition-all duration-300 ${isActive ? (isAdm ? "text-indigo-600 dark:text-indigo-400" : "text-blue-600 dark:text-blue-400") : 'group-hover:scale-110'}`}>
                     {React.cloneElement(link.icon as React.ReactElement, { className: "w-6 h-6" })}
                   </div>
                 </motion.div>
@@ -545,7 +545,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           /* Mobile & Desktop Expanded View: Sectioned for Mobile */
           mobileSections.map((section, idx) => (
             <div key={section.title} className={idx > 0 ? "pt-4 lg:pt-0" : ""}>
-                <h4 className="lg:hidden px-4 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">{section.title}</h4>
+                <h4 className="lg:hidden px-4 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-4">{section.title}</h4>
                 <div className="space-y-1.5">
                    {section.links.map((link) => {
                      const isActive = pathname === link.href;
@@ -556,21 +556,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                            whileTap={{ scale: 0.97 }}
                            className={`group relative flex items-center gap-4 rounded-2xl px-4 py-4 transition-all duration-300 ${isActive
                                ? isAdm 
-                                 ? "bg-gradient-to-r from-indigo-500/10 to-indigo-500/5 text-indigo-700 shadow-sm border border-indigo-100/50"
-                                 : "bg-gradient-to-r from-blue-500/10 to-blue-500/5 text-blue-700 shadow-sm border border-blue-100/50"
-                               : "text-slate-500 hover:bg-white border border-transparent hover:text-slate-900"
+                                 ? "bg-gradient-to-r from-indigo-500/10 to-indigo-500/5 text-indigo-700 shadow-sm border border-indigo-100/50 dark:from-indigo-600/25 dark:to-indigo-600/10 dark:text-indigo-300 dark:border-indigo-500/30 dark:shadow-[0_4px_20px_rgba(99,102,241,0.15)]"
+                                 : "bg-gradient-to-r from-blue-500/10 to-blue-500/5 text-blue-700 shadow-sm border border-blue-100/50 dark:from-blue-600/25 dark:to-indigo-600/10 dark:text-blue-300 dark:border-blue-500/30 dark:shadow-[0_4px_20px_rgba(59,130,246,0.15)]"
+                               : "text-slate-500 hover:bg-white border border-transparent hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#131B2E] dark:hover:text-slate-100 dark:hover:border-slate-800/80"
                              }`}
                          >
                            {isActive && (
                              <motion.div
                                layoutId="activeSidebarLine"
-                               className={`absolute left-0 inset-y-0 my-auto w-1.5 h-7 rounded-r-lg ${isAdm ? "bg-indigo-600" : "bg-blue-600"}`}
+                               className={`absolute left-0 inset-y-0 my-auto w-1.5 h-7 rounded-r-lg ${isAdm ? "bg-indigo-600 dark:bg-indigo-400 dark:shadow-[0_0_10px_rgba(129,140,248,0.8)]" : "bg-blue-600 dark:bg-blue-400 dark:shadow-[0_0_10px_rgba(96,165,250,0.8)]"}`}
                              />
                            )}
-                           <div className={`shrink-0 transition-all duration-300 ${isActive ? (isAdm ? "text-indigo-600" : "text-blue-600") : 'group-hover:scale-110'}`}>
+                           <div className={`shrink-0 transition-all duration-300 ${isActive ? (isAdm ? "text-indigo-600 dark:text-indigo-400" : "text-blue-600 dark:text-blue-400") : 'group-hover:scale-110'}`}>
                              {React.cloneElement(link.icon as React.ReactElement, { className: "w-6 h-6" })}
                            </div>
-                           <span className="text-[15px] font-bold tracking-wide">
+                           <span className={`text-[15px] font-bold tracking-wide ${isActive ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white"}`}>
                              {link.name}
                            </span>
                          </motion.div>
@@ -584,10 +584,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* Common Action Footer */}
-      <div className={`pb-6 pt-4 mt-auto border-t border-slate-100 transition-all duration-300 space-y-2 relative z-10 ${collapsed ? 'px-3' : 'px-5'}`}>
+      <div className={`pb-6 pt-4 mt-auto border-t border-slate-100 dark:border-slate-800/80 transition-all duration-300 space-y-2 relative z-10 ${collapsed ? 'px-3' : 'px-5'}`}>
         {!collapsed && (
           <div className="px-2 mb-2">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Theme Mode</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">Theme Mode</h3>
             <ThemeToggle variant="pill" />
           </div>
         )}
@@ -604,10 +604,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <motion.div
             whileHover={{ x: collapsed ? 0 : 6 }}
             whileTap={{ scale: 0.97 }}
-            className={`group relative flex items-center rounded-2xl py-3.5 transition-all duration-300 text-slate-500 hover:bg-white inset-shadow hover:shadow-[0_4px_20px_-8px_rgba(0,0,0,0.1)] hover:border-slate-100 hover:text-slate-900 border border-transparent ${collapsed ? 'justify-center px-0' : 'gap-3.5 px-4'
+            className={`group relative flex items-center rounded-2xl py-3.5 transition-all duration-300 text-slate-500 hover:bg-white inset-shadow hover:shadow-[0_4px_20px_-8px_rgba(0,0,0,0.1)] hover:border-slate-100 hover:text-slate-900 border border-transparent dark:text-slate-400 dark:hover:bg-[#131B2E] dark:hover:text-white dark:hover:border-slate-800/80 ${collapsed ? 'justify-center px-0' : 'gap-3.5 px-4'
               }`}
           >
-            <div className={`shrink-0 transition-all duration-300 group-hover:scale-110 ${isActiveSettings ? (isAdm ? 'text-indigo-600' : 'text-blue-600') : 'group-hover:text-slate-800'}`}>
+            <div className={`shrink-0 transition-all duration-300 group-hover:scale-110 ${isActiveSettings ? (isAdm ? 'text-indigo-600 dark:text-indigo-400' : 'text-blue-600 dark:text-blue-400') : 'group-hover:text-slate-800 dark:group-hover:text-white'}`}>
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
@@ -627,7 +627,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <motion.div
             whileHover={{ x: collapsed ? 0 : 6 }}
             whileTap={{ scale: 0.97 }}
-            className={`group relative flex w-full items-center rounded-2xl py-3.5 transition-all duration-300 text-slate-400 hover:bg-red-50/50 hover:border-red-100 hover:text-red-600 border border-transparent hover:shadow-[0_4px_20px_-8px_rgba(239,68,68,0.15)] ${collapsed ? 'justify-center px-0' : 'gap-3.5 px-4'
+            className={`group relative flex w-full items-center rounded-2xl py-3.5 transition-all duration-300 text-slate-400 hover:bg-red-50/50 hover:border-red-100 hover:text-red-600 border border-transparent hover:shadow-[0_4px_20px_-8px_rgba(239,68,68,0.15)] dark:text-slate-400 dark:hover:bg-red-950/20 dark:hover:border-red-900/40 dark:hover:text-red-400 ${collapsed ? 'justify-center px-0' : 'gap-3.5 px-4'
               }`}
           >
             <div className="shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:text-red-500">
@@ -667,7 +667,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-              className="fixed inset-y-0 left-0 z-[170] w-[300px] shadow-[20px_0_60px_-15px_rgba(0,0,0,0.3)] lg:hidden flex flex-col bg-white"
+              className="fixed inset-y-0 left-0 z-[170] w-[300px] shadow-[20px_0_60px_-15px_rgba(0,0,0,0.3)] lg:hidden flex flex-col bg-white dark:bg-[#0B101D]"
             >
               <div className="flex-1 h-full overflow-hidden">
                 {getMobileSidebarContent()}
