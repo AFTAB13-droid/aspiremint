@@ -338,7 +338,12 @@ export const sendOrderPaymentEmail = async (email: string, name: string, orderId
   });
 };
 
-export const sendRefundReminderEmail = async (email: string, name: string, orderData: any) => {
+export const sendRefundReminderEmail = async (
+  email: string, 
+  name: string, 
+  orderData: any, 
+  milestoneDay: 15 | 20 | 25 = 20
+) => {
   const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "https://aspiremint.in";
   const targetId = orderData._id || orderData.aspireOrderId;
   const refundFormUrl = `${baseUrl}/app/refunds/fill/${targetId}`;
@@ -359,22 +364,73 @@ export const sendRefundReminderEmail = async (email: string, name: string, order
     { label: "Status", value: "Refund Form Pending" }
   ];
 
+  let bannerHtml = "";
+  let subject = "";
+  let headerTitle = "";
+  let headerColor = "";
+  let headerTextColor = "#ffffff";
+  let buttonText = "👉 Fill Refund Form Now";
+
+  const orderIdDisplay = orderData.userOrderId || orderData.aspireOrderId || "Order";
+
+  if (milestoneDay === 15) {
+    headerTitle = "Friendly Reminder: Submit Refund Form";
+    headerColor = "#0d6efd";
+    headerTextColor = "#ffffff";
+    subject = `ℹ️ Reminder (Day 15): Please Submit Refund Form for Order #${orderIdDisplay}`;
+    buttonText = "👉 Submit Refund Form Now";
+    bannerHtml = `
+      <div style="background-color: #e7f1ff; border-left: 4px solid #0d6efd; padding: 14px 18px; margin: 15px 0; border-radius: 4px;">
+        <strong style="color: #084298; font-size: 15px;">ℹ️ Friendly Reminder: 15 Days Passed</strong><br>
+        <span style="color: #052c65; font-size: 13px;">
+          It has been 15 days since your order form was filled, and your refund form has not been submitted yet. 
+          Please fill and submit your refund form with your review or delivery screenshot so our verification team can approve your cashback payout smoothly.
+        </span>
+      </div>
+    `;
+  } else if (milestoneDay === 25) {
+    headerTitle = "🚨 Final Notice: Refund Form Pending";
+    headerColor = "#dc3545";
+    headerTextColor = "#ffffff";
+    subject = `🚨 Final Notice (Day 25): Urgent Refund Form Submission for Order #${orderIdDisplay}`;
+    buttonText = "⚡ Submit Refund Form Immediately (Final Call)";
+    bannerHtml = `
+      <div style="background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 14px 18px; margin: 15px 0; border-radius: 4px;">
+        <strong style="color: #842029; font-size: 15px;">🚨 Final Notice: 25 Days Passed – Action Required</strong><br>
+        <span style="color: #58151c; font-size: 13px;">
+          It has been <b>25 days</b> since your order form was filled, and your refund form is STILL pending! 
+          This is your <b>final reminder</b> before the refund claim window expires. Please submit your refund form right now to avoid cancellation of your cashback.
+        </span>
+      </div>
+    `;
+  } else {
+    // 20 Days (Default)
+    headerTitle = "Action Required: 20 Days Passed for Refund";
+    headerColor = "#ffc107";
+    headerTextColor = "#000000";
+    subject = `⚠️ Urgent (Day 20): Only 5 Days Left to Fill Refund Form for Order #${orderIdDisplay}`;
+    buttonText = "👉 Fill Refund Form Now";
+    bannerHtml = `
+      <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 14px 18px; margin: 15px 0; border-radius: 4px;">
+        <strong style="color: #856404; font-size: 15px;">⏳ Urgent Notice: Only 5 Days Left!</strong><br>
+        <span style="color: #664d03; font-size: 13px;">
+          It has been 20 days since your order form was filled, and you have not submitted your refund form yet. 
+          You have <b>only 5 days left</b> before the claim window closes. Please fill and submit your refund form immediately to receive your cashback!
+        </span>
+      </div>
+    `;
+  }
+
   const body = `
     Hi <b>${name}</b>,<br><br>
-    <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 14px 18px; margin: 15px 0; border-radius: 4px;">
-      <strong style="color: #856404; font-size: 15px;">⏳ Urgent Notice: Only 5 Days Left!</strong><br>
-      <span style="color: #664d03; font-size: 13px;">
-        It has been 20 days since your order form was filled, and you have not submitted your refund form yet. 
-        You have <b>only 5 days left</b> before the claim window closes. Please fill and submit your refund form immediately to receive your cashback!
-      </span>
-    </div>
+    ${bannerHtml}
 
     <b>Order Details:</b>
     ${renderTable(details)}
 
     <div style="text-align: center; margin: 28px 0;">
       <a href="${refundFormUrl}" style="background-color: #0d6efd; color: #ffffff; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 8px; font-size: 15px; display: inline-block;">
-        👉 Fill Refund Form Now
+        ${buttonText}
       </a>
     </div>
 
@@ -389,8 +445,8 @@ export const sendRefundReminderEmail = async (email: string, name: string, order
   return transporter.sendMail({
     from: process.env.EMAIL_FROM || `"AspireMint Admin" <info@aspiremint.in>`,
     to: email,
-    subject: `⚠️ Only 5 Days Left: Please Fill Refund Form for Order #${orderData.userOrderId || orderData.aspireOrderId}`,
-    html: renderSimpleEmail("Action Required: 5 Days Left for Refund", "#ffc107", "#000000", body),
+    subject,
+    html: renderSimpleEmail(headerTitle, headerColor, headerTextColor, body),
   });
 };
 

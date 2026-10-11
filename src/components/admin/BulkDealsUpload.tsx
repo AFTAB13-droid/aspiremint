@@ -212,7 +212,7 @@ export const BulkDealsUpload: React.FC<Props> = ({ onSuccess }) => {
       // Required fields
       if (!row.brandName) errors.push("Brand Name is required.");
       if (!row.productDetails) errors.push("Product Description is required.");
-      if (!row.productLink) errors.push("Direct Purchase Link is required.");
+      // Product Link is optional; if provided, it is validated for HTTP/HTTPS below.
 
       // Fuzzy check for Brand matching existing database Brands
       const matchedBrand = brands.find(b => b.name.toLowerCase() === row.brandName.toLowerCase());
@@ -328,7 +328,7 @@ export const BulkDealsUpload: React.FC<Props> = ({ onSuccess }) => {
   const triggerDownloadTemplate = () => {
     const csvContent = "brandName,productDetails,productLink,marketplace,dealType,reviewType,reviewSlots,ratingSlots,onlyOrderSlots,submittedSlots,commission,juhiCommission,originalCommission,productImage,userRemarks,mediatorRemarks,remarks,mediators\n" +
       "SAMSUNG,S24 Ultra Back Armor Case,https://amazon.in/s24-case,Amazon,Original,REVIEW,10,0,0,0,150,180,200,,Must ship next day,Internal dispatch standard,Premium sample,ALL\n" +
-      "APPLE,iPhone 15 Matte Screen Shield,https://flipkart.com/iph15,Flipkart,Original,REVIEW,RATING,5,5,0,0,100,120,150,,Placeholder image will apply automatically,,,Rohan Sharma, Anita Verma";
+      "APPLE,iPhone 15 Matte Screen Shield,,Flipkart,Original,REVIEW,RATING,5,5,0,0,100,120,150,,Placeholder image will apply automatically,,,Rohan Sharma, Anita Verma";
     
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);

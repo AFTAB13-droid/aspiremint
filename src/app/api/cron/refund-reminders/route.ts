@@ -3,8 +3,8 @@ export const dynamic = "force-dynamic";
 import { checkAndSendRefundReminders } from "@/services/refundReminderService";
 
 /**
- * Dedicated Cron / Trigger Endpoint for 20-Day Refund Reminders
- * Invoked to scan orders in REFUND_FORM_PENDING after 20 days and send emails warning 5 days remain.
+ * Dedicated Cron / Trigger Endpoint for Multi-Milestone (15, 20, 25 Days) Refund Reminders
+ * Invoked to scan orders in REFUND_FORM_PENDING after 15, 20, and 25 days and send reminder emails.
  */
 export async function GET(req: Request) {
   try {

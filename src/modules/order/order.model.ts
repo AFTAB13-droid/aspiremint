@@ -56,6 +56,12 @@ export interface IOrder extends Document {
   invoiceOrderId?: string;
   refundReminderSent?: boolean;
   refundReminderSentAt?: Date;
+  refundReminder15Sent?: boolean;
+  refundReminder15SentAt?: Date;
+  refundReminder20Sent?: boolean;
+  refundReminder20SentAt?: Date;
+  refundReminder25Sent?: boolean;
+  refundReminder25SentAt?: Date;
   refundProof?: {
     reviewLink?: string;
     reviewScreenshot?: string;
@@ -131,6 +137,12 @@ const OrderSchema = new Schema<IOrder>(
     invoiceOrderId: { type: String },
     refundReminderSent: { type: Boolean, default: false },
     refundReminderSentAt: { type: Date },
+    refundReminder15Sent: { type: Boolean, default: false },
+    refundReminder15SentAt: { type: Date },
+    refundReminder20Sent: { type: Boolean, default: false },
+    refundReminder20SentAt: { type: Date },
+    refundReminder25Sent: { type: Boolean, default: false },
+    refundReminder25SentAt: { type: Date },
     refundDetails: {
       upiId: String,
       accountNumber: String,
