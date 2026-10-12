@@ -521,13 +521,29 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
             timeStyle: "medium" 
           });
 
+          const isBlinkit = Boolean(
+            updatedOrder.marketplace?.toLowerCase().includes("blinkit") || 
+            updatedOrder.brandName?.toLowerCase().includes("blinkit")
+          );
+
+          const refundPayout = updatedOrder.refundDetails?.expectedPayout ?? 
+            (updatedOrder.dealType === 'Empty Box' 
+              ? ((Number(updatedOrder.amount) || 0) + (Number(updatedOrder.lessAmount) || 0)) 
+              : ((Number(updatedOrder.amount) || 0) - (Number(updatedOrder.lessAmount) || 0)));
+
           await pushToGoogleSheet("REFUND", {
             "Timestamp": istTimestamp,
-            "Order Id": updatedOrder.userOrderId || updatedOrder._id,
+            "Order ID": updatedOrder.userOrderId || updatedOrder.aspireOrderId || String(updatedOrder._id),
             "Mobile Number": buyer?.mobile || "",
-            "Review Ss": updatedOrder.refundProof?.reviewScreenshot || "",
-            "Feedback Ss": updatedOrder.refundProof?.returnPeriodScreenshot || "",
-            "Refund Amount": updatedOrder.refundDetails?.expectedPayout ?? updatedOrder.amount,
+            "Review Screenshot": updatedOrder.refundProof?.reviewScreenshot || "",
+            "Seller Feedback": updatedOrder.refundProof?.sellerFeedbackScreenshot || "",
+            "Return Period SS": isBlinkit ? "" : (updatedOrder.refundProof?.returnPeriodScreenshot || ""),
+            "Delivered SS": updatedOrder.refundProof?.deliveryScreenshot || "",
+            "Review Link": updatedOrder.refundProof?.reviewLink || "",
+            "Invoice Screenshot (For Blinkit Orders)": isBlinkit 
+              ? (updatedOrder.refundProof?.invoiceScreenshot || updatedOrder.refundProof?.returnPeriodScreenshot || "") 
+              : (updatedOrder.refundProof?.invoiceScreenshot || ""),
+            "Refund Amount": refundPayout,
           });
         } catch (err) {
           console.error("Google sheets push error:", err);

@@ -65,8 +65,10 @@ export interface IOrder extends Document {
   refundProof?: {
     reviewLink?: string;
     reviewScreenshot?: string;
+    sellerFeedbackScreenshot?: string;
     returnPeriodScreenshot?: string;
     deliveryScreenshot?: string;
+    invoiceScreenshot?: string;
   };
   paymentDetails?: {
     transactionId?: string;
@@ -159,8 +161,10 @@ const OrderSchema = new Schema<IOrder>(
     refundProof: {
       reviewLink: String,
       reviewScreenshot: String,
+      sellerFeedbackScreenshot: String,
       returnPeriodScreenshot: String,
       deliveryScreenshot: String,
+      invoiceScreenshot: String,
     },
     paymentDetails: {
       transactionId: String,

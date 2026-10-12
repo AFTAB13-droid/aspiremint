@@ -20,8 +20,10 @@ export default function FillRefundPage() {
   const [formData, setFormData] = useState<any>({
     reviewLink: "",
     reviewScreenshot: "",
+    sellerFeedbackScreenshot: "",
     returnPeriodScreenshot: "",
     deliveryScreenshot: "",
+    invoiceScreenshot: "",
     invoiceOrderId: "",
     upiId: "",
     accountHolderName: "",
@@ -77,8 +79,10 @@ export default function FillRefundPage() {
                     // Sync proofs as fallback if not in draft
                     if (!newState.reviewLink) newState.reviewLink = o.refundProof?.reviewLink || "";
                     if (!newState.reviewScreenshot) newState.reviewScreenshot = o.refundProof?.reviewScreenshot || "";
+                    if (!newState.sellerFeedbackScreenshot) newState.sellerFeedbackScreenshot = o.refundProof?.sellerFeedbackScreenshot || "";
                     if (!newState.returnPeriodScreenshot) newState.returnPeriodScreenshot = o.refundProof?.returnPeriodScreenshot || "";
                     if (!newState.deliveryScreenshot) newState.deliveryScreenshot = o.refundProof?.deliveryScreenshot || "";
+                    if (!newState.invoiceScreenshot) newState.invoiceScreenshot = o.refundProof?.invoiceScreenshot || (isBlinkit ? o.refundProof?.returnPeriodScreenshot : "") || "";
 
                     return newState;
                  });
@@ -87,8 +91,10 @@ export default function FillRefundPage() {
              setFormData({
                 reviewLink: o.refundProof?.reviewLink || "",
                 reviewScreenshot: o.refundProof?.reviewScreenshot || "",
+                sellerFeedbackScreenshot: o.refundProof?.sellerFeedbackScreenshot || "",
                 returnPeriodScreenshot: o.refundProof?.returnPeriodScreenshot || "",
                 deliveryScreenshot: o.refundProof?.deliveryScreenshot || "",
+                invoiceScreenshot: o.refundProof?.invoiceScreenshot || (isBlinkit ? o.refundProof?.returnPeriodScreenshot : "") || "",
                 invoiceOrderId: o.refundDetails?.invoiceOrderId || o.invoiceOrderId || "",
                 upiId: o.refundDetails?.upiId || profileUpi || "",
                 accountHolderName: o.refundDetails?.accountHolderName || profileHolder || "",
@@ -193,9 +199,16 @@ export default function FillRefundPage() {
           toast.error(`Please upload the ${ssLabel}`);
           return;
        }
-       if (!formData.returnPeriodScreenshot) {
-          toast.error(`Please upload the ${isBlinkit ? "Invoice Screenshot" : "Return Period Over Screenshot"}`);
-          return;
+       if (isBlinkit) {
+          if (!formData.invoiceScreenshot && !formData.returnPeriodScreenshot) {
+             toast.error("Please upload the Blinkit Invoice Screenshot");
+             return;
+          }
+       } else {
+          if (!formData.returnPeriodScreenshot) {
+             toast.error("Please upload the Return Period Over Screenshot");
+             return;
+          }
        }
     }
 
@@ -236,8 +249,12 @@ export default function FillRefundPage() {
           refundProof: {
             reviewLink: formData.reviewLink || "",
             reviewScreenshot: formData.reviewScreenshot || "",
-            returnPeriodScreenshot: formData.returnPeriodScreenshot || "",
+            sellerFeedbackScreenshot: formData.sellerFeedbackScreenshot || "",
+            returnPeriodScreenshot: isBlinkit ? "" : (formData.returnPeriodScreenshot || ""),
             deliveryScreenshot: formData.deliveryScreenshot || "",
+            invoiceScreenshot: isBlinkit 
+              ? (formData.invoiceScreenshot || formData.returnPeriodScreenshot || "") 
+              : (formData.invoiceScreenshot || ""),
           }
         }),
       });
@@ -294,9 +311,9 @@ export default function FillRefundPage() {
   const RenderProofInput = ({ label, field, sublabel }: { label: string, field: string, sublabel?: string }) => {
     let tabLink = "";
     if (field === 'returnPeriodScreenshot') {
-       const isBlinkit = order.marketplace?.toLowerCase().includes("blinkit") || order.brandName?.toLowerCase().includes("blinkit");
-       if (isBlinkit) tabLink = "invoice-ss";
-       else tabLink = "return-period-ss";
+       tabLink = "return-period-ss";
+    } else if (field === 'invoiceScreenshot') {
+       tabLink = "invoice-ss";
     }
 
     return (
@@ -440,12 +457,18 @@ export default function FillRefundPage() {
                          {(isReviewDeal || isRatingDeal || isSubmittedDeal) && (
                             <RenderProofInput label={(isSubmittedDeal ? "Review Submitted SS" : isReviewDeal ? "Review Snapshot" : "Rating Snapshot") + " *"} field="reviewScreenshot" sublabel="Select Snapshot" />
                          )}
-                         {(isReviewDeal || isRatingDeal || isSubmittedDeal) && (
-                            <RenderProofInput label={((order.marketplace?.toLowerCase().includes("blinkit") || order.brandName?.toLowerCase().includes("blinkit")) ? "Invoice SS *" : "Return Period Over SS *")} field="returnPeriodScreenshot" sublabel={((order.marketplace?.toLowerCase().includes("blinkit") || order.brandName?.toLowerCase().includes("blinkit")) ? "Invoice Evidence" : "Window Evidence")} />
+                         {(isReviewDeal || isRatingDeal || isSubmittedDeal) && !isBlinkit && (
+                            <RenderProofInput label="Seller Feedback (Optional)" field="sellerFeedbackScreenshot" sublabel="Select Feedback Snapshot" />
+                         )}
+                         {(isReviewDeal || isRatingDeal || isSubmittedDeal) && !isBlinkit && (
+                            <RenderProofInput label="Return Period Over SS *" field="returnPeriodScreenshot" sublabel="Window Evidence" />
+                         )}
+                         {isBlinkit && (
+                            <RenderProofInput label="Invoice Screenshot (Blinkit) *" field="invoiceScreenshot" sublabel="Upload Blinkit Invoice" />
                          )}
                          {isOnlyOrder && (
                             <div className="col-span-full">
-                               <RenderProofInput label="Order Delivered Screenshot" field="deliveryScreenshot" sublabel="Upload snapshot from orders dashboard" />
+                               <RenderProofInput label="Order Delivered Screenshot *" field="deliveryScreenshot" sublabel="Upload snapshot from orders dashboard" />
                             </div>
                          )}
                       </div>
