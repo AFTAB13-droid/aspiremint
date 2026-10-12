@@ -168,7 +168,8 @@ export async function POST(req: Request) {
           ifscCode: explicitIfsc || user.paymentDetails?.ifscCode,
           bankName: explicitBank || user.paymentDetails?.bankName,
           accountHolderName: explicitHolder || user.paymentDetails?.accountHolder,
-          ...(explicitUpi && { submittedAt: new Date() })
+          ...(explicitUpi && { submittedAt: new Date() }),
+          expectedPayout: dealType === 'Empty Box' ? ((parsedAmount || 0) + (Number(lessAmount) || 0)) : ((parsedAmount || 0) - (Number(lessAmount) || 0))
         },
         userRemarks: dealDoc.userRemarks || "",
         mediatorRemarks: dealDoc.mediatorRemarks || "",
@@ -232,21 +233,40 @@ export async function POST(req: Request) {
       // Run all external post-transaction tasks concurrently to speed up API response
       const externalTasks = [];
 
+      const istTimestamp = new Date().toLocaleString("en-IN", { 
+        timeZone: "Asia/Kolkata",
+        dateStyle: "medium", 
+        timeStyle: "medium" 
+      });
+
+      const protocolValue = reviewType === "SUBMITTED" 
+        ? "REVIEW SUBMITTED" 
+        : (reviewType || "");
+
+      const refundAmount = dealType === 'Empty Box'
+        ? ((parsedAmount || 0) + (Number(lessAmount) || 0))
+        : ((parsedAmount || 0) - (Number(lessAmount) || 0));
+
+      const exchangeProductName = typeof exchangeProduct === 'object' && exchangeProduct !== null 
+        ? (exchangeProduct.name || "") 
+        : (typeof exchangeProduct === 'string' ? exchangeProduct : "");
+
       externalTasks.push(
         import('@/utils/googleSheets').then(({ pushToGoogleSheet }) => 
           pushToGoogleSheet("ORDER", {
+            "Timestamp": istTimestamp,
             "Brand Name": brandName,
             "Product Code": productCode,
-            "Order Id": userOrderId || "",
-            "Reviewer Name": reviewName || "",
+            "Deal Protocol (Protocol Type)": protocolValue,
+            "Order ID": userOrderId ? userOrderId.trim() : "",
+            "Review Name": typeof reviewName === 'string' ? reviewName.trim() : (reviewName || ""),
+            "Order Amount": parsedAmount,
+            "Order Screenshot": screenshot || "",
             "Mobile Number": user.mobile || "",
-            "order Amount": amount,
-            "order ss": screenshot || "",
-            "Mediator Name": assignedMediator?.systemDisplayName || assignedMediator?.name || "Unassigned",
-            "Deal Type": reviewType || "",
-            "Exchange Product": exchangeProduct || "",
-            "Less Amount": lessAmount || 0,
-            "Refund Amount": (Number(amount) || 0) - (Number(lessAmount) || 0),
+            "Deal Type": dealType || "",
+            "Exchange Product": exchangeProductName,
+            "Commission/Less": lessAmount !== undefined && lessAmount !== "" ? Number(lessAmount) : 0,
+            "Refund Amount": refundAmount,
             "Product Link": dealDoc.productLink || "",
           })
         ).catch(err => console.error("Google sheets push error:", err))

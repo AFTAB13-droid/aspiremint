@@ -515,12 +515,19 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         try {
           const buyer = await (await import('@/modules/user/user.model')).User.findById(updatedOrder.buyer).lean();
           const { pushToGoogleSheet } = await import('@/utils/googleSheets');
+          const istTimestamp = new Date().toLocaleString("en-IN", { 
+            timeZone: "Asia/Kolkata",
+            dateStyle: "medium", 
+            timeStyle: "medium" 
+          });
+
           await pushToGoogleSheet("REFUND", {
+            "Timestamp": istTimestamp,
             "Order Id": updatedOrder.userOrderId || updatedOrder._id,
             "Mobile Number": buyer?.mobile || "",
             "Review Ss": updatedOrder.refundProof?.reviewScreenshot || "",
             "Feedback Ss": updatedOrder.refundProof?.returnPeriodScreenshot || "",
-            "Refund Amount": updatedOrder.amount,
+            "Refund Amount": updatedOrder.refundDetails?.expectedPayout ?? updatedOrder.amount,
           });
         } catch (err) {
           console.error("Google sheets push error:", err);
