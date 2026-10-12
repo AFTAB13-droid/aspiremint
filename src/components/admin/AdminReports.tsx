@@ -362,27 +362,161 @@ export const AdminReports: React.FC<AdminReportsProps> = ({ orders = [], allBran
     }
   };
 
-  const appScriptCode = `function doPost(e) {
+  const appScriptCode = `// ASPIREMINT UNIFIED GOOGLE APPS SCRIPT (Code.gs)
+// Handles: Orders (14 Columns), Refunds (10 Columns), and Admin Reports
+
+var ORDER_COLUMNS = [
+  "Timestamp",
+  "Brand Name",
+  "Product Code",
+  "Deal Protocol (Protocol Type)",
+  "Order ID",
+  "Review Name",
+  "Order Amount",
+  "Order Screenshot",
+  "Mobile Number",
+  "Deal Type",
+  "Exchange Product",
+  "Commission/Less",
+  "Refund Amount",
+  "Product Link"
+];
+
+var REFUND_COLUMNS = [
+  "Timestamp",
+  "Order ID",
+  "Mobile Number",
+  "Review Screenshot",
+  "Seller Feedback",
+  "Return Period SS",
+  "Delivered SS",
+  "Review Link",
+  "Invoice Screenshot (For Blinkit Orders)",
+  "Refund Amount"
+];
+
+function doPost(e) {
   try {
+    if (!e || !e.postData || !e.postData.contents) {
+      return jsonResponse({ success: false, message: "Empty payload received." });
+    }
+
     var payload = JSON.parse(e.postData.contents);
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    
-    // Write headers if spreadsheet is brand new
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(payload.headers);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var type = (payload.type || "").toString().toUpperCase();
+
+    // 1. ORDER SUBMISSIONS
+    if (type === "ORDER") {
+      var orderSheet = getOrCreateSheet(ss, "Orders");
+      writeRowToSheet(orderSheet, ORDER_COLUMNS, payload);
+      return jsonResponse({ success: true, message: "Order logged successfully." });
     }
-    
-    // Write report summary rows
-    for (var i = 0; i < payload.rows.length; i++) {
-      sheet.appendRow(payload.rows[i]);
+
+    // 2. REFUND SUBMISSIONS
+    if (type === "REFUND") {
+      var refundSheet = getOrCreateSheet(ss, "Refunds");
+      writeRowToSheet(refundSheet, REFUND_COLUMNS, payload);
+      return jsonResponse({ success: true, message: "Refund logged successfully." });
     }
-    
-    return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Sheet synchronized successfully." }))
-      .setMimeType(ContentService.MimeType.JSON);
+
+    // 3. ADMIN REPORTS BULK EXPORT
+    if (payload.rows && Array.isArray(payload.rows)) {
+      var reportsSheet = getOrCreateSheet(ss, "Reports");
+      if (reportsSheet.getLastRow() === 0 && payload.headers && Array.isArray(payload.headers)) {
+        reportsSheet.appendRow(payload.headers);
+        reportsSheet.getRange(1, 1, 1, payload.headers.length).setFontWeight("bold");
+        reportsSheet.setFrozenRows(1);
+      }
+      for (var r = 0; r < payload.rows.length; r++) {
+        reportsSheet.appendRow(payload.rows[r]);
+      }
+      return jsonResponse({ success: true, message: "Report synchronized successfully." });
+    }
+
+    // 4. FALLBACK
+    var defaultSheet = ss.getActiveSheet();
+    var keys = Object.keys(payload).filter(function(k) { return k !== "type"; });
+    if (keys.length > 0) {
+      writeRowToSheet(defaultSheet, keys, payload);
+      return jsonResponse({ success: true, message: "Data logged to active sheet." });
+    }
+
+    return jsonResponse({ success: false, message: "Unrecognized payload format." });
+
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ success: false, message: err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return jsonResponse({ success: false, error: err.toString() });
   }
+}
+
+function doGet(e) {
+  return jsonResponse({ success: true, status: "active", message: "AspireMint Webhook Service is active." });
+}
+
+function getOrCreateSheet(ss, targetName) {
+  var sheets = ss.getSheets();
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].getName().trim().toLowerCase() === targetName.toLowerCase()) {
+      return sheets[i];
+    }
+  }
+  if (sheets.length === 1 && sheets[0].getLastRow() === 0 && sheets[0].getLastColumn() === 0) {
+    sheets[0].setName(targetName);
+    return sheets[0];
+  }
+  return ss.insertSheet(targetName);
+}
+
+function writeRowToSheet(sheet, defaultHeaders, payload) {
+  var lastRow = sheet.getLastRow();
+  var headers = [];
+
+  if (lastRow === 0) {
+    sheet.appendRow(defaultHeaders);
+    sheet.getRange(1, 1, 1, defaultHeaders.length).setFontWeight("bold");
+    sheet.setFrozenRows(1);
+    headers = defaultHeaders;
+  } else {
+    var numCols = sheet.getLastColumn();
+    if (numCols > 0) {
+      headers = sheet.getRange(1, 1, 1, numCols).getValues()[0];
+    } else {
+      headers = defaultHeaders;
+    }
+  }
+
+  var row = [];
+  for (var i = 0; i < headers.length; i++) {
+    var colName = (headers[i] || "").toString().trim();
+    var val = findValue(payload, colName);
+    row.push(val !== undefined && val !== null ? val : "");
+  }
+
+  sheet.appendRow(row);
+}
+
+function findValue(obj, headerName) {
+  if (!headerName) return "";
+  if (obj[headerName] !== undefined && obj[headerName] !== null) {
+    return obj[headerName];
+  }
+
+  var cleanHeader = headerName.toLowerCase().replace(/[^a-z0-9]/g, "");
+  var keys = Object.keys(obj);
+
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    var cleanKey = k.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (cleanKey === cleanHeader) {
+      return obj[k];
+    }
+  }
+
+  return "";
+}
+
+function jsonResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
 }`;
 
   return (
