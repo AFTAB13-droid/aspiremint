@@ -72,6 +72,30 @@ export interface IUser extends Document {
     counter: number;
     transports?: string[];
   }[];
+  linkedPlatforms?: {
+    amazon?: {
+      connected: boolean;
+      accountName?: string;
+      accountIdentifier?: string;
+      linkedAt?: Date;
+      lastSyncedAt?: Date;
+    };
+    flipkart?: {
+      connected: boolean;
+      accountName?: string;
+      accountIdentifier?: string;
+      linkedAt?: Date;
+      lastSyncedAt?: Date;
+    };
+    blinkit?: {
+      connected: boolean;
+      accountName?: string;
+      accountIdentifier?: string;
+      linkedAt?: Date;
+      lastSyncedAt?: Date;
+    };
+    [key: string]: any;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -151,7 +175,30 @@ const UserSchema = new Schema<IUser>(
         counter: { type: Number, required: true },
         transports: { type: [String], default: [] }
       }
-    ]
+    ],
+    linkedPlatforms: {
+      amazon: {
+        connected: { type: Boolean, default: false },
+        accountName: { type: String },
+        accountIdentifier: { type: String },
+        linkedAt: { type: Date },
+        lastSyncedAt: { type: Date }
+      },
+      flipkart: {
+        connected: { type: Boolean, default: false },
+        accountName: { type: String },
+        accountIdentifier: { type: String },
+        linkedAt: { type: Date },
+        lastSyncedAt: { type: Date }
+      },
+      blinkit: {
+        connected: { type: Boolean, default: false },
+        accountName: { type: String },
+        accountIdentifier: { type: String },
+        linkedAt: { type: Date },
+        lastSyncedAt: { type: Date }
+      }
+    }
   },
   { timestamps: true }
 );

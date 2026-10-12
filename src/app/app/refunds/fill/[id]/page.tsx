@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { MarketplaceSyncModal, RefundProofs } from "@/components/marketplace/MarketplaceSyncModal";
 
 export default function FillRefundPage() {
   const { id } = useParams();
@@ -13,6 +14,7 @@ export default function FillRefundPage() {
   const [submitting, setSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState<string | null>(null);
   const [order, setOrder] = useState<any>(null);
+  const [showSyncModal, setShowSyncModal] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitPhase, setSubmitPhase] = useState<number>(0);
   const submissionPhases = ["Verifying Details...", "Requesting for Refund..."];
@@ -57,6 +59,11 @@ export default function FillRefundPage() {
           const storageKey = `refund_form_${id}`;
           const saved = localStorage.getItem(storageKey);
           const isEditMode = o.status !== "REFUND_FORM_PENDING";
+
+          const isBlinkitOrder = Boolean(
+             o.marketplace?.toLowerCase().includes("blinkit") || 
+             o.brandName?.toLowerCase().includes("blinkit")
+          );
           
           if (saved && !isEditMode) {
              try {
@@ -82,7 +89,7 @@ export default function FillRefundPage() {
                     if (!newState.sellerFeedbackScreenshot) newState.sellerFeedbackScreenshot = o.refundProof?.sellerFeedbackScreenshot || "";
                     if (!newState.returnPeriodScreenshot) newState.returnPeriodScreenshot = o.refundProof?.returnPeriodScreenshot || "";
                     if (!newState.deliveryScreenshot) newState.deliveryScreenshot = o.refundProof?.deliveryScreenshot || "";
-                    if (!newState.invoiceScreenshot) newState.invoiceScreenshot = o.refundProof?.invoiceScreenshot || (isBlinkit ? o.refundProof?.returnPeriodScreenshot : "") || "";
+                    if (!newState.invoiceScreenshot) newState.invoiceScreenshot = o.refundProof?.invoiceScreenshot || (isBlinkitOrder ? o.refundProof?.returnPeriodScreenshot : "") || "";
 
                     return newState;
                  });
@@ -94,7 +101,7 @@ export default function FillRefundPage() {
                 sellerFeedbackScreenshot: o.refundProof?.sellerFeedbackScreenshot || "",
                 returnPeriodScreenshot: o.refundProof?.returnPeriodScreenshot || "",
                 deliveryScreenshot: o.refundProof?.deliveryScreenshot || "",
-                invoiceScreenshot: o.refundProof?.invoiceScreenshot || (isBlinkit ? o.refundProof?.returnPeriodScreenshot : "") || "",
+                invoiceScreenshot: o.refundProof?.invoiceScreenshot || (isBlinkitOrder ? o.refundProof?.returnPeriodScreenshot : "") || "",
                 invoiceOrderId: o.refundDetails?.invoiceOrderId || o.invoiceOrderId || "",
                 upiId: o.refundDetails?.upiId || profileUpi || "",
                 accountHolderName: o.refundDetails?.accountHolderName || profileHolder || "",
@@ -167,6 +174,21 @@ export default function FillRefundPage() {
     } catch (err: any) {
       toast.error(err.message || "Upload Transmission Interrupted", { id: loadingId });
     } finally { setIsUploading(null); }
+  };
+
+  const handleApplyProofs = (proofs: RefundProofs) => {
+    setFormData((prev: any) => ({
+      ...prev,
+      reviewLink: proofs.reviewLink || prev.reviewLink,
+      reviewScreenshot: proofs.reviewScreenshot || prev.reviewScreenshot,
+      sellerFeedbackScreenshot: proofs.sellerFeedbackScreenshot || prev.sellerFeedbackScreenshot,
+      returnPeriodScreenshot: proofs.returnPeriodScreenshot || prev.returnPeriodScreenshot,
+      deliveryScreenshot: proofs.deliveryScreenshot || prev.deliveryScreenshot,
+      invoiceScreenshot: proofs.invoiceScreenshot || prev.invoiceScreenshot,
+      invoiceOrderId: proofs.invoiceOrderId || prev.invoiceOrderId,
+      accountHolderName: proofs.reviewerName || prev.accountHolderName,
+    }));
+    toast.success("⚡ Verified marketplace proofs applied! All fields remain 100% editable.");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -407,14 +429,52 @@ export default function FillRefundPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           
           <div className="md:col-span-2 order-2 md:order-1">
-             <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="rounded-[32px] md:rounded-[40px] bg-white p-5 md:p-12 shadow-sm md:shadow-xl md:shadow-slate-200/50">
+             <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="rounded-[32px] md:rounded-[40px] bg-white dark:bg-[#0E1526] p-5 md:p-12 shadow-sm md:shadow-xl md:shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800/80">
                 <form onSubmit={handleSubmit} className="space-y-6 md:space-y-10">
                    
+                   {/* Marketplace Fast-Track Proof Sync Banner */}
+                   <div className="p-4 sm:p-5 rounded-[24px] bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-blue-500/10 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-blue-950/40 border border-emerald-200/80 dark:border-emerald-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                      <div className="flex items-center gap-3">
+                         <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-600 text-white flex items-center justify-center text-xl shadow-md shrink-0">
+                            ⚡
+                         </div>
+                         <div>
+                            <div className="flex items-center gap-2">
+                               <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                                  Marketplace Auto-Fetch
+                               </h4>
+                               <span className="text-[8px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800">
+                                  Sandboxed
+                               </span>
+                            </div>
+                            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                               Auto-retrieve review link, delivery date & return period status from {order?.marketplace || "Marketplace"}.
+                            </p>
+                         </div>
+                      </div>
+                      <button
+                         type="button"
+                         onClick={() => setShowSyncModal(true)}
+                         className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-md shadow-emerald-600/20 active:scale-95 transition-all shrink-0 flex items-center justify-center gap-1.5"
+                      >
+                         <span>⚡ Auto-Fetch Proofs</span>
+                      </button>
+                   </div>
+
                    {/* Proof Section */}
                    <div className="space-y-8">
-                      <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-3">
-                         <div className="h-4 w-1 bg-blue-600 rounded-full" /> Proof Verification
-                      </h3>
+                      <div className="flex items-center justify-between">
+                         <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-[0.2em] flex items-center gap-3">
+                            <div className="h-4 w-1 bg-blue-600 rounded-full" /> Proof Verification
+                         </h3>
+                         <button
+                            type="button"
+                            onClick={() => setShowSyncModal(true)}
+                            className="text-[9px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/60 dark:border-emerald-800 transition-all active:scale-95"
+                         >
+                            <span>⚡ Auto-Fetch</span>
+                         </button>
+                      </div>
 
                         <div className="space-y-6 font-mono">
                            {isBlinkit && (
@@ -440,9 +500,18 @@ export default function FillRefundPage() {
 
                            {(isReviewDeal) && (
                              <div className="space-y-3 font-mono">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                                  Live Review URL
-                                </label>
+                                <div className="flex items-center justify-between ml-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                      Live Review URL
+                                    </label>
+                                    <button
+                                       type="button"
+                                       onClick={() => setShowSyncModal(true)}
+                                       className="text-[9px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/60 dark:border-indigo-800 transition-all active:scale-95"
+                                    >
+                                       <span>⚡ Auto-Fetch Link</span>
+                                    </button>
+                                 </div>
                                <input 
                                  type="url" value={formData.reviewLink}
                                  onChange={(e) => setFormData({...formData, reviewLink: e.target.value})}
@@ -457,10 +526,7 @@ export default function FillRefundPage() {
                          {(isReviewDeal || isRatingDeal || isSubmittedDeal) && (
                             <RenderProofInput label={(isSubmittedDeal ? "Review Submitted SS" : isReviewDeal ? "Review Snapshot" : "Rating Snapshot") + " *"} field="reviewScreenshot" sublabel="Select Snapshot" />
                          )}
-                         {(isReviewDeal || isRatingDeal || isSubmittedDeal) && !isBlinkit && (
-                            <RenderProofInput label="Seller Feedback (Optional)" field="sellerFeedbackScreenshot" sublabel="Select Feedback Snapshot" />
-                         )}
-                         {(isReviewDeal || isRatingDeal || isSubmittedDeal) && !isBlinkit && (
+                                                  {(isReviewDeal || isRatingDeal || isSubmittedDeal) && !isBlinkit && (
                             <RenderProofInput label="Return Period Over SS *" field="returnPeriodScreenshot" sublabel="Window Evidence" />
                          )}
                          {isBlinkit && (
@@ -635,6 +701,18 @@ export default function FillRefundPage() {
          )}
       </AnimatePresence>
 
-    </div>
+    
+
+      {/* Marketplace Sync & Proof Fetch Modal */}
+      <MarketplaceSyncModal
+        isOpen={showSyncModal}
+        onClose={() => setShowSyncModal(false)}
+        mode="REFUND_FETCH"
+        currentMarketplace={order?.marketplace}
+        lockedPlatform={order?.marketplace || (isBlinkit ? "Blinkit" : "Amazon")}
+        orderId={order?.userOrderId || order?.aspireOrderId}
+        onApplyProofs={handleApplyProofs}
+      />
+</div>
   );
 }

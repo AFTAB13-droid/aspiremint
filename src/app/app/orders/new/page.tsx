@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { MarketplaceSyncModal, SyncedOrder } from "@/components/marketplace/MarketplaceSyncModal";
 
 interface PlatformFormat {
   regex: RegExp;
@@ -80,6 +81,7 @@ export default function NewOrderPage() {
   const [mediators, setMediators] = useState<any[]>([]);
   const [activeDeals, setActiveDeals] = useState<any[]>([]);
   const [selectedDealDetails, setSelectedDealDetails] = useState<any>(null);
+  const [showSyncModal, setShowSyncModal] = useState(false);
 
   const [formData, setFormData] = useState({
     brandName: "",
@@ -349,6 +351,24 @@ export default function NewOrderPage() {
     });
   };
 
+  const handleSelectSyncedOrder = (order: SyncedOrder) => {
+    setFormData(prev => ({
+      ...prev,
+      userOrderId: order.orderId,
+      amount: order.amount !== undefined ? order.amount.toString() : prev.amount,
+      brandName: order.brandName || prev.brandName,
+      productCode: order.productCode || prev.productCode,
+      dealType: order.dealType || prev.dealType,
+      reviewType: order.reviewType || prev.reviewType,
+      reviewName: order.reviewerName || prev.reviewName,
+      screenshot: order.imageUrl || prev.screenshot,
+    }));
+    if (order.imageUrl) {
+      setUploadPreview(order.imageUrl);
+    }
+    toast.success(`⚡ Auto-filled ${order.orderId} from ${order.marketplace}! All fields remain 100% editable.`);
+  };
+
   const compressImage = async (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -536,8 +556,39 @@ export default function NewOrderPage() {
             
             {/* Left Column: Form Content */}
             <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-[40px] bg-white p-6 md:p-10 shadow-xl shadow-slate-200/30 border border-white space-y-8">
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-[40px] bg-white dark:bg-[#0E1526] p-6 md:p-10 shadow-xl shadow-slate-200/30 dark:shadow-none border border-slate-100 dark:border-slate-800/80 space-y-8">
                   
+                  {/* Marketplace Fast-Track Auto-Sync Banner */}
+                  <div className="p-4 sm:p-5 rounded-[28px] bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-blue-500/10 dark:from-indigo-950/40 dark:via-purple-950/30 dark:to-blue-950/40 border border-indigo-200/80 dark:border-indigo-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                     <div className="flex items-center gap-3">
+                        <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-600 text-white flex items-center justify-center text-xl shadow-md shrink-0">
+                           ⚡
+                        </div>
+                        <div>
+                           <div className="flex items-center gap-2">
+                              <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                                 {selectedDealDetails?.marketplace ? `${selectedDealDetails.marketplace} Auto-Fill` : "Marketplace Auto-Fill"}
+                              </h4>
+                              <span className="text-[8px] font-black uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-200/60 dark:border-indigo-800">
+                                 {selectedDealDetails?.marketplace ? `Predefined: ${selectedDealDetails.marketplace}` : "Sandboxed"}
+                              </span>
+                           </div>
+                           <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                              {selectedDealDetails?.marketplace 
+                                 ? `Predefined for this deal: Auto-fetch your recent ${selectedDealDetails.marketplace} purchase in 1 click.`
+                                 : "Auto-fetch recent Amazon, Flipkart or Blinkit orders in 1-click. Manual edit always open."}
+                           </p>
+                        </div>
+                     </div>
+                     <button
+                        type="button"
+                        onClick={() => setShowSyncModal(true)}
+                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-md shadow-indigo-600/20 active:scale-95 transition-all shrink-0 flex items-center justify-center gap-1.5"
+                     >
+                        <span>⚡ Auto-Fetch {selectedDealDetails?.marketplace || "Orders"}</span>
+                     </button>
+                  </div>
+
                   {/* Section 1: Brand & Product */}
                   <div className="space-y-6">
                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
@@ -628,9 +679,18 @@ export default function NewOrderPage() {
                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                         {isFieldEnabled('userOrderId') && (
                            <div className="space-y-2 col-span-full sm:col-span-1">
-                              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                                 {config.userOrderId.label} {isFieldRequired('userOrderId') && "*"}
-                              </label>
+                              <div className="flex items-center justify-between ml-1">
+                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                    {config.userOrderId.label} {isFieldRequired('userOrderId') && "*"}
+                                 </label>
+                                 <button
+                                    type="button"
+                                    onClick={() => setShowSyncModal(true)}
+                                    className="text-[9px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/60 dark:border-indigo-800 transition-all active:scale-95"
+                                 >
+                                    <span>⚡ Auto-Fetch</span>
+                                 </button>
+                              </div>
                               <input 
                                  name="userOrderId" type="text" required={isFieldRequired('userOrderId')} value={formData.userOrderId} onChange={handleInputChange}
                                  placeholder={config.userOrderId.placeholder}
@@ -1124,6 +1184,16 @@ export default function NewOrderPage() {
             </motion.div>
          )}
       </AnimatePresence>
+
+      {/* Marketplace Sync & Auto-Fetch Modal */}
+      <MarketplaceSyncModal
+        isOpen={showSyncModal}
+        onClose={() => setShowSyncModal(false)}
+        mode="ORDER_SELECT"
+        currentMarketplace={selectedDealDetails?.marketplace}
+        lockedPlatform={selectedDealDetails?.marketplace}
+        onSelectOrder={handleSelectSyncedOrder}
+      />
 
     </div>
   );

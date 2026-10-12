@@ -17,6 +17,7 @@ import { AvatarPickerModal } from "@/components/ui/AvatarPickerModal";
 import { ChangeEmailModal } from "@/components/ui/ChangeEmailModal";
 import { getUserAvatar } from "@/data/avatars";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { MarketplaceProfileSection } from "@/components/marketplace/MarketplaceProfileSection";
 
 function getDeviceInfo(deviceString: string) {
   if (!deviceString) return { name: "Legacy Device", isMobile: false };
@@ -501,6 +502,7 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
+    { id: "platforms", label: "Marketplaces", icon: Sparkles },
     { id: "payments", label: "Payments", icon: CreditCard },
     { id: "security", label: "Security", icon: Lock },
   ];
@@ -807,6 +809,18 @@ export default function SettingsPage() {
                                  </button>
                               )}
                            </div>
+
+                           {/* Marketplace Integrations Section */}
+                           <div className="pt-8 border-t border-slate-100 dark:border-slate-800">
+                              <MarketplaceProfileSection />
+                           </div>
+                        </div>
+                     )}
+
+                     {/* TAB: PLATFORMS */}
+                     {activeTab === "platforms" && (
+                        <div className="space-y-10">
+                           <MarketplaceProfileSection />
                         </div>
                      )}
 
@@ -1084,7 +1098,7 @@ export default function SettingsPage() {
                         </div>
                         
                         <button 
-                          type="submit" disabled={saving || (activeTab === 'payments' && !showPaymentOtp && false) || activeTab === 'security'}
+                          type="submit" disabled={saving || (activeTab === 'payments' && !showPaymentOtp && false) || activeTab === 'security' || activeTab === 'platforms'}
                           className={`flex-1 md:flex-none md:min-w-[240px] h-16 md:h-18 rounded-[24px] text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3 ${
                             isAdm ? "bg-slate-900 shadow-slate-900/20" : "bg-blue-600 shadow-blue-600/20 hover:bg-blue-700"
                           } disabled:opacity-50 disabled:grayscale`}
@@ -1292,6 +1306,17 @@ export default function SettingsPage() {
                                 </div>
                              </div>
                           </div>
+                          {/* Marketplace Integrations Section */}
+                          <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                             <MarketplaceProfileSection />
+                          </div>
+                       </div>
+                    )}
+
+                    {/* PLATFORMS VIEW */}
+                    {activeTab === "platforms" && (
+                       <div className="space-y-4">
+                          <MarketplaceProfileSection />
                        </div>
                     )}
 
@@ -1519,7 +1544,7 @@ export default function SettingsPage() {
               </AnimatePresence>
 
               {/* Floating Bottom Glass Save Bar */}
-              {activeTab !== 'security' && (
+              {activeTab !== 'security' && activeTab !== 'platforms' && (
                 <div className="fixed bottom-4 left-4 right-4 z-40 bg-white/85 backdrop-blur-md border border-slate-200/60 rounded-2xl p-3 shadow-xl flex items-center justify-between gap-4">
                    <div className="flex items-center gap-2">
                       <div className="h-7 w-7 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center">
