@@ -21,7 +21,7 @@ export default function SingleDealDetailPage() {
   
   const dealId = params?.id as string;
   const role = (session?.user as any)?.role || "USER";
-  const isAdm = role === "ADMIN";
+  const isAdm = role === "ADMIN" || role === "SUBADMIN";
   const isMediator = role === "MEDIATOR";
 
   const [deal, setDeal] = useState<any>(null);
@@ -311,8 +311,8 @@ export default function SingleDealDetailPage() {
         )}
       </div>
 
-      {/* Animated High-Demand / Unavailable Banner */}
-      {isUnavailable && (
+      {/* Animated High-Demand / Unavailable Banner (Only shown to buyers/users, not to Admin) */}
+      {isUnavailable && !isAdm && (
         <AnimatePresence>
           {isOut ? (
             <motion.div
@@ -495,7 +495,7 @@ export default function SingleDealDetailPage() {
 
           {/* Product Marketplace Direct Link Card */}
           {deal.productLink && (
-            isUnavailable ? (
+            (isUnavailable && !isAdm) ? (
               <div
                 className="p-5 bg-slate-100 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 rounded-[28px] border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between cursor-not-allowed select-none opacity-70"
                 title="Marketplace link is disabled because this deal is currently unavailable"
@@ -739,7 +739,7 @@ export default function SingleDealDetailPage() {
                 )
               ) : (
                 <>
-                  {isUnavailable ? (
+                  {(isUnavailable && !isAdm) ? (
                     <div className="w-full sm:flex-1 h-14 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 cursor-not-allowed border border-slate-200 dark:border-slate-700 select-none">
                       <AlertTriangle className="w-5 h-5 text-slate-400" />
                       {isOut ? "Campaign Sold Out" : "Campaign Archived"}
@@ -1201,7 +1201,7 @@ export default function SingleDealDetailPage() {
             )
           ) : (
             <>
-              {isUnavailable ? (
+              {(isUnavailable && !isAdm) ? (
                 <div className="flex-1 h-12 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 cursor-not-allowed border border-slate-200 dark:border-slate-700 select-none">
                   {isOut ? "Sold Out" : "Archived"}
                 </div>
