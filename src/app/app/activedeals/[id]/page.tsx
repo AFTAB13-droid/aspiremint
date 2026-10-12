@@ -11,7 +11,7 @@ import { formatTimeAgo } from "@/utils/formatTimeAgo";
 import { 
   ArrowLeft, ArrowRight, Share2, Copy, Check, ExternalLink, Sparkles, 
   Flame, ShoppingBag, Info, AlertTriangle, MessageSquare, 
-  Clock, Tag, ShieldCheck, DollarSign, Send
+  Clock, Tag, ShieldCheck, DollarSign, Send, Bell
 } from "lucide-react";
 
 export default function SingleDealDetailPage() {
@@ -30,6 +30,8 @@ export default function SingleDealDetailPage() {
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [returnUrl, setReturnUrl] = useState("/app/activedeals");
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -71,24 +73,48 @@ export default function SingleDealDetailPage() {
       const res = await fetch(`/api/deals/active/${dealId}?v=${Date.now()}`);
       const json = await res.json();
       if (json.success) {
-        if (!json.data.isActive && role !== "ADMIN") {
-          toast.error("This campaign has been archived and is no longer available.");
-          router.push(returnUrl);
-          return;
-        }
         setDeal(json.data);
-      } else {
-        if (role !== "ADMIN") {
-          toast.error("This campaign has been archived and is no longer available.");
-          router.push(returnUrl);
-          return;
+        if (json.data.isSubscribed !== undefined) {
+          setIsSubscribed(Boolean(json.data.isSubscribed));
         }
+      } else {
         toast.error(json.message || "Failed to load deal details");
       }
     } catch (err) {
       toast.error("Network error loading deal");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleNotify = async () => {
+    if (!deal) return;
+    if (!session) {
+      toast.error("Please sign in to enable deal notification reminders");
+      return;
+    }
+
+    setSubscribing(true);
+    try {
+      const res = await fetch(`/api/deals/active/${deal._id || deal.productCode || dealId}/notify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const json = await res.json();
+      if (json.success) {
+        setIsSubscribed(json.isSubscribed);
+        if (json.isSubscribed) {
+          toast.success(json.message || "Notification reminder enabled! 🔔");
+        } else {
+          toast(json.message || "Reminder removed", { icon: "🔕" });
+        }
+      } else {
+        toast.error(json.message || "Failed to update notification reminder");
+      }
+    } catch (err) {
+      toast.error("Network error updating reminder");
+    } finally {
+      setSubscribing(false);
     }
   };
 
@@ -209,7 +235,9 @@ export default function SingleDealDetailPage() {
 
   const isHotDeal = deal.createdAt && (Date.now() - new Date(deal.createdAt).getTime() < 24 * 60 * 60 * 1000);
   const consumedSlots = (deal.totalSlots || 0) - (deal.remainingSlots || 0);
-  const isOut = deal.remainingSlots <= 0;
+  const isOut = (deal.remainingSlots || 0) <= 0;
+  const isArchived = !deal.isActive;
+  const isUnavailable = isOut || isArchived;
   const isHurry = deal.remainingSlots > 0 && deal.remainingSlots < 4;
   const isLimited = deal.remainingSlots >= 4 && deal.remainingSlots < 7;
 
@@ -221,22 +249,22 @@ export default function SingleDealDetailPage() {
   return (
     <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-3 sm:py-6 pb-32 space-y-5 sm:space-y-8 overflow-x-hidden">
       {/* Dynamic Header & Breadcrumbs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/70 backdrop-blur-md p-3.5 sm:p-5 rounded-[24px] sm:rounded-[28px] border border-slate-100 shadow-sm w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md p-3.5 sm:p-5 rounded-[24px] sm:rounded-[28px] border border-slate-100 dark:border-slate-800 shadow-sm w-full">
         <div className="flex items-center gap-3">
           <button
             onClick={handleGoBack}
-            className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all active:scale-95 shadow-sm shrink-0"
+            className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center transition-all active:scale-95 shadow-sm shrink-0"
             title="Go Back"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <div className="flex items-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
               <Link href={returnUrl} className="hover:text-indigo-600 transition-colors">Active Deals</Link>
               <span>/</span>
               <span className="text-indigo-600">{deal.brandName}</span>
             </div>
-            <h1 className="text-sm sm:text-base md:text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
+            <h1 className="text-sm sm:text-base md:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
               {deal.productCode}
               {!deal.isActive && (
                 <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-white text-[8px] font-black uppercase tracking-widest shadow-sm">
@@ -258,7 +286,7 @@ export default function SingleDealDetailPage() {
             {!deal.isActive && isAdm && (
               <button
                 onClick={handleRestoreDeal}
-                className="h-10 sm:h-11 px-4 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm"
+                className="h-10 sm:h-11 px-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm"
               >
                 Restore Deal
               </button>
@@ -266,7 +294,7 @@ export default function SingleDealDetailPage() {
 
             <button
               onClick={handleCopyLink}
-              className="h-10 sm:h-11 px-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-100 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm"
+              className="h-10 sm:h-11 px-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm"
             >
               {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
               {copied ? "Copied Link" : "Copy Link"}
@@ -282,6 +310,112 @@ export default function SingleDealDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Animated High-Demand / Unavailable Banner */}
+      {isUnavailable && (
+        <AnimatePresence>
+          {isOut ? (
+            <motion.div
+              initial={{ opacity: 0, y: -12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="w-full relative overflow-hidden rounded-[26px] sm:rounded-[32px] p-5 sm:p-7 border-2 border-rose-400/80 dark:border-rose-600/80 bg-gradient-to-br from-rose-500/15 via-amber-500/10 to-orange-500/15 dark:from-rose-950/60 dark:via-amber-950/40 dark:to-orange-950/50 backdrop-blur-md shadow-xl shadow-rose-500/10"
+            >
+              {/* Animated background glow pulse */}
+              <div className="absolute -top-16 -right-16 w-48 h-48 bg-rose-500/20 rounded-full blur-3xl animate-pulse pointer-events-none" />
+              <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-amber-500/20 rounded-full blur-3xl animate-pulse pointer-events-none" />
+
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative z-10">
+                <div className="space-y-2 max-w-2xl">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 dark:bg-rose-500/30 border border-rose-500/40 text-rose-700 dark:text-rose-300 text-[10px] font-black uppercase tracking-widest shadow-xs">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                    </span>
+                    <span>Stock Exhausted</span>
+                    <span className="opacity-60">•</span>
+                    <span>High Demand ⚡</span>
+                  </div>
+
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2.5 flex-wrap">
+                    <span>Ohh, you are late!</span>
+                    <span className="text-rose-600 dark:text-rose-400 animate-pulse">Product stock sold out!</span>
+                    <span className="inline-block transform hover:rotate-12 transition-transform">⚡🔥📦</span>
+                  </h2>
+
+                  <p className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed">
+                    This deal was on extremely high demand and all available slots were claimed rapidly! Click <span className="text-rose-600 dark:text-rose-400 font-black">"Notify Me"</span> below and we'll send you an instant push notification the second fresh stock arrives!
+                  </p>
+                </div>
+
+                {/* Notify Me Button */}
+                <div className="w-full md:w-auto shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleToggleNotify}
+                    disabled={subscribing}
+                    className={`px-7 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 transition-all shadow-xl active:scale-95 ${
+                      isSubscribed
+                        ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/30 ring-2 ring-emerald-400/50"
+                        : "bg-gradient-to-r from-rose-600 via-orange-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white shadow-rose-600/30"
+                    }`}
+                  >
+                    <Bell className={`w-4 h-4 ${isSubscribed ? "" : "animate-bounce"}`} />
+                    {subscribing ? "Updating..." : isSubscribed ? "Notification Enabled 🔔" : "Notify Me When Live 🔔"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ) : isArchived ? (
+            <motion.div
+              initial={{ opacity: 0, y: -12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="w-full relative overflow-hidden rounded-[26px] sm:rounded-[32px] p-5 sm:p-7 border-2 border-amber-400/80 dark:border-amber-600/80 bg-gradient-to-br from-amber-500/15 via-slate-500/10 to-indigo-500/15 dark:from-amber-950/60 dark:via-slate-950/40 dark:to-indigo-950/50 backdrop-blur-md shadow-xl shadow-amber-500/10"
+            >
+              <div className="absolute -top-16 -right-16 w-48 h-48 bg-amber-500/20 rounded-full blur-3xl animate-pulse pointer-events-none" />
+
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative z-10">
+                <div className="space-y-2 max-w-2xl">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 dark:bg-amber-500/30 border border-amber-500/40 text-amber-700 dark:text-amber-300 text-[10px] font-black uppercase tracking-widest shadow-xs">
+                    <span>⏳</span>
+                    <span>Temporarily Paused</span>
+                    <span className="opacity-60">•</span>
+                    <span>Archived</span>
+                  </div>
+
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2.5 flex-wrap">
+                    <span>Deal is currently unavailable.</span>
+                    <span className="text-amber-600 dark:text-amber-400">Sorry!</span>
+                    <span className="inline-block transform hover:rotate-12 transition-transform">⏳🚫</span>
+                  </h2>
+
+                  <p className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed">
+                    This campaign has been temporarily paused or archived by administrator. It may be reactivated soon. Click <span className="text-amber-600 dark:text-amber-400 font-black">"Notify Me"</span> to receive an instant push notification the second this deal goes live!
+                  </p>
+                </div>
+
+                {/* Notify Me Button */}
+                <div className="w-full md:w-auto shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleToggleNotify}
+                    disabled={subscribing}
+                    className={`px-7 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2.5 transition-all shadow-xl active:scale-95 ${
+                      isSubscribed
+                        ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/30 ring-2 ring-emerald-400/50"
+                        : "bg-gradient-to-r from-amber-600 to-indigo-600 hover:from-amber-500 hover:to-indigo-500 text-white shadow-amber-600/30"
+                    }`}
+                  >
+                    <Bell className={`w-4 h-4 ${isSubscribed ? "" : "animate-bounce"}`} />
+                    {subscribing ? "Updating..." : isSubscribed ? "Notification Enabled 🔔" : "Notify Me When Live 🔔"}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      )}
 
       {/* Main Single Deal View Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 w-full">
@@ -361,25 +495,45 @@ export default function SingleDealDetailPage() {
 
           {/* Product Marketplace Direct Link Card */}
           {deal.productLink && (
-            <a
-              href={deal.productLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-[28px] shadow-xl flex items-center justify-between group hover:scale-[1.01] active:scale-[0.99] transition-all"
-            >
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/10 group-hover:rotate-12 transition-transform">
-                  <ExternalLink className="w-6 h-6" />
+            isUnavailable ? (
+              <div
+                className="p-5 bg-slate-100 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 rounded-[28px] border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between cursor-not-allowed select-none opacity-70"
+                title="Marketplace link is disabled because this deal is currently unavailable"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-slate-200 dark:bg-slate-700/80 flex items-center justify-center text-slate-400 dark:text-slate-500 border border-slate-300 dark:border-slate-600">
+                    <ExternalLink className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Marketplace Link Disabled</p>
+                    <p className="text-sm font-black uppercase tracking-tight mt-0.5 text-slate-500 dark:text-slate-400 line-through decoration-slate-400">Open {deal.marketplace} Link</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Marketplace Item Page</p>
-                  <p className="text-sm font-black text-white uppercase tracking-tight mt-0.5">Open {deal.marketplace} Link</p>
+                <div className="h-10 px-4 bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 cursor-not-allowed border border-slate-300 dark:border-slate-600">
+                  Link Inactive
                 </div>
               </div>
-              <div className="h-10 px-4 bg-blue-600 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-blue-600/30">
-                Visit Link
-              </div>
-            </a>
+            ) : (
+              <a
+                href={deal.productLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-[28px] shadow-xl flex items-center justify-between group hover:scale-[1.01] active:scale-[0.99] transition-all"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/10 group-hover:rotate-12 transition-transform">
+                    <ExternalLink className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Marketplace Item Page</p>
+                    <p className="text-sm font-black text-white uppercase tracking-tight mt-0.5">Open {deal.marketplace} Link</p>
+                  </div>
+                </div>
+                <div className="h-10 px-4 bg-blue-600 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-blue-600/30">
+                  Visit Link
+                </div>
+              </a>
+            )
           )}
         </div>
 
@@ -551,9 +705,30 @@ export default function SingleDealDetailPage() {
             </div>
 
             {/* Main Action CTAs */}
-            <div className="pt-4 flex flex-col sm:flex-row items-center gap-4">
+            <div className="pt-4 flex flex-col sm:flex-row items-center gap-3">
               {role === 'USER' ? (
-                deal.remainingSlots > 0 ? (
+                isUnavailable ? (
+                  <>
+                    <div className="w-full sm:flex-1 h-14 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 cursor-not-allowed border border-slate-200 dark:border-slate-700 select-none">
+                      <AlertTriangle className="w-5 h-5 text-slate-400" />
+                      {isOut ? "Order Form Closed (Sold Out)" : "Order Form Inactive (Archived)"}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleToggleNotify}
+                      disabled={subscribing}
+                      className={`w-full sm:w-auto h-14 px-8 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2.5 shadow-lg active:scale-95 transition-all ${
+                        isSubscribed
+                          ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25 ring-2 ring-emerald-400/50"
+                          : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/30"
+                      }`}
+                    >
+                      <Bell className={`w-4 h-4 ${isSubscribed ? "" : "animate-bounce"}`} />
+                      {subscribing ? "Updating..." : isSubscribed ? "Notification Enabled 🔔" : "Notify Me When Live 🔔"}
+                    </button>
+                  </>
+                ) : (
                   <Link
                     href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
                     className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-blue-600/30 active:scale-95 transition-all"
@@ -561,21 +736,23 @@ export default function SingleDealDetailPage() {
                     <ShoppingBag className="w-5 h-5" />
                     Fill Order Form Now
                   </Link>
-                ) : (
-                  <div className="w-full h-14 bg-slate-100 text-slate-400 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 cursor-not-allowed">
-                    <AlertTriangle className="w-5 h-5" />
-                    Campaign Sold Out
-                  </div>
                 )
               ) : (
                 <>
-                  <Link
-                    href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
-                    className="w-full sm:flex-1 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-indigo-600/30 active:scale-95 transition-all"
-                  >
-                    <ShoppingBag className="w-5 h-5" />
-                    Fill Form For Order
-                  </Link>
+                  {isUnavailable ? (
+                    <div className="w-full sm:flex-1 h-14 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 cursor-not-allowed border border-slate-200 dark:border-slate-700 select-none">
+                      <AlertTriangle className="w-5 h-5 text-slate-400" />
+                      {isOut ? "Campaign Sold Out" : "Campaign Archived"}
+                    </div>
+                  ) : (
+                    <Link
+                      href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
+                      className="w-full sm:flex-1 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-indigo-600/30 active:scale-95 transition-all"
+                    >
+                      <ShoppingBag className="w-5 h-5" />
+                      Fill Form For Order
+                    </Link>
+                  )}
 
                   <button
                     onClick={handleWhatsAppShare}
@@ -990,10 +1167,30 @@ export default function SingleDealDetailPage() {
       )}
 
       {/* Mobile Sticky Bottom Action Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-t border-slate-100 p-4 shadow-[0_-8px_20px_rgba(0,0,0,0.05)]">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-100 dark:border-slate-800 p-4 shadow-[0_-8px_20px_rgba(0,0,0,0.08)]">
         <div className="flex items-center gap-3">
           {role === 'USER' ? (
-            deal.remainingSlots > 0 ? (
+            isUnavailable ? (
+              <>
+                <div className="flex-1 h-12 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 cursor-not-allowed border border-slate-200 dark:border-slate-700 select-none">
+                  {isOut ? "Sold Out" : "Archived"}
+                </div>
+                
+                <button
+                  type="button"
+                  onClick={handleToggleNotify}
+                  disabled={subscribing}
+                  className={`flex-[2] h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all ${
+                    isSubscribed
+                      ? "bg-emerald-600 text-white shadow-emerald-600/25 ring-2 ring-emerald-400/40"
+                      : "bg-blue-600 text-white shadow-blue-600/30"
+                  }`}
+                >
+                  <Bell className={`w-3.5 h-3.5 ${isSubscribed ? "" : "animate-bounce"}`} />
+                  {subscribing ? "Updating..." : isSubscribed ? "We'll Notify You 🔔" : "Notify Me 🔔"}
+                </button>
+              </>
+            ) : (
               <Link
                 href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
                 className="w-full h-12 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 active:scale-95 transition-all"
@@ -1001,20 +1198,22 @@ export default function SingleDealDetailPage() {
                 Fill Order Form
                 <ShoppingBag className="w-4 h-4" />
               </Link>
-            ) : (
-              <div className="w-full h-12 bg-slate-100 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 cursor-not-allowed">
-                Sold Out
-              </div>
             )
           ) : (
             <>
-              <Link
-                href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
-                className="flex-1 h-12 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 active:scale-95 transition-all"
-              >
-                Fill Order Form
-                <ShoppingBag className="w-4 h-4" />
-              </Link>
+              {isUnavailable ? (
+                <div className="flex-1 h-12 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 cursor-not-allowed border border-slate-200 dark:border-slate-700 select-none">
+                  {isOut ? "Sold Out" : "Archived"}
+                </div>
+              ) : (
+                <Link
+                  href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
+                  className="flex-1 h-12 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 active:scale-95 transition-all"
+                >
+                  Fill Order Form
+                  <ShoppingBag className="w-4 h-4" />
+                </Link>
+              )}
 
               <button
                 onClick={handleWhatsAppShare}

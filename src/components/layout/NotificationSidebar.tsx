@@ -146,6 +146,8 @@ export function NotificationSidebar({ isOpen, onClose, userRole }: NotificationS
       case "ADMIN_ALERT":
       case "BROADCAST_MESSAGE":
         return <ShieldAlert className="w-5 h-5 text-indigo-500" />;
+      case "DEAL_RESTOCKED":
+        return <Bell className="w-5 h-5 text-amber-500 animate-bounce" />;
       default:
         return <Info className="w-5 h-5 text-blue-500" />;
     }

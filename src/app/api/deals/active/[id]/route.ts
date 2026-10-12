@@ -40,12 +40,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ success: false, message: 'Deal not found' }, { status: 404 });
     }
 
-    // Role-based visibility check
-    if (!isAdmin && !(deal as any).isActive) {
-      return NextResponse.json({ success: false, message: 'This deal is no longer active' }, { status: 404 });
-    }
-
-    if (user.role === 'MEDIATOR' && !isJuhi) {
+    // Allow all authenticated users with the direct link to view the deal details,
+    // so they can see if it is sold out or unavailable, with buttons disabled and Notify Me enabled.
+    if (user.role === 'MEDIATOR' && !isJuhi && (deal as any).isActive) {
       const isAssigned = (deal as any).assignedMediators?.some((m: any) => m.mediatorId?.toString() === user.id || m.isAll);
       if (!isAssigned) {
         return NextResponse.json({ success: false, message: 'Access denied for this deal' }, { status: 403 });
@@ -158,6 +155,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       productImage: (deal as any).productImage || "",
       displayPayout: user.role === 'USER' ? undefined : displayPayout,
       juhiCommission: (deal as any).juhiCommission === undefined || (deal as any).juhiCommission === null ? "N/A" : (deal as any).juhiCommission,
+      isSubscribed: Boolean((deal as any).notifySubscribers?.some((s: any) => s.toString() === user.id)),
       relatedDeals: sanitizedRelatedDeals
     };
 
@@ -268,6 +266,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
     
     await invalidateDealsCache(); // Blocking/Awaited
+
+    // Check if the deal was previously unavailable/sold-out and is now LIVE (active with stock > 0)
+    const wasUnavailable = !oldDeal.isActive || (oldDeal.remainingSlots || 0) <= 0;
+    const isNowLive = Boolean(updatedDeal && updatedDeal.isActive && (updatedDeal.remainingSlots || 0) > 0);
+    if (wasUnavailable && isNowLive) {
+      import('@/services/dealNotification.service').then(({ notifyDealSubscribers }) => {
+        notifyDealSubscribers(updatedDeal);
+      }).catch(err => console.error('Failed to notify deal subscribers:', err));
+    }
 
     return NextResponse.json({ success: true, data: updatedDeal });
   } catch (error: any) {

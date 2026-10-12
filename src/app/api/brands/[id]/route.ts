@@ -53,7 +53,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
           const totalSlots = newTotalReview + newTotalRating + newTotalOnly + newTotalSub;
           const remainingSlots = (pc.stockReview || 0) + (pc.stockRating || 0) + (pc.stockOnly || 0) + (pc.stockSubmitted || 0);
 
-          return ActiveDeal.findByIdAndUpdate(deal._id, {
+          const updated = await ActiveDeal.findByIdAndUpdate(deal._id, {
             $set: {
               reviewSlots: newTotalReview,
               remainingReview: pc.stockReview || 0,
@@ -67,7 +67,17 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
               remainingSlots: remainingSlots,
               isActive: (deal.isActive === false && remainingSlots > 0) ? true : deal.isActive
             }
-          });
+          }, { new: true });
+
+          const wasUnavailable = !deal.isActive || (deal.remainingSlots || 0) <= 0;
+          const isNowLive = Boolean(updated && updated.isActive && (updated.remainingSlots || 0) > 0);
+          if (wasUnavailable && isNowLive) {
+            import('@/services/dealNotification.service').then(({ notifyDealSubscribers }) => {
+              notifyDealSubscribers(updated);
+            }).catch(err => console.error('Failed to notify deal subscribers:', err));
+          }
+
+          return updated;
         }
       });
       

@@ -37,6 +37,7 @@ export interface IActiveDeal extends Document {
   originalCommission: number | string; // Baseline commission/less for profit calculation
   commission: number | string; // Standard Rate for other mediators
   isActive: boolean;
+  notifySubscribers?: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -80,6 +81,7 @@ const ActiveDealSchema = new Schema<IActiveDeal>(
     originalCommission: { type: Schema.Types.Mixed, default: "N/A" },
     commission: { type: Schema.Types.Mixed, default: "N/A" },
     isActive: { type: Boolean, default: true },
+    notifySubscribers: [{ type: Schema.Types.ObjectId, ref: "User" }],
   },
   { timestamps: true }
 );
@@ -87,5 +89,6 @@ const ActiveDealSchema = new Schema<IActiveDeal>(
 // Database Indexes for query optimization
 ActiveDealSchema.index({ isActive: 1, createdAt: -1 });
 ActiveDealSchema.index({ "assignedMediators.mediatorId": 1 });
+ActiveDealSchema.index({ notifySubscribers: 1 });
 
 export const ActiveDeal: Model<IActiveDeal> = mongoose.models.ActiveDeal || mongoose.model<IActiveDeal>("ActiveDeal", ActiveDealSchema);
