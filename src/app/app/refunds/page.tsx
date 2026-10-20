@@ -115,15 +115,7 @@ export default function RefundsPage() {
           filtered = ordersJson.data.filter((o: any) => o.status === "REFUND_APPROVED");
         } else {
           filtered = ordersJson.data.filter((o: any) => 
-            [
-              "COMPLETED", 
-              "REFUNDED", 
-              "UNDER_VERIFICATION", 
-              "REFUND_APPROVED", 
-              "REFUND_REJECTED", 
-              "REFUND_FORM_SUBMITTED", 
-              "REFUND_FORM_PENDING"
-            ].includes(o.status) || Boolean(o.refundDetails?.submittedAt)
+            o.status === "COMPLETED" || o.status === "REFUNDED"
           );
         }
         setOrders(filtered);
@@ -270,6 +262,8 @@ export default function RefundsPage() {
         } else if (activeTab === "REJECTED") {
           matchesTab = order.status === "REFUND_REJECTED";
         }
+      } else if (role !== "MEDIATOR") {
+        matchesTab = order.status === "COMPLETED" || order.status === "REFUNDED";
       }
 
       return matchesSearch && matchesBrand && matchesDate && matchesTab;
@@ -317,7 +311,7 @@ export default function RefundsPage() {
 
 
   return (
-    <div className="mx-auto w-full pb-10 px-4 md:px-0">
+    <div className="mx-auto w-full pb-24 md:pb-10 px-4 md:px-0">
       
       {/* Navigation Space Management */}
       <div className="pt-4 md:pt-0" />
@@ -898,76 +892,8 @@ export default function RefundsPage() {
               </tbody>
             </table>
           </div>
-          {/* Pagination Component */}
-          <>
-             {/* Mobile Pagination Footer */}
-             {totalPages > 1 && (
-               <div className="flex flex-col items-center justify-between gap-8 mt-12 mb-10 px-4 md:hidden">
-                  <div className="flex items-center gap-4 bg-white/50 backdrop-blur-md px-6 py-3 rounded-full border border-slate-100 shadow-sm order-2">
-                     <button 
-                        onClick={() => setCurrentPage(1)} 
-                        disabled={currentPage === 1}
-                        className="p-2 text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-colors"
-                     >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
-                     </button>
-                     <div className="h-4 w-px bg-slate-200" />
-                     <div className="flex items-center gap-2">
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                           let pageNum;
-                           if (totalPages <= 5) pageNum = i + 1;
-                           else if (currentPage <= 3) pageNum = i + 1;
-                           else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
-                           else pageNum = currentPage - 2 + i;
-
-                           return (
-                              <button
-                                 key={pageNum}
-                                 onClick={() => setCurrentPage(pageNum)}
-                                 className={`h-10 w-10 rounded-xl text-[11px] font-black transition-all ${currentPage === pageNum ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30" : "text-slate-400 hover:bg-white hover:text-indigo-600"}`}
-                              >
-                                 {pageNum}
-                              </button>
-                           );
-                        })}
-                     </div>
-                     <div className="h-4 w-px bg-slate-200" />
-                     <button 
-                        onClick={() => setCurrentPage(totalPages)} 
-                        disabled={currentPage === totalPages}
-                        className="p-2 text-slate-400 hover:text-indigo-600 disabled:opacity-20 transition-colors"
-                     >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" strokeWidth={3} /></svg>
-                     </button>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 group order-1">
-                     <div className="flex flex-col items-end">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Hub Navigation</span>
-                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest leading-none">Page {currentPage} of {totalPages}</span>
-                     </div>
-                     <div className="flex items-center gap-1">
-                        <button 
-                           onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                           disabled={currentPage === 1}
-                           className="h-12 w-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-900 hover:text-white disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-slate-400 transition-all shadow-sm"
-                        >
-                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-                        </button>
-                        <button 
-                           onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                           disabled={currentPage === totalPages}
-                           className="h-12 w-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-900 hover:text-white disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-slate-400 transition-all shadow-sm"
-                        >
-                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
-                        </button>
-                     </div>
-                  </div>
-               </div>
-             )}
-
-               {/* Desktop Pagination Footer */}
-               <div className="hidden md:flex flex-col md:flex-row items-center justify-between gap-6 px-4 mt-6 mb-10">
+          {/* Desktop Pagination Footer */}
+          <div className="hidden md:flex flex-col md:flex-row items-center justify-between gap-6 px-4 mt-6 mb-10">
                  <div className="flex items-center gap-4">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
                       SHOWING <span className="text-indigo-600">{paginatedOrders.length}</span> OF <span className="text-slate-900">{filteredOrders.length}</span> CLAIMS
@@ -1027,7 +953,6 @@ export default function RefundsPage() {
                    </button>
                  </div>
                </div>
-          </>
         </div>
       ) : (
         <div className="mt-8 p-16 rounded-[32px] border border-dashed border-slate-100 bg-white flex flex-col items-center justify-center text-center">
@@ -1111,20 +1036,20 @@ export default function RefundsPage() {
 
       {/* Premium Fixed-Bottom Pagination for Mobile */}
       {totalPages >= 1 && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white/80 backdrop-blur-md border-t border-slate-100 flex flex-col items-center py-2 px-6 shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white/90 dark:bg-[#0E1526]/95 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 flex flex-col items-center py-2 px-6 shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
            {/* Status Indicator */}
            <div className="flex items-center gap-3 mb-2">
-              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                PAGE <span className="text-slate-900">{currentPage}</span> OF <span className="text-slate-900">{totalPages}</span>
+              <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">
+                PAGE <span className="text-slate-900 dark:text-white">{currentPage}</span> OF <span className="text-slate-900 dark:text-white">{totalPages}</span>
               </p>
-              <div className="h-1 w-1 rounded-full bg-slate-200" />
-              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                <span className="text-slate-900">{filteredOrders.length}</span> ENTRIES
+              <div className="h-1 w-1 rounded-full bg-slate-200 dark:bg-slate-700" />
+              <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">
+                <span className="text-slate-900 dark:text-white">{filteredOrders.length}</span> ENTRIES
               </p>
            </div>
 
            {totalPages >= 1 && (
-              <div className="flex items-center gap-1 bg-slate-900 rounded-full p-1 shadow-xl">
+              <div className="flex items-center gap-1 bg-slate-900 dark:bg-[#111827] border border-transparent dark:border-slate-700/60 rounded-full p-1 shadow-xl">
                  <button 
                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                    disabled={currentPage === 1}

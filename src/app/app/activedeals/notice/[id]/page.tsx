@@ -154,23 +154,20 @@ export default function DealNoticePage() {
           </div>
 
           {/* Attention Title */}
-          <div className="space-y-1 text-center sm:text-left">
+          <div className="text-center sm:text-left">
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
-              Important Buyer Instructions
+              Special Instructions
             </h2>
-            <p className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-              Please read administrator remarks thoroughly before visiting the deal link
-            </p>
           </div>
 
-          {/* The Remarks Card */}
-          <div className="relative p-5 sm:p-6 rounded-[28px] bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border-2 border-amber-400/60 dark:border-amber-500/40 shadow-inner space-y-3">
+          {/* The Remarks Card - Hero Attraction Point */}
+          <div className="relative p-5 sm:p-7 rounded-[28px] bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border-2 border-amber-400/70 dark:border-amber-500/50 shadow-inner space-y-3">
             <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-              <ShieldCheck className="w-5 h-5" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Administrator Remarks</span>
+              <ShieldCheck className="w-5 h-5 shrink-0" />
+              <span className="text-[11px] font-black uppercase tracking-widest">Admin Remark</span>
             </div>
-            <div className="p-4 sm:p-5 rounded-2xl bg-white/90 dark:bg-[#111827]/90 border border-amber-200/60 dark:border-amber-500/20 backdrop-blur-sm">
-              <p className="text-xs sm:text-sm font-black text-slate-800 dark:text-slate-100 leading-relaxed uppercase tracking-tight whitespace-pre-wrap select-text">
+            <div className="p-4 sm:p-6 rounded-2xl bg-white/95 dark:bg-[#111827]/95 border border-amber-200/70 dark:border-amber-500/30 backdrop-blur-sm shadow-sm">
+              <p className="text-sm sm:text-base font-black text-slate-900 dark:text-white leading-relaxed uppercase tracking-tight whitespace-pre-wrap select-text">
                 {deal.userRemarks}
               </p>
             </div>
@@ -204,29 +201,29 @@ export default function DealNoticePage() {
               onClick={() => router.push(`/app/activedeals/${deal.productCode || dealId}`)}
               className="w-full sm:w-auto h-12 px-6 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-black text-[10px] uppercase tracking-widest transition-all order-2 sm:order-1"
             >
-              Cancel / Back to Deal
+              Cancel
             </button>
 
             <button
               type="button"
               onClick={handleContinue}
               disabled={!timerFinished}
-              className={`w-full sm:flex-1 h-13 sm:h-14 rounded-2xl font-black text-[10px] sm:text-[11px] uppercase tracking-widest flex items-center justify-center gap-2.5 shadow-xl transition-all order-1 sm:order-2 ${
+              className={`w-full sm:flex-1 h-12 sm:h-13 rounded-2xl font-black text-[11px] uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl transition-all order-1 sm:order-2 ${
                 timerFinished
-                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/30 hover:scale-[1.02] active:scale-95 cursor-pointer ring-4 ring-emerald-500/20"
+                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/30 hover:scale-[1.01] active:scale-95 cursor-pointer ring-4 ring-emerald-500/20"
                   : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-300 dark:border-slate-700 shadow-none opacity-80"
               }`}
             >
               {timerFinished ? (
                 <>
-                  <CheckCircle2 className="w-4 h-4 text-white" />
-                  <span>I Have Read Instructions — Open Product Link</span>
-                  <ExternalLink className="w-4 h-4 text-white ml-1" />
+                  <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+                  <span>Open Product Link</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-white shrink-0" />
                 </>
               ) : (
                 <>
-                  <Clock className="w-4 h-4 text-amber-500 animate-spin" />
-                  <span>Please Read Carefully ({secondsLeft}s)</span>
+                  <Clock className="w-4 h-4 text-amber-500 animate-spin shrink-0" />
+                  <span>Wait ({secondsLeft}s)</span>
                 </>
               )}
             </button>
