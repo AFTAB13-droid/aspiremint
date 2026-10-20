@@ -28,6 +28,7 @@ interface MobileActiveDealsProps {
   currentPage: number;
   setCurrentPage: (page: number) => void;
   totalPages: number;
+  isArchived?: boolean;
 }
 
 export function MobileActiveDeals({ 
@@ -36,7 +37,8 @@ export function MobileActiveDeals({
   dealTypeFilter = "All Deals", setDealTypeFilter, dealTypeOptions,
   reviewTypeFilter = "All Types", setReviewTypeFilter, reviewTypeOptions,
   searchQuery, setSearchQuery,
-  currentPage, setCurrentPage, totalPages
+  currentPage, setCurrentPage, totalPages,
+  isArchived = false
 }: MobileActiveDealsProps) {
   const router = useRouter();
   const [selectedRemark, setSelectedRemark] = useState<string | null>(null);
@@ -412,7 +414,7 @@ export function MobileActiveDeals({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
               onClick={() => handleOpenDeal(deal)}
-              className="relative bg-white rounded-[32px] p-5 border border-slate-100 shadow-sm overflow-hidden group active:scale-[0.98] transition-all cursor-pointer hover:border-indigo-200"
+              className="relative bg-white dark:bg-[#0E1526] rounded-[32px] p-5 border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden group active:scale-[0.98] transition-all cursor-pointer hover:border-indigo-200 dark:hover:border-slate-700"
             >
               {/* Background Accent */}
               <div className={`absolute top-0 right-0 w-32 h-32 blur-3xl opacity-[0.03] pointer-events-none -mr-10 -mt-10 ${isOut ? 'bg-rose-500' : 'bg-blue-500'}`} />
@@ -427,7 +429,7 @@ export function MobileActiveDeals({
               <div className={`flex gap-4 ${isHotDeal && !isOut ? 'mt-3' : ''}`}>
                 {/* Product Image / Icon */}
                 <div className="relative flex-shrink-0">
-                  <div className="h-20 w-20 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden shadow-inner">
+                  <div className="h-20 w-20 rounded-2xl bg-slate-50 dark:bg-[#111827] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-inner">
                     {deal.productImage ? (
                       <img 
                         src={deal.productImage?.includes('cloudinary.com') ? deal.productImage.replace('/image/upload/', '/image/upload/q_auto,f_auto,w_250,c_fill/') : deal.productImage} 
@@ -439,12 +441,12 @@ export function MobileActiveDeals({
                         style={{ opacity: 0 }}
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300">
+                      <div className="w-full h-full flex items-center justify-center text-slate-300 dark:text-slate-600">
                         <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                       </div>
                     )}
                   </div>
-                  <div className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-white flex items-center justify-center shadow-sm ${isOut ? 'bg-rose-500' : 'bg-emerald-500'}`}>
+                  <div className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center shadow-sm ${isOut ? 'bg-rose-500' : 'bg-emerald-500'}`}>
                     <div className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
                   </div>
                 </div>
@@ -461,11 +463,11 @@ export function MobileActiveDeals({
                           sessionStorage.setItem("active_deals_scroll", String(window.scrollY));
                         }
                       }}
-                      className="text-[13px] font-black text-slate-900 uppercase tracking-tight break-all leading-tight hover:text-blue-600 transition-colors"
+                      className="text-[13px] font-black text-slate-900 dark:text-white uppercase tracking-tight break-all leading-tight hover:text-blue-600 transition-colors"
                     >
                       {deal.productCode}
                     </Link>
-                    <span className="text-[8px] font-black text-slate-300 uppercase whitespace-nowrap mt-1 shrink-0">{formatTimeAgo(deal.createdAt)}</span>
+                    <span className="text-[8px] font-black text-slate-300 dark:text-slate-500 uppercase whitespace-nowrap mt-1 shrink-0">{formatTimeAgo(deal.createdAt)}</span>
                   </div>
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 truncate">{deal.brandName}</p>
                   
@@ -479,7 +481,7 @@ export function MobileActiveDeals({
                            sessionStorage.setItem("active_deals_scroll", String(window.scrollY));
                          }
                        }}
-                       className="text-[10px] font-black text-slate-700 uppercase tracking-tight mt-1 leading-relaxed break-words line-clamp-2 block hover:text-blue-600 transition-colors"
+                       className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-tight mt-1 leading-relaxed break-words line-clamp-2 block hover:text-blue-600 transition-colors"
                      >
                        {deal.productDetails}
                      </Link>
@@ -487,14 +489,14 @@ export function MobileActiveDeals({
                   
                   <div className="flex flex-wrap items-center gap-2 mt-2.5">
                     <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tight border ${
-                      deal.dealType === 'Original' ? "bg-emerald-50 text-emerald-600 border-emerald-100" : 
-                      deal.dealType === 'Exchange' ? "bg-blue-50 text-blue-600 border-blue-100" : 
-                      "bg-indigo-50 text-indigo-600 border-indigo-100"
+                      deal.dealType === 'Original' ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/50" : 
+                      deal.dealType === 'Exchange' ? "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800/50" : 
+                      "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800/50"
                     }`}>
                       {deal.dealType}
                     </span>
                     <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">{deal.marketplace}</span>
-                    <span className="text-slate-200 opacity-50">•</span>
+                    <span className="text-slate-200 dark:text-slate-700 opacity-50">•</span>
                     <span className="text-[8px] font-black text-indigo-400/70 uppercase tracking-widest">{deal.reviewType === "SUBMITTED" ? "REVIEW SUBMITTED" : deal.reviewType}</span>
                   </div>
                 </div>
@@ -514,15 +516,21 @@ export function MobileActiveDeals({
                       }}
                       className="flex items-center gap-1.5 group/link"
                     >
-                       <div className="h-7 w-7 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center border border-indigo-100 group-hover/link:bg-indigo-600 group-hover/link:text-white transition-all">
+                       <div className="h-7 w-7 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-lg flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50 group-hover/link:bg-indigo-600 group-hover/link:text-white transition-all">
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                        </div>
                        <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest">View Page</span>
                     </Link>
 
                     {deal.productLink && (
-                       <a href={deal.productLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 group/link">
-                          <div className="h-7 w-7 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center border border-blue-100 group-hover/link:bg-blue-600 group-hover/link:text-white transition-all">
+                       <a 
+                         href={deal.userRemarks?.trim() ? `/app/activedeals/notice/${deal.productCode || deal._id}` : deal.productLink} 
+                         target={deal.userRemarks?.trim() ? undefined : "_blank"} 
+                         rel="noopener noreferrer" 
+                         onClick={(e) => e.stopPropagation()} 
+                         className="flex items-center gap-1.5 group/link"
+                       >
+                          <div className="h-7 w-7 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center border border-blue-100 dark:border-blue-900/50 group-hover/link:bg-blue-600 group-hover/link:text-white transition-all">
                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                           </div>
                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Link</span>
@@ -556,45 +564,57 @@ export function MobileActiveDeals({
 
               {/* Stock Bar & Payout */}
               <div className="mt-5 space-y-3">
-                {boughtText && !isOut && (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="flex items-center gap-1.5 -mb-1"
-                  >
-                    <span className="text-[10px] font-black text-rose-600 uppercase tracking-tight animate-pulse bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100">
-                      {boughtText}
-                    </span>
-                  </motion.div>
-                )}
-
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">LIVE STOCKS</span>
+                {role === 'USER' && (isArchived || deal.isActive === false) ? (
+                  <div className="flex items-center justify-between p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                      <span className="text-[10px] font-black uppercase tracking-wider">Archived Deal</span>
+                    </div>
+                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400">Temporarily Paused</span>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tight border ${status.style}`}>
-                    {status.text}
-                  </span>
-                </div>
-                
-                <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(deal.remainingSlots / deal.totalSlots) * 100}%` }}
-                    className={`h-full rounded-full transition-all duration-1000 ${isOut ? 'bg-rose-500' : isHurry ? 'bg-rose-600' : isLimited ? 'bg-orange-500' : 'bg-blue-600'}`}
-                  />
-                </div>
+                ) : (
+                  <>
+                    {boughtText && !isOut && (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex items-center gap-1.5 -mb-1"
+                      >
+                        <span className="text-[10px] font-black text-rose-600 uppercase tracking-tight animate-pulse bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-md border border-rose-100 dark:border-rose-900/50">
+                          {boughtText}
+                        </span>
+                      </motion.div>
+                    )}
+
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">LIVE STOCKS</span>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tight border ${status.style}`}>
+                        {status.text}
+                      </span>
+                    </div>
+                    
+                    <div className="h-2 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-100 dark:border-slate-700">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(deal.remainingSlots / deal.totalSlots) * 100}%` }}
+                        className={`h-full rounded-full transition-all duration-1000 ${isOut ? 'bg-rose-500' : isHurry ? 'bg-rose-600' : isLimited ? 'bg-orange-500' : 'bg-blue-600'}`}
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div className="flex items-center justify-between pt-1">
                   {role !== 'USER' ? (
                     <div className="flex flex-col">
                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Amount</p>
                       {deal.displayPayout === "N/A" ? (
-                        <p className="text-xs font-black text-indigo-600 mt-1">N/A</p>
+                        <p className="text-xs font-black text-indigo-600 dark:text-indigo-400 mt-1">N/A</p>
                       ) : Number(deal.displayPayout) === 0 ? (
-                        <p className="text-xs font-black text-emerald-600 mt-1">Full Refund</p>
+                        <p className="text-xs font-black text-emerald-600 dark:text-emerald-400 mt-1">Full Refund</p>
                       ) : (
-                        <p className={`text-base font-black tracking-tighter mt-1 ${Number(deal.displayPayout) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        <p className={`text-base font-black tracking-tighter mt-1 ${Number(deal.displayPayout) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                           {Number(deal.displayPayout) >= 0 ? '+' : '-'}₹{Math.abs(Number(deal.displayPayout))}
                         </p>
                       )}
@@ -602,14 +622,14 @@ export function MobileActiveDeals({
                   ) : (
                     <div className="flex flex-col">
                       <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest leading-none">Comm./Less</p>
-                      <div className="flex items-center gap-1.5 mt-1 bg-indigo-50/50 px-2 py-1 rounded-xl border border-indigo-100 shadow-sm self-start">
+                      <div className="flex items-center gap-1.5 mt-1 bg-indigo-50/50 dark:bg-indigo-950/40 px-2 py-1 rounded-xl border border-indigo-100 dark:border-indigo-900/50 shadow-sm self-start">
                         <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
                         {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === "N/A" ? (
-                          <span className="text-xs font-black text-indigo-600">Ask Juhi</span>
+                          <span className="text-xs font-black text-indigo-600 dark:text-indigo-400">Ask Juhi</span>
                         ) : Number(deal.juhiCommission) === 0 ? (
-                          <span className="text-xs font-black text-emerald-600">Full Refund</span>
+                          <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">Full Refund</span>
                         ) : (
-                          <span className={`text-xs font-black ${Number(deal.juhiCommission) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          <span className={`text-xs font-black ${Number(deal.juhiCommission) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                             {Number(deal.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(deal.juhiCommission))}
                           </span>
                         )}
@@ -619,7 +639,20 @@ export function MobileActiveDeals({
 
                   <div className="flex items-center gap-2">
                     {role === 'USER' ? (
-                      deal.remainingSlots > 0 ? (
+                      (isArchived || deal.isActive === false) ? (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenDeal(deal);
+                          }}
+                          className="h-11 px-5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                          </svg>
+                          Notify Me
+                        </button>
+                      ) : deal.remainingSlots > 0 ? (
                         <Link 
                           href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
                           className="h-11 px-6 bg-blue-600 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 active:scale-95 transition-all"
@@ -628,7 +661,7 @@ export function MobileActiveDeals({
                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                         </Link>
                       ) : (
-                        <div className="h-11 px-6 bg-slate-50 border border-slate-100 text-slate-300 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 cursor-not-allowed">
+                        <div className="h-11 px-6 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-300 dark:text-slate-600 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 cursor-not-allowed">
                           Sold Out
                         </div>
                       )

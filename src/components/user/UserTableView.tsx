@@ -580,15 +580,20 @@ export function UserTableView({ orders, onRefund, onViewDetails, onNewOrder, ref
             key={order._id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`bg-white rounded-[20px] p-4 shadow-sm border transition-all duration-300 relative overflow-hidden group ${highlight.bg.replace('hover:', '')} ${order.status === 'REFUND_REJECTED' ? 'border-rose-400 ring-1 ring-rose-100' : 'border-slate-100'}`}
+            className={`bg-white dark:bg-[#0E1526] rounded-[20px] p-4 shadow-sm border transition-all duration-300 relative overflow-hidden group ${highlight.bg.replace('hover:', '')} ${order.status === 'REFUND_REJECTED' ? 'border-rose-400 ring-1 ring-rose-100' : 'border-slate-100 dark:border-slate-800'}`}
           >
             <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${highlight.border.replace('border-l-', 'bg-')}`} />
             {/* Status Header */}
             <div className="flex items-center justify-between mb-3">
                <div className="flex flex-col">
-                  <span className="text-[11px] font-black text-slate-900 tracking-tight uppercase">
-                    {order.userOrderId || order.aspireOrderId}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono text-[9px] font-black border border-slate-200 dark:border-slate-700">
+                      #{(currentPage - 1) * itemsPerPage + idx + 1}
+                    </span>
+                    <span className="text-[11px] font-black text-slate-900 dark:text-white tracking-tight uppercase">
+                      {order.userOrderId || order.aspireOrderId}
+                    </span>
+                  </div>
                   <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
                     Order ID
                   </span>
@@ -599,10 +604,10 @@ export function UserTableView({ orders, onRefund, onViewDetails, onNewOrder, ref
             </div>
 
             {/* Product & Brand */}
-            <div className="bg-slate-50/50 rounded-xl p-3 mb-3 border border-slate-100/50">
+            <div className="bg-slate-50/50 dark:bg-[#111827] rounded-xl p-3 mb-3 border border-slate-100/50 dark:border-slate-800">
                <div className="flex flex-col">
                   <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Brand & Product</span>
-                  <span className="text-[12px] font-black text-slate-900 mt-1 uppercase leading-tight">
+                  <span className="text-[12px] font-black text-slate-900 dark:text-white mt-1 uppercase leading-tight">
                     {order.brandName || "DEAL"} - {order.productCode || "N/A"}
                   </span>
                </div>
@@ -612,14 +617,14 @@ export function UserTableView({ orders, onRefund, onViewDetails, onNewOrder, ref
             <div className="grid grid-cols-2 gap-3 mb-4">
                <div className="flex flex-col gap-0.5">
                   <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Reviewer</span>
-                  <span className="text-[10px] font-black text-slate-800 uppercase truncate">{order.reviewName || "Guest"}</span>
+                  <span className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase truncate">{order.reviewName || "Guest"}</span>
                </div>
                <div className="flex flex-col gap-0.5">
                   <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Mediator</span>
                   <div className="flex items-center gap-1.5 overflow-hidden">
-                      <span className="text-[10px] font-black text-slate-800 uppercase truncate">{order.mediator?.systemDisplayName || order.mediator?.name || "Pending..."}</span>
+                      <span className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase truncate">{order.mediator?.systemDisplayName || order.mediator?.name || "Pending..."}</span>
                       {order.assignmentType === 'AUTO' && (
-                         <span className="text-[7px] font-black text-emerald-600 uppercase tracking-tighter px-1 py-0.5 bg-emerald-50 rounded border border-emerald-100 leading-none flex-shrink-0">System</span>
+                         <span className="text-[7px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-tighter px-1 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 rounded border border-emerald-100 dark:border-emerald-800 leading-none flex-shrink-0">System</span>
                       )}
                    </div>
 
@@ -629,23 +634,23 @@ export function UserTableView({ orders, onRefund, onViewDetails, onNewOrder, ref
                   <div className="space-y-1">
                      <div className="flex items-center gap-1">
                         <span className="text-[7px] font-black text-slate-400 uppercase">Ord:</span>
-                        <span className="text-[9px] font-medium text-slate-600 uppercase tracking-tight">{formatDate(order.createdAt)}</span>
+                        <span className="text-[9px] font-medium text-slate-600 dark:text-slate-300 uppercase tracking-tight">{formatDate(order.createdAt)}</span>
                      </div>
                      {order.refundDetails?.submittedAt && order.status !== 'REFUND_FORM_PENDING' && (
                         <div className="flex items-center gap-1">
                            <span className="text-[7px] font-black text-indigo-400 uppercase">Ref:</span>
-                           <span className="text-[9px] font-medium text-slate-600 uppercase tracking-tight">{formatDate(order.refundDetails.submittedAt)}</span>
+                           <span className="text-[9px] font-medium text-slate-600 dark:text-slate-300 uppercase tracking-tight">{formatDate(order.refundDetails.submittedAt)}</span>
                         </div>
                      )}
                      {getDueDays(order.createdAt, order.status) && (
-                        <span className="text-[9px] font-black text-amber-600 uppercase tracking-tight leading-none block pt-1">{getDueDays(order.createdAt, order.status)}</span>
+                        <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-tight leading-none block pt-1">{getDueDays(order.createdAt, order.status)}</span>
                      )}
                   </div>
                </div>
                {showRefundOnly && (order.status === 'COMPLETED' || order.status === 'REFUNDED') && (
-                  <div className="flex flex-col gap-1 mt-2 col-span-2 p-3 bg-emerald-50 rounded-xl border border-emerald-100/60">
+                  <div className="flex flex-col gap-1 mt-2 col-span-2 p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-100/60 dark:border-emerald-900/40">
                      <div className="flex items-center justify-between">
-                        <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest leading-none">Settlement Cleared</span>
+                        <span className="text-[8px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest leading-none">Settlement Cleared</span>
                         <span className="text-[8px] font-black text-slate-400 uppercase font-mono">
                            {(order.paymentDetails?.paidAt || order.updatedAt) ? (
                               new Date(order.paymentDetails?.paidAt || order.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -653,8 +658,8 @@ export function UserTableView({ orders, onRefund, onViewDetails, onNewOrder, ref
                         </span>
                      </div>
                      <div className="flex items-center justify-between mt-0.5">
-                        <span className="text-[10px] font-black text-slate-900 uppercase truncate">Paid By: {order.paymentDetails?.paidByName || "System"}</span>
-                        <span className="text-[9px] font-bold text-slate-500 uppercase">
+                        <span className="text-[10px] font-black text-slate-900 dark:text-white uppercase truncate">Paid By: {order.paymentDetails?.paidByName || "System"}</span>
+                        <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase">
                            {(order.paymentDetails?.paidAt || order.updatedAt) ? new Date(order.paymentDetails?.paidAt || order.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}
                         </span>
                      </div>
@@ -663,10 +668,10 @@ export function UserTableView({ orders, onRefund, onViewDetails, onNewOrder, ref
              </div>
 
             {/* Action Bar */}
-            <div className="flex items-center gap-2 pt-3 border-t border-slate-50">
+            <div className="flex items-center gap-2 pt-3 border-t border-slate-50 dark:border-slate-800">
                <button 
                  onClick={() => onViewDetails(order._id)}
-                 className="flex-1 h-10 bg-slate-100 rounded-xl flex items-center justify-center gap-1.5 text-[9px] font-black text-slate-600 uppercase tracking-widest hover:bg-slate-200 transition-all border border-slate-200/50"
+                 className="flex-1 h-10 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center gap-1.5 text-[9px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all border border-slate-200/50 dark:border-slate-700"
                >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                   Details

@@ -114,7 +114,17 @@ export default function RefundsPage() {
         } else if (role === "MEDIATOR") {
           filtered = ordersJson.data.filter((o: any) => o.status === "REFUND_APPROVED");
         } else {
-          filtered = ordersJson.data.filter((o: any) => ["COMPLETED", "REFUNDED"].includes(o.status));
+          filtered = ordersJson.data.filter((o: any) => 
+            [
+              "COMPLETED", 
+              "REFUNDED", 
+              "UNDER_VERIFICATION", 
+              "REFUND_APPROVED", 
+              "REFUND_REJECTED", 
+              "REFUND_FORM_SUBMITTED", 
+              "REFUND_FORM_PENDING"
+            ].includes(o.status) || Boolean(o.refundDetails?.submittedAt)
+          );
         }
         setOrders(filtered);
       }
@@ -236,7 +246,7 @@ export default function RefundsPage() {
   };
 
   const filteredOrders = useMemo(() => {
-    return orders.filter((order: any) => {
+    const list = orders.filter((order: any) => {
       const q = searchQuery.trim().toLowerCase();
       const matchesSearch = q === "" || 
         order.userOrderId?.toLowerCase().includes(q) ||
@@ -263,6 +273,13 @@ export default function RefundsPage() {
       }
 
       return matchesSearch && matchesBrand && matchesDate && matchesTab;
+    });
+
+    // Sort newest / most recent first
+    return [...list].sort((a: any, b: any) => {
+      const timeA = new Date(a.refundDetails?.submittedAt || a.createdAt || a.updatedAt || 0).getTime();
+      const timeB = new Date(b.refundDetails?.submittedAt || b.createdAt || b.updatedAt || 0).getTime();
+      return timeB - timeA;
     });
   }, [orders, searchQuery, brandFilter, filterDate, activeTab, role]);
 
@@ -306,13 +323,13 @@ export default function RefundsPage() {
       <div className="pt-4 md:pt-0" />
       {role === "ADMIN" && (
         <div className="flex flex-col md:flex-row items-center gap-4 mb-8">
-           <div className="flex items-center gap-2 p-1.5 bg-white rounded-[24px] border border-slate-100 shadow-sm w-fit">
+           <div className="flex items-center gap-2 p-1.5 bg-white dark:bg-[#0E1526] rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm w-fit">
               {(["VERIFYING", "APPROVED", "REJECTED"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => { setActiveTab(tab); setSelectedIds([]); setCurrentPage(1); }}
                   className={`relative px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
-                    activeTab === tab ? "text-white" : "text-slate-400 hover:text-slate-600"
+                    activeTab === tab ? "text-white" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   }`}
                 >
                   {activeTab === tab && (
@@ -327,23 +344,23 @@ export default function RefundsPage() {
               {activeTab === "VERIFYING" && (
                 <button
                   onClick={() => setCsvVerifyModalOpen(true)}
-                  className="h-11 px-4 md:px-5 bg-slate-900 border border-slate-900 shadow-sm rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-slate-800 transition-all flex items-center justify-center gap-2 active:scale-95 shrink-0"
+                  className="h-11 px-4 md:px-5 bg-slate-900 dark:bg-slate-800 border border-slate-900 dark:border-slate-700 shadow-sm rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-slate-800 transition-all flex items-center justify-center gap-2 active:scale-95 shrink-0"
                 >
                   <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
                   <span>CSV Bulk Verification</span>
                 </button>
               )}
 
-              <div className="flex flex-wrap items-center gap-2 bg-white px-3 py-1.5 rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md w-fit">
+              <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-[#0E1526] px-3 py-1.5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm transition-all hover:shadow-md w-fit">
                  <div className="relative">
                     <input 
                        type="text" 
                        placeholder="Search..." 
                        value={searchQuery}
                        onChange={(e) => setSearchQuery(e.target.value)}
-                       className="pl-8 pr-3 py-2 bg-slate-50 border-none rounded-xl text-[10px] font-black uppercase placeholder:text-slate-300 focus:ring-1 focus:ring-blue-500 w-36 transition-all"
+                       className="pl-8 pr-3 py-2 bg-slate-50 dark:bg-[#111827] border-none rounded-xl text-[10px] font-black uppercase placeholder:text-slate-300 dark:placeholder:text-slate-500 text-slate-800 dark:text-white focus:ring-1 focus:ring-blue-500 w-36 transition-all"
                     />
-                    <svg className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <svg className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                  </div>
 
                  <CustomDropdown 
@@ -358,7 +375,7 @@ export default function RefundsPage() {
                  {(searchQuery || brandFilter !== "ALL BRANDS" || filterDate) && (
                     <button 
                      onClick={() => { setSearchQuery(""); setBrandFilter("ALL BRANDS"); setFilterDate(""); }}
-                     className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                     className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all"
                     >
                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
@@ -369,7 +386,7 @@ export default function RefundsPage() {
       )}
 
        {role === "MEDIATOR" && (
-         <div className="w-full flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-slate-100 p-4 md:p-2 rounded-2xl shadow-sm mb-8">
+         <div className="w-full flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#0E1526] border border-slate-100 dark:border-slate-800 p-4 md:p-2 rounded-2xl shadow-sm mb-8">
             <div className="flex items-center gap-3 pl-2 md:pl-4">
                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Settlement Registry</span>
@@ -377,14 +394,14 @@ export default function RefundsPage() {
             <div className="flex items-center gap-2 w-full md:w-auto">
                <button 
                  onClick={() => setPayersModalOpen(true)}
-                 className="flex-1 md:flex-initial h-10 px-4 md:px-6 bg-white border border-slate-200 text-slate-700 shadow-sm rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+                 className="flex-1 md:flex-initial h-10 px-4 md:px-6 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-sm rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
                >
                   <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                   Manage Payers
                </button>
                <button 
                  onClick={() => setCsvModalOpen(true)}
-                 className="flex-1 md:flex-initial h-10 px-4 md:px-6 bg-slate-900 border border-slate-900 shadow-sm rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+                 className="flex-1 md:flex-initial h-10 px-4 md:px-6 bg-slate-900 dark:bg-slate-800 border border-slate-900 dark:border-slate-700 shadow-sm rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
                >
                   <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
                   CSV Bulk Payout
@@ -394,13 +411,13 @@ export default function RefundsPage() {
       )}
 
       {role === "USER" && (
-        <div className="w-full bg-white border border-slate-100 p-4 md:p-6 rounded-[28px] shadow-sm mb-8 space-y-4">
+        <div className="w-full bg-white dark:bg-[#0E1526] border border-slate-100 dark:border-slate-800 p-4 md:p-6 rounded-[28px] shadow-sm mb-8 space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Title / Info */}
             <div className="flex items-center gap-3">
               <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
               <div>
-                <h2 className="text-sm md:text-base font-black text-slate-900 uppercase tracking-tight">
+                <h2 className="text-sm md:text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">
                   My Refund History
                 </h2>
                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
@@ -432,7 +449,7 @@ export default function RefundsPage() {
                       handleUserSearch();
                     }
                   }}
-                  className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] font-bold uppercase placeholder:text-slate-300 placeholder:normal-case placeholder:font-normal focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800"
+                  className="w-full pl-9 pr-8 py-2.5 bg-slate-50 dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-2xl text-[11px] font-bold uppercase placeholder:text-slate-300 dark:placeholder:text-slate-500 placeholder:normal-case placeholder:font-normal focus:bg-white dark:focus:bg-[#162035] focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 dark:text-white"
                 />
                 <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -500,7 +517,7 @@ export default function RefundsPage() {
 
           {/* Quick Brand Filter Pills for Mobile */}
           {allBrands.length > 1 && (
-            <div className="sm:hidden pt-2 border-t border-slate-50 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+            <div className="sm:hidden pt-2 border-t border-slate-50 dark:border-slate-800/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
               <span className="text-[8px] font-black uppercase tracking-wider text-slate-400 shrink-0 mr-1">Brand:</span>
               {allBrands.map((brand) => (
                 <button
@@ -513,7 +530,7 @@ export default function RefundsPage() {
                   className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider whitespace-nowrap transition-all shrink-0 ${
                     brandFilter === brand
                       ? "bg-blue-600 text-white shadow-sm"
-                      : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100"
+                      : "bg-slate-50 dark:bg-[#111827] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800"
                   }`}
                 >
                   {brand}
@@ -578,17 +595,22 @@ export default function RefundsPage() {
                    initial={{ opacity: 0, y: 20 }}
                    animate={{ opacity: 1, y: 0 }}
                    transition={{ delay: idx * 0.05 }}
-                   className="group bg-white rounded-3xl p-5 border border-slate-100 shadow-sm relative overflow-hidden active:scale-[0.98] transition-all"
+                   className="group bg-white dark:bg-[#0E1526] rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden active:scale-[0.98] transition-all"
                 >
                    {/* Top Info Header */}
                    <div className="flex items-start justify-between gap-3 mb-4">
                       <div className="flex items-center gap-2.5 min-w-0">
-                         <div className={`h-10 w-10 rounded-2xl flex-shrink-0 flex items-center justify-center text-xs font-black shadow-inner ${role === 'ADMIN' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-50 text-slate-400'}`}>
+                         <div className={`h-10 w-10 rounded-2xl flex-shrink-0 flex items-center justify-center text-xs font-black shadow-inner ${role === 'ADMIN' ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300'}`}>
                             {order.brandName?.charAt(0) || 'R'}
                          </div>
                          <div className="flex flex-col min-w-0">
                             <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest truncate">{order.brandName}</span>
-                            <h3 className="text-sm font-black text-slate-900 tracking-tight uppercase truncate">{order.userOrderId}</h3>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                               <span className="px-1.5 py-0.5 rounded-md text-[8px] font-black bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
+                                 #{(currentPage - 1) * itemsPerPage + idx + 1}
+                               </span>
+                               <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight uppercase truncate">{order.userOrderId}</h3>
+                            </div>
                          </div>
                       </div>
                       <div className="flex flex-col items-end shrink-0">
@@ -603,27 +625,27 @@ export default function RefundsPage() {
 
                    {/* Proofs Row for Admin */}
                    {role === 'ADMIN' && activeTab === 'VERIFYING' && (
-                    <div className="flex items-center gap-3 mb-3 p-2 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                    <div className="flex items-center gap-3 mb-3 p-2 bg-slate-50/50 dark:bg-[#111827]/60 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mr-auto pl-1">Compliance Proofs</p>
                       {order.refundProof?.reviewScreenshot && (
-                        <a href={order.refundProof.reviewScreenshot} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-2 bg-white rounded-xl border border-slate-100 hover:bg-slate-100 transition-all shadow-sm">
-                          <svg className="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        <a href={order.refundProof.reviewScreenshot} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-2 bg-white dark:bg-[#1A233A] rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shadow-sm">
+                          <svg className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                         </a>
                       )}
                       {order.refundProof?.reviewLink && (
-                        <a href={order.refundProof.reviewLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-2 bg-white rounded-xl border border-slate-100 hover:bg-slate-100 transition-all shadow-sm">
-                          <svg className="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        <a href={order.refundProof.reviewLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-2 bg-white dark:bg-[#1A233A] rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shadow-sm">
+                          <svg className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                         </a>
                       )}
                     </div>
                   )}
 
                    {/* Grid Data */}
-                   <div className="grid grid-cols-2 gap-2.5 py-3 border-t border-b border-slate-100">
+                   <div className="grid grid-cols-2 gap-2.5 py-3 border-t border-b border-slate-100 dark:border-slate-800">
                       <div>
                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 leading-none">Net Refund</p>
                          <div className="flex items-baseline gap-0.5">
-                            <span className="text-base font-black text-slate-900 leading-none">₹{amount.toLocaleString()}</span>
+                            <span className="text-base font-black text-slate-900 dark:text-white leading-none">₹{amount.toLocaleString()}</span>
                             <span className="text-[8px] font-bold text-emerald-500 uppercase leading-none">INR</span>
                          </div>
                       </div>
@@ -631,7 +653,7 @@ export default function RefundsPage() {
                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 leading-none">
                             {role === 'MEDIATOR' ? 'Deal / Config' : 'Mediator'}
                          </p>
-                         <p className="text-xs font-black text-slate-800 uppercase tracking-tight truncate leading-none">
+                         <p className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight truncate leading-none">
                             {role === 'MEDIATOR' ? (
                                <span>{order.dealType} • {order.reviewType || 'Standard'}</span>
                             ) : (
@@ -645,7 +667,7 @@ export default function RefundsPage() {
                    <div className="pt-3 flex items-center justify-between gap-3">
                       <div className="flex flex-col min-w-0">
                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Buyer ID</span>
-                         <span className="text-xs font-black text-blue-600 lowercase tracking-tight truncate">@{order.reviewName || "N/A"}</span>
+                         <span className="text-xs font-black text-blue-600 dark:text-blue-400 lowercase tracking-tight truncate">@{order.reviewName || "N/A"}</span>
                       </div>
                       
                       <div className="flex items-center gap-1.5">
@@ -657,7 +679,7 @@ export default function RefundsPage() {
                         ) : order.status === 'REFUND_SETTLED' ? (
                            <div className="flex flex-col items-end">
                               <span className="text-[8px] font-black text-emerald-600 uppercase leading-none">Paid By</span>
-                              <span className="text-[9px] font-black text-slate-900 uppercase truncate max-w-[80px] mt-0.5 leading-none">{order.paymentDetails?.paidByName || "Admin"}</span>
+                              <span className="text-[9px] font-black text-slate-900 dark:text-white uppercase truncate max-w-[80px] mt-0.5 leading-none">{order.paymentDetails?.paidByName || "Admin"}</span>
                            </div>
                         ) : role === 'MEDIATOR' && order.status === 'REFUND_APPROVED' ? (
                            <button onClick={(e) => { e.stopPropagation(); handlePay(order._id); }} className="h-9 px-4 rounded-xl bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest shadow-md shadow-emerald-600/10 active:scale-95 transition-all flex items-center gap-1.5">
@@ -665,7 +687,7 @@ export default function RefundsPage() {
                               Pay
                            </button>
                         ) : (
-                           <button onClick={() => router.push(`/app/orders/${order._id}`)} className="h-9 px-4 rounded-xl bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all">
+                           <button onClick={() => router.push(`/app/orders/${order._id}`)} className="h-9 px-4 rounded-xl bg-slate-900 dark:bg-slate-800 text-white text-[9px] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all border border-transparent dark:border-slate-700">
                               Details
                            </button>
                         )}
@@ -687,10 +709,11 @@ export default function RefundsPage() {
                         type="checkbox" 
                         checked={selectedIds.length === paginatedOrders.length && paginatedOrders.length > 0} 
                         onChange={toggleSelectAll}
-                        className="w-5 h-5 border-2 border-slate-200 rounded-lg text-blue-600 focus:ring-blue-600/20 cursor-pointer"
+                        className="w-5 h-5 border-2 border-slate-200 dark:border-slate-700 rounded-lg text-blue-600 focus:ring-blue-600/20 cursor-pointer"
                       />
                     </th>
                   )}
+                  <th className="px-5 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">SR.</th>
                   <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Order Entry</th>
                   {role === 'ADMIN' && activeTab === 'VERIFYING' ? (
                     <>
@@ -714,7 +737,7 @@ export default function RefundsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800/60">
-                {paginatedOrders.map((order) => {
+                {paginatedOrders.map((order, idx) => {
                   const amount = order.refundDetails?.expectedPayout ?? (order.dealType === "Empty Box" ? (order.amount + (order.lessAmount || 0)) : (order.amount - (order.lessAmount || 0)));
                   return (
                     <motion.tr key={order._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
@@ -727,13 +750,16 @@ export default function RefundsPage() {
                             type="checkbox" 
                             checked={selectedIds.includes(order._id)} 
                             onChange={() => toggleSelect(order._id)}
-                            className="w-5 h-5 border-2 border-slate-200 rounded-lg text-blue-600 focus:ring-blue-600/20 cursor-pointer"
+                            className="w-5 h-5 border-2 border-slate-200 dark:border-slate-700 rounded-lg text-blue-600 focus:ring-blue-600/20 cursor-pointer"
                           />
                         </td>
                       )}
+                      <td className="px-5 py-5 text-center text-xs font-black text-slate-400 dark:text-slate-500">
+                        #{(currentPage - 1) * itemsPerPage + idx + 1}
+                      </td>
                       <td className="px-8 py-5 border-l-4 border-l-transparent group-hover:border-l-blue-500 transition-all">
-                        <p className="text-sm font-black text-slate-900 uppercase tracking-tighter">{order.userOrderId}</p>
-                        <p className="text-[9px] font-bold text-slate-300 uppercase mt-0.5 whitespace-nowrap">{order.brandName} • {order.dealType}</p>
+                        <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tighter">{order.userOrderId}</p>
+                        <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase mt-0.5 whitespace-nowrap">{order.brandName} • {order.dealType}</p>
                       </td>
                       
                       {role === 'ADMIN' && activeTab === 'VERIFYING' ? (
@@ -765,17 +791,17 @@ export default function RefundsPage() {
                         <>
                           <td className="px-6 py-5">
                             <div className="flex flex-col gap-1">
-                               <span className="text-[10px] font-black text-slate-900 uppercase tracking-tight">{order.brandName}</span>
+                               <span className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-tight">{order.brandName}</span>
                                <div className="flex items-center gap-2">
-                                  <span className="text-[8px] font-black text-blue-600 uppercase tracking-widest px-1.5 py-0.5 bg-blue-50 rounded border border-blue-100">{order.dealType}</span>
-                                  <span className="text-[8px] font-black text-indigo-600 uppercase tracking-widest px-1.5 py-0.5 bg-indigo-50 rounded border border-indigo-100">{order.reviewType === 'SUBMITTED' ? 'REVIEW SUBMITTED' : order.reviewType}</span>
+                                  <span className="text-[8px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest px-1.5 py-0.5 bg-blue-50 dark:bg-blue-950/50 rounded border border-blue-100 dark:border-blue-900/50">{order.dealType}</span>
+                                  <span className="text-[8px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-950/50 rounded border border-indigo-100 dark:border-indigo-900/50">{order.reviewType === 'SUBMITTED' ? 'REVIEW SUBMITTED' : order.reviewType}</span>
                                </div>
                             </div>
                           </td>
                           <td className="px-6 py-5">
                             <div className="flex flex-col">
-                              <p className="text-[11px] font-black text-slate-900 uppercase tracking-tighter line-clamp-1">{order.buyer?.name || "Anonymous"}</p>
-                              <p className="text-[9px] font-bold text-blue-600 uppercase tracking-widest mt-0.5 italic truncate w-32" title={order.reviewName}>
+                              <p className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-tighter line-clamp-1">{order.buyer?.name || "Anonymous"}</p>
+                              <p className="text-[9px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mt-0.5 italic truncate w-32" title={order.reviewName}>
                                 @{order.reviewName || "N/A"}
                               </p>
                             </div>
@@ -783,17 +809,17 @@ export default function RefundsPage() {
                         </>
                       )}
                       <td className="px-6 py-5">
-                        <p className="text-lg font-black text-slate-900 tracking-tighter">₹{amount.toLocaleString()}</p>
-                        <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Gross Refund</p>
+                        <p className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">₹{amount.toLocaleString()}</p>
+                        <p className="text-[8px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-widest">Gross Refund</p>
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-2 group/mediator">
-                          <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-400 group-hover/mediator:bg-blue-50 group-hover/mediator:text-blue-600 transition-colors">
+                          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-black text-slate-400 dark:text-slate-300 group-hover/mediator:bg-blue-50 dark:group-hover/mediator:bg-blue-950/50 group-hover/mediator:text-blue-600 transition-colors">
                             {order.mediator?.name?.[0] || "?"}
                           </div>
                           <div className="flex flex-col">
-                            <p className="text-[11px] font-black text-slate-900 uppercase tracking-tighter line-clamp-1">{order.mediator?.name || "Unassigned"}</p>
-                            <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest line-clamp-1 truncate w-24">#{order.mediator?.aspireMintId || "---"}</p>
+                            <p className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-tighter line-clamp-1">{order.mediator?.name || "Unassigned"}</p>
+                            <p className="text-[8px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-widest line-clamp-1 truncate w-24">#{order.mediator?.aspireMintId || "---"}</p>
                           </div>
                         </div>
                       </td>

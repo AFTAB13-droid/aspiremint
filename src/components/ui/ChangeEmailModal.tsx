@@ -177,7 +177,7 @@ export function ChangeEmailModal({
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="relative w-full max-w-lg bg-white rounded-[40px] p-8 md:p-10 shadow-2xl overflow-hidden border border-slate-100"
+          className="relative w-full max-w-lg bg-white dark:bg-[#0E1526] rounded-[40px] p-8 md:p-10 shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800"
         >
           {/* Accent glow orb */}
           <div
@@ -200,7 +200,7 @@ export function ChangeEmailModal({
                   <Mail className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight">
+                  <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                     {step === 1 ? "Change Direct Mail" : "Verify New Mail"}
                   </h2>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
@@ -212,7 +212,7 @@ export function ChangeEmailModal({
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="h-10 w-10 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-all disabled:opacity-50"
+                className="h-10 w-10 flex items-center justify-center rounded-full bg-slate-50 dark:bg-slate-800 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-all disabled:opacity-50"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -223,7 +223,7 @@ export function ChangeEmailModal({
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200/80 text-rose-700 flex items-start gap-3"
+                className="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 flex items-start gap-3"
               >
                 <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-rose-500" />
                 <div className="text-xs font-bold leading-relaxed">{errorMsg}</div>
@@ -231,14 +231,14 @@ export function ChangeEmailModal({
             )}
 
             {/* Current email pill */}
-            <div className="mb-6 p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+            <div className="mb-6 p-4 rounded-2xl bg-slate-50 dark:bg-[#111827] border border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div>
                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
                   Current Mail
                 </span>
-                <span className="text-xs font-black text-slate-700 break-all">{currentEmail}</span>
+                <span className="text-xs font-black text-slate-700 dark:text-slate-200 break-all">{currentEmail}</span>
               </div>
-              <span className="px-2.5 py-1 rounded-full bg-slate-200/60 text-slate-600 text-[8px] font-black uppercase tracking-wider">
+              <span className="px-2.5 py-1 rounded-full bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[8px] font-black uppercase tracking-wider">
                 Active
               </span>
             </div>
@@ -251,7 +251,7 @@ export function ChangeEmailModal({
                     New Email Address
                   </label>
                   <div className="relative group">
-                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors">
+                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 dark:group-focus-within:text-white transition-colors">
                       <Mail className="w-5 h-5" />
                     </div>
                     <input
@@ -261,7 +261,7 @@ export function ChangeEmailModal({
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
                       disabled={loading}
-                      className="w-full h-16 pl-14 pr-6 bg-slate-50 border border-slate-200/70 focus:bg-white rounded-[24px] shadow-inner font-bold text-sm outline-none transition-all focus:ring-4 focus:ring-sky-100 focus:border-sky-500 disabled:opacity-60"
+                      className="w-full h-16 pl-14 pr-6 bg-slate-50 dark:bg-[#111827] border border-slate-200/70 dark:border-slate-700 focus:bg-white dark:focus:bg-[#161F36] rounded-[24px] shadow-inner font-bold text-sm outline-none transition-all focus:ring-4 focus:ring-sky-100 dark:focus:ring-sky-900/40 focus:border-sky-500 disabled:opacity-60 text-slate-900 dark:text-white"
                     />
                   </div>
                   <p className="text-[10px] font-medium text-slate-400 ml-1 leading-normal">
@@ -296,10 +296,10 @@ export function ChangeEmailModal({
             ) : (
               /* STEP 2: Verify OTP */
               <form onSubmit={handleVerifyOtp} className="space-y-6">
-                <div className="p-4 rounded-2xl bg-sky-50/70 border border-sky-100 flex items-start gap-3">
+                <div className="p-4 rounded-2xl bg-sky-50/70 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-900/50 flex items-start gap-3">
                   <ShieldCheck className="w-5 h-5 text-sky-600 shrink-0 mt-0.5" />
-                  <div className="text-xs font-bold text-sky-900 leading-relaxed">
-                    Code dispatched to <span className="font-black text-sky-700 underline">{newEmail}</span>.
+                  <div className="text-xs font-bold text-sky-900 dark:text-sky-200 leading-relaxed">
+                    Code dispatched to <span className="font-black text-sky-700 dark:text-sky-400 underline">{newEmail}</span>.
                     Please check your inbox or spam folder.
                   </div>
                 </div>
@@ -316,13 +316,13 @@ export function ChangeEmailModal({
                         setOtp("");
                         setErrorMsg(null);
                       }}
-                      className="text-[10px] font-black text-sky-600 hover:text-sky-700 uppercase tracking-wider underline"
+                      className="text-[10px] font-black text-sky-600 dark:text-sky-400 hover:text-sky-700 uppercase tracking-wider underline"
                     >
                       Change email
                     </button>
                   </div>
                   <div className="relative group">
-                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 transition-colors">
+                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 dark:group-focus-within:text-white transition-colors">
                       <KeyRound className="w-5 h-5" />
                     </div>
                     <input
@@ -334,7 +334,7 @@ export function ChangeEmailModal({
                       value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                       disabled={loading}
-                      className="w-full h-16 pl-14 pr-6 bg-slate-50 border border-slate-200/70 focus:bg-white rounded-[24px] shadow-inner font-mono font-black text-lg tracking-[0.3em] outline-none transition-all focus:ring-4 focus:ring-sky-100 focus:border-sky-500 text-slate-900 disabled:opacity-60"
+                      className="w-full h-16 pl-14 pr-6 bg-slate-50 dark:bg-[#111827] border border-slate-200/70 dark:border-slate-700 focus:bg-white dark:focus:bg-[#161F36] rounded-[24px] shadow-inner font-mono font-black text-lg tracking-[0.3em] outline-none transition-all focus:ring-4 focus:ring-sky-100 dark:focus:ring-sky-900/40 focus:border-sky-500 text-slate-900 dark:text-white disabled:opacity-60"
                     />
                   </div>
                 </div>

@@ -515,8 +515,8 @@ export default function SingleDealDetailPage() {
               </div>
             ) : (
               <a
-                href={deal.productLink}
-                target="_blank"
+                href={deal.userRemarks?.trim() ? `/app/activedeals/notice/${deal.productCode || dealId}` : deal.productLink}
+                target={deal.userRemarks?.trim() ? "_self" : "_blank"}
                 rel="noopener noreferrer"
                 className="p-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-[28px] shadow-xl flex items-center justify-between group hover:scale-[1.01] active:scale-[0.99] transition-all"
               >
@@ -539,12 +539,12 @@ export default function SingleDealDetailPage() {
 
         {/* Right Section: Core Specifications, Inventory & CTA */}
         <div className="lg:col-span-7 space-y-4 sm:space-y-6 w-full">
-          <div className="bg-white rounded-[26px] sm:rounded-[36px] p-4 sm:p-8 border border-slate-100 shadow-sm space-y-5 sm:space-y-6 w-full">
+          <div className="bg-white dark:bg-[#0E1526] rounded-[26px] sm:rounded-[36px] p-4 sm:p-8 border border-slate-100 dark:border-slate-800 shadow-sm space-y-5 sm:space-y-6 w-full">
             
             {/* Title & Product Code Bar */}
-            <div className="space-y-3 pb-6 border-b border-slate-100">
+            <div className="space-y-3 pb-6 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-100">
+                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg border border-indigo-100 dark:border-indigo-900/50">
                   {deal.brandName}
                 </span>
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
@@ -552,17 +552,17 @@ export default function SingleDealDetailPage() {
                 </span>
               </div>
 
-              <h2 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight leading-snug">
+              <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-snug">
                 {deal.productDetails}
               </h2>
 
               <div className="flex items-center gap-3 pt-1">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-xl">
                   <Tag className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="text-xs font-black text-slate-800 uppercase tracking-widest">{deal.productCode}</span>
+                  <span className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest">{deal.productCode}</span>
                 </div>
                 {boughtText && !isOut && (
-                  <span className="text-[9px] font-black text-rose-600 uppercase tracking-tight bg-rose-50 px-2.5 py-1 rounded-xl border border-rose-100 animate-pulse">
+                  <span className="text-[9px] font-black text-rose-600 uppercase tracking-tight bg-rose-50 dark:bg-rose-950/40 px-2.5 py-1 rounded-xl border border-rose-100 dark:border-rose-900/50 animate-pulse">
                     {boughtText}
                   </span>
                 )}
@@ -570,74 +570,76 @@ export default function SingleDealDetailPage() {
             </div>
 
             {/* Inventory & Stock Real-time Tracker */}
-            <div className="space-y-4 p-4 sm:p-6 bg-slate-50/70 rounded-[24px] sm:rounded-[28px] border border-slate-100 w-full">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className={`h-3 w-3 rounded-full ${isOut ? 'bg-rose-500' : 'bg-emerald-500'} animate-pulse`} />
-                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest">LIVE STOCKS</h3>
-                </div>
-
-                <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border ${
-                  isOut ? "bg-rose-50 text-rose-500 border-rose-100" :
-                  isHurry ? "bg-rose-50 text-rose-600 border-rose-200 animate-pulse" :
-                  isLimited ? "bg-orange-50 text-orange-600 border-orange-200" :
-                  "bg-emerald-50 text-emerald-600 border-emerald-100"
-                }`}>
-                  {isOut ? "Out of Stock" : isHurry ? "Hurry Up! Few slots left" : isLimited ? "Limited Stock" : "Stock Available"}
-                </span>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="h-3 w-full bg-slate-200/60 rounded-full overflow-hidden p-0.5 border border-slate-200/50">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(100, Math.max(0, ((deal.remainingSlots || 0) / (deal.totalSlots || 1)) * 100))}%` }}
-                  transition={{ duration: 1.2, ease: "easeOut" }}
-                  className={`h-full rounded-full ${isOut ? 'bg-rose-500' : isHurry ? 'bg-rose-600' : isLimited ? 'bg-orange-500' : 'bg-indigo-600'}`}
-                />
-              </div>
-
-              {/* Granular Breakdown (Shown only to Admin & Mediator) */}
-              {role !== 'USER' ? (
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                  <p className="text-xs font-black text-slate-700">
-                    <span className="text-indigo-600 font-extrabold text-sm">{deal.remainingSlots || 0}</span> / {deal.totalSlots || 0} Total Slots Remaining
-                  </p>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    {deal.reviewSlots > 0 && (
-                      <span className="text-[9px] font-black text-slate-600 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
-                        Review: {deal.remainingReview || 0}/{deal.reviewSlots}
-                      </span>
-                    )}
-                    {deal.ratingSlots > 0 && (
-                      <span className="text-[9px] font-black text-slate-600 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
-                        Rating: {deal.remainingRating || 0}/{deal.ratingSlots}
-                      </span>
-                    )}
-                    {deal.onlyOrderSlots > 0 && (
-                      <span className="text-[9px] font-black text-slate-600 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
-                        Order: {deal.remainingOnly || 0}/{deal.onlyOrderSlots}
-                      </span>
-                    )}
-                    {deal.submittedSlots > 0 && (
-                      <span className="text-[9px] font-black text-slate-600 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
-                        Submitted: {deal.remainingSubmitted || 0}/{deal.submittedSlots}
-                      </span>
-                    )}
+            {!(isArchived && role === 'USER') && (
+              <div className="space-y-4 p-4 sm:p-6 bg-slate-50/70 dark:bg-[#0B101D] rounded-[24px] sm:rounded-[28px] border border-slate-100 dark:border-slate-800 w-full">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`h-3 w-3 rounded-full ${isOut ? 'bg-rose-500' : 'bg-emerald-500'} animate-pulse`} />
+                    <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">LIVE STOCKS</h3>
                   </div>
-                </div>
-              ) : (
-                <div className="pt-1 flex items-center justify-between">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    Realtime Availability Status
-                  </p>
-                  <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">
-                    {isOut ? "Unavailable" : "Active Campaign"}
+
+                  <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border ${
+                    isOut ? "bg-rose-50 text-rose-500 border-rose-100" :
+                    isHurry ? "bg-rose-50 text-rose-600 border-rose-200 animate-pulse" :
+                    isLimited ? "bg-orange-50 text-orange-600 border-orange-200" :
+                    "bg-emerald-50 text-emerald-600 border-emerald-100"
+                  }`}>
+                    {isOut ? "Out of Stock" : isHurry ? "Hurry Up! Few slots left" : isLimited ? "Limited Stock" : "Stock Available"}
                   </span>
                 </div>
-              )}
-            </div>
+
+                {/* Progress Bar */}
+                <div className="h-3 w-full bg-slate-200/60 dark:bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-200/50 dark:border-slate-700">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(100, Math.max(0, ((deal.remainingSlots || 0) / (deal.totalSlots || 1)) * 100))}%` }}
+                    transition={{ duration: 1.2, ease: "easeOut" }}
+                    className={`h-full rounded-full ${isOut ? 'bg-rose-500' : isHurry ? 'bg-rose-600' : isLimited ? 'bg-orange-500' : 'bg-indigo-600'}`}
+                  />
+                </div>
+
+                {/* Granular Breakdown (Shown only to Admin & Mediator) */}
+                {role !== 'USER' ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                    <p className="text-xs font-black text-slate-700 dark:text-slate-300">
+                      <span className="text-indigo-600 dark:text-indigo-400 font-extrabold text-sm">{deal.remainingSlots || 0}</span> / {deal.totalSlots || 0} Total Slots Remaining
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {deal.reviewSlots > 0 && (
+                        <span className="text-[9px] font-black text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
+                          Review: {deal.remainingReview || 0}/{deal.reviewSlots}
+                        </span>
+                      )}
+                      {deal.ratingSlots > 0 && (
+                        <span className="text-[9px] font-black text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
+                          Rating: {deal.remainingRating || 0}/{deal.ratingSlots}
+                        </span>
+                      )}
+                      {deal.onlyOrderSlots > 0 && (
+                        <span className="text-[9px] font-black text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
+                          Order: {deal.remainingOnly || 0}/{deal.onlyOrderSlots}
+                        </span>
+                      )}
+                      {deal.submittedSlots > 0 && (
+                        <span className="text-[9px] font-black text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
+                          Submitted: {deal.remainingSubmitted || 0}/{deal.submittedSlots}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="pt-1 flex items-center justify-between">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Realtime Availability Status
+                    </p>
+                    <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                      {isOut ? "Unavailable" : "Active Campaign"}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Commission / Less Card */}
             <div className="p-5 bg-gradient-to-r from-indigo-50 to-indigo-50/30 rounded-[28px] border border-indigo-100/60 flex items-center justify-between shadow-sm relative overflow-hidden group">
@@ -909,11 +911,11 @@ export default function SingleDealDetailPage() {
 
                       {rel.productLink && (
                         <a
-                          href={rel.productLink}
-                          target="_blank"
+                          href={rel.userRemarks?.trim() ? `/app/activedeals/notice/${rel.productCode || rel._id}` : rel.productLink}
+                          target={rel.userRemarks?.trim() ? "_self" : "_blank"}
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="flex items-center gap-1 bg-slate-50 hover:bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-100 text-slate-500 transition-colors"
+                          className="flex items-center gap-1 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 px-2.5 py-1 rounded-lg border border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 transition-colors"
                         >
                           <ExternalLink className="w-3 h-3 text-blue-500" />
                           <span className="text-[8px] font-black uppercase tracking-widest">Link</span>
@@ -923,24 +925,26 @@ export default function SingleDealDetailPage() {
                   </div>
 
                   {/* Stock Bar (No real stock numbers) */}
-                  <div className="mt-3.5 space-y-1.5">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">LIVE STOCKS</span>
+                  {!(role === 'USER' && !rel.isActive) && (
+                    <div className="mt-3.5 space-y-1.5">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em]">LIVE STOCKS</span>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tight border ${stockInfo.style}`}>
+                          {stockInfo.text}
+                        </span>
                       </div>
-                      <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tight border ${stockInfo.style}`}>
-                        {stockInfo.text}
-                      </span>
-                    </div>
 
-                    <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100">
-                      <div
-                        className={`h-full rounded-full transition-all duration-700 ${relIsOut ? 'bg-rose-500' : relIsHurry ? 'bg-rose-600' : relIsLimited ? 'bg-orange-500' : 'bg-blue-600'}`}
-                        style={{ width: `${Math.min(100, Math.max(0, ((rel.remainingSlots || 0) / (rel.totalSlots || 1)) * 100))}%` }}
-                      />
+                      <div className="h-2 w-full bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-100 dark:border-slate-700">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${relIsOut ? 'bg-rose-500' : relIsHurry ? 'bg-rose-600' : relIsLimited ? 'bg-orange-500' : 'bg-blue-600'}`}
+                          style={{ width: `${Math.min(100, Math.max(0, ((rel.remainingSlots || 0) / (rel.totalSlots || 1)) * 100))}%` }}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Bottom Row: Comm./Less & Action Button */}
                   <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100/80">
@@ -1082,36 +1086,38 @@ export default function SingleDealDetailPage() {
                     </div>
 
                     {/* Live Stocks Progress Section (No raw numbers) */}
-                    <div className="space-y-1.5 pt-1 border-t border-slate-100/70">
-                      <div className="flex items-center justify-between text-[9px]">
-                        <span className="font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                          LIVE STOCKS
-                        </span>
-                        <span className={`px-2 py-0.5 rounded-md font-black uppercase tracking-tight text-[8px] border ${stockInfo.style}`}>
-                          {stockInfo.text}
-                        </span>
-                      </div>
+                    {!(role === 'USER' && !rel.isActive) && (
+                      <div className="space-y-1.5 pt-1 border-t border-slate-100/70 dark:border-slate-800">
+                        <div className="flex items-center justify-between text-[9px]">
+                          <span className="font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                            LIVE STOCKS
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-md font-black uppercase tracking-tight text-[8px] border ${stockInfo.style}`}>
+                            {stockInfo.text}
+                          </span>
+                        </div>
 
-                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-700 ${relIsOut ? 'bg-rose-500' : relIsHurry ? 'bg-rose-600' : relIsLimited ? 'bg-orange-500' : 'bg-blue-600'}`}
-                          style={{ width: `${Math.min(100, Math.max(0, ((rel.remainingSlots || 0) / (rel.totalSlots || 1)) * 100))}%` }}
-                        />
+                        <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-700 ${relIsOut ? 'bg-rose-500' : relIsHurry ? 'bg-rose-600' : relIsLimited ? 'bg-orange-500' : 'bg-blue-600'}`}
+                            style={{ width: `${Math.min(100, Math.max(0, ((rel.remainingSlots || 0) / (rel.totalSlots || 1)) * 100))}%` }}
+                          />
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Commission / Payout Row */}
                     <div className="pt-1 flex items-center justify-between">
                       {role === 'USER' ? (
-                        <div className="flex items-center gap-1.5 bg-indigo-50/60 px-2.5 py-1 rounded-xl border border-indigo-100/60">
+                        <div className="flex items-center gap-1.5 bg-indigo-50/60 dark:bg-indigo-950/40 px-2.5 py-1 rounded-xl border border-indigo-100/60 dark:border-indigo-900/50">
                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Comm./Less:</span>
                           {rel.juhiCommission === undefined || rel.juhiCommission === null || rel.juhiCommission === "N/A" ? (
-                            <span className="text-[10px] font-black text-indigo-600">Ask Juhi</span>
+                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400">Ask Juhi</span>
                           ) : Number(rel.juhiCommission) === 0 ? (
-                            <span className="text-[10px] font-black text-emerald-600">Full Refund</span>
+                            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">Full Refund</span>
                           ) : (
-                            <span className={`text-[10px] font-black ${Number(rel.juhiCommission) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            <span className={`text-[10px] font-black ${Number(rel.juhiCommission) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                               {Number(rel.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(rel.juhiCommission))}
                             </span>
                           )}
@@ -1119,7 +1125,7 @@ export default function SingleDealDetailPage() {
                       ) : (
                         <div className="flex items-center gap-1.5">
                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Payout:</span>
-                          <span className={`text-[11px] font-black ${Number(rel.displayPayout) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          <span className={`text-[11px] font-black ${Number(rel.displayPayout) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                             {rel.displayPayout !== "N/A" ? `${Number(rel.displayPayout) >= 0 ? '+' : '-'}₹${Math.abs(Number(rel.displayPayout))}` : "N/A"}
                           </span>
                         </div>
@@ -1128,14 +1134,14 @@ export default function SingleDealDetailPage() {
                   </div>
 
                   {/* Bottom Action Row */}
-                  <div className="pt-3 mt-2 border-t border-slate-100 flex items-center gap-2">
+                  <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
                     {rel.productLink && (
                       <a
-                        href={rel.productLink}
-                        target="_blank"
+                        href={rel.userRemarks?.trim() ? `/app/activedeals/notice/${rel.productCode || rel._id}` : rel.productLink}
+                        target={rel.userRemarks?.trim() ? "_self" : "_blank"}
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="h-8.5 px-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 flex items-center gap-1 text-[8px] font-black uppercase tracking-wider transition-all shadow-2xs hover:scale-105 active:scale-95 shrink-0"
+                        className="h-8.5 px-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 flex items-center gap-1 text-[8px] font-black uppercase tracking-wider transition-all shadow-2xs hover:scale-105 active:scale-95 shrink-0"
                         title={`Open ${rel.marketplace} Link`}
                       >
                         <ExternalLink className="w-3 h-3 text-blue-600" />
