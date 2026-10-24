@@ -16,7 +16,7 @@ export default function DealNoticePage() {
 
   const [deal, setDeal] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [secondsLeft, setSecondsLeft] = useState(7);
+  const [secondsLeft, setSecondsLeft] = useState(3);
   const [timerFinished, setTimerFinished] = useState(false);
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export default function DealNoticePage() {
     fetchDeal();
   }, [dealId, router]);
 
-  // Enforce 7-second reading countdown
+  // Enforce 3-second reading countdown
   useEffect(() => {
     if (loading || !deal?.userRemarks?.trim()) return;
 
@@ -101,7 +101,7 @@ export default function DealNoticePage() {
 
   if (!deal) return null;
 
-  const totalDuration = 7;
+  const totalDuration = 3;
   const progressPercent = ((totalDuration - secondsLeft) / totalDuration) * 100;
 
   return (
