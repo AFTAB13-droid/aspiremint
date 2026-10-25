@@ -70,6 +70,16 @@ const navLinks: NavLink[] = [
     )
   },
   {
+    name: "Review Finder",
+    href: "/app/review-finder",
+    roles: ["USER", "MEDIATOR", "ADMIN"],
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+      </svg>
+    )
+  },
+  {
     name: "Passbook",
     href: "/app/wallet",
     roles: ["MEDIATOR", "ADMIN"],
@@ -304,7 +314,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const mobileSections = [
     { 
       title: "Operations", 
-      links: filteredLinks.filter(l => ["Dashboard", "Orders", "My Orders", "Active Deals", "My Refunds", "My Activity", "Refunds", "Passbook", "Refer and Earn", "Support", "Support Hub", "Reference Center"].includes(l.name)) 
+      links: filteredLinks.filter(l => ["Dashboard", "Orders", "My Orders", "Active Deals", "My Refunds", "Review Finder", "My Activity", "Refunds", "Passbook", "Refer and Earn", "Support", "Support Hub", "Reference Center"].includes(l.name)) 
     },
     { 
       title: "Management", 
