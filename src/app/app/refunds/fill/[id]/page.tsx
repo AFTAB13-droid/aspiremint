@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Search, ExternalLink, Sparkles, ArrowRight } from "lucide-react";
 
 export default function FillRefundPage() {
   const { id } = useParams();
@@ -58,6 +59,19 @@ export default function FillRefundPage() {
           const saved = localStorage.getItem(storageKey);
           const isEditMode = o.status !== "REFUND_FORM_PENDING";
 
+          // Check for Review Finder Auto-fill payload
+          const autofillKey = `review_finder_autofill_${id}`;
+          const autofillRaw = localStorage.getItem(autofillKey);
+          let autofillPayload: any = null;
+          if (autofillRaw) {
+            try {
+              autofillPayload = JSON.parse(autofillRaw);
+              localStorage.removeItem(autofillKey);
+            } catch (err) {
+              console.error("Autofill parse error", err);
+            }
+          }
+
           const isBlinkitOrder = Boolean(
              o.marketplace?.toLowerCase().includes("blinkit") || 
              o.brandName?.toLowerCase().includes("blinkit")
@@ -89,13 +103,21 @@ export default function FillRefundPage() {
                     if (!newState.deliveryScreenshot) newState.deliveryScreenshot = o.refundProof?.deliveryScreenshot || "";
                     if (!newState.invoiceScreenshot) newState.invoiceScreenshot = o.refundProof?.invoiceScreenshot || (isBlinkitOrder ? o.refundProof?.returnPeriodScreenshot : "") || "";
 
+                    // Apply Review Finder Auto-fill priority
+                    if (autofillPayload?.reviewScreenshot) {
+                       newState.reviewScreenshot = autofillPayload.reviewScreenshot;
+                    }
+                    if (autofillPayload?.reviewLink) {
+                       newState.reviewLink = autofillPayload.reviewLink;
+                    }
+
                     return newState;
                  });
              } catch(e) { localStorage.removeItem(storageKey); }
           } else {
              setFormData({
-                reviewLink: o.refundProof?.reviewLink || "",
-                reviewScreenshot: o.refundProof?.reviewScreenshot || "",
+                reviewLink: autofillPayload?.reviewLink || o.refundProof?.reviewLink || "",
+                reviewScreenshot: autofillPayload?.reviewScreenshot || o.refundProof?.reviewScreenshot || "",
                 sellerFeedbackScreenshot: o.refundProof?.sellerFeedbackScreenshot || "",
                 returnPeriodScreenshot: o.refundProof?.returnPeriodScreenshot || "",
                 deliveryScreenshot: o.refundProof?.deliveryScreenshot || "",
@@ -106,6 +128,13 @@ export default function FillRefundPage() {
                 expectedPayout: o.refundDetails?.expectedPayout || calculatedPayout,
                 dealType: o.refundDetails?.dealType || o.dealType || "Standard",
                 productCode: o.refundDetails?.productCode || o.productCode || "",
+             });
+          }
+
+          if (autofillPayload) {
+             toast.success("Review Snapshot & Link auto-filled from Review Finder!", {
+                duration: 4000,
+                icon: "✨",
              });
           }
         } else { toast.error("Identity Handshake Failure"); }
@@ -325,15 +354,33 @@ export default function FillRefundPage() {
     <div className="space-y-3">
        <div className="flex items-center justify-between ml-1">
            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</label>
-           {tabLink && (
-               <button 
-                 type="button" 
-                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(`/app/samples?tab=${tabLink}`, '_blank'); }} 
-                 className="px-2.5 py-1 bg-slate-100 text-slate-500 rounded flex-shrink-0 text-[8px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
-               >
-                 View Sample
-               </button>
-           )}
+           <div className="flex items-center gap-2">
+             {field === 'reviewScreenshot' && (
+                <button 
+                  type="button" 
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    e.stopPropagation(); 
+                    const targetUrl = order?.productLink || "";
+                    window.open(`/app/review-finder?url=${encodeURIComponent(targetUrl)}&orderId=${id}`, '_blank'); 
+                  }} 
+                  className="px-2.5 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg flex-shrink-0 text-[8px] font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-sm flex items-center gap-1 active:scale-95"
+                  title="Search reviews on Flipkart and auto-generate screenshot proof"
+                >
+                  <Search className="w-2.5 h-2.5 stroke-[3]" />
+                  <span>Find on Flipkart</span>
+                </button>
+             )}
+             {tabLink && (
+                 <button 
+                   type="button" 
+                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(`/app/samples?tab=${tabLink}`, '_blank'); }} 
+                   className="px-2.5 py-1 bg-slate-100 text-slate-500 rounded flex-shrink-0 text-[8px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                 >
+                   View Sample
+                 </button>
+             )}
+           </div>
        </div>
        <div className="relative group">
           {!formData[field] ? (
@@ -369,18 +416,32 @@ export default function FillRefundPage() {
     <div className="min-h-screen bg-[#F8FAFC] md:bg-transparent pb-36 md:pb-20">
       
       {/* MOBILE STICKY HEADER */}
-      <div className="sticky top-0 z-50 md:hidden bg-white/80 backdrop-blur-xl border-b border-slate-100 px-4 py-4 flex items-center justify-between">
-         <button onClick={() => router.back()} className="h-10 w-10 rounded-full bg-slate-50 flex flex-shrink-0 items-center justify-center text-slate-600 active:scale-90 transition-all border border-slate-100">
+      <div className="sticky top-0 z-50 md:hidden bg-white/80 dark:bg-[#0E1526]/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 px-4 py-4 flex items-center justify-between">
+         <button onClick={() => router.back()} className="h-10 w-10 rounded-full bg-slate-50 dark:bg-slate-800 flex flex-shrink-0 items-center justify-center text-slate-600 dark:text-slate-300 active:scale-90 transition-all border border-slate-100 dark:border-slate-700">
             <svg className="w-4 h-4 ml-[-2px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
          </button>
          <div className="text-center px-2">
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 leading-tight">Apply Refund</h2>
-            <p className="text-xs font-black text-slate-900 tracking-tight">{order.userOrderId}</p>
+            <p className="text-xs font-black text-slate-900 dark:text-white tracking-tight">{order.userOrderId}</p>
          </div>
-         <button onClick={() => router.push('/app/samples')} className="h-10 px-3 md:px-4 md:w-auto w-10 rounded-full bg-blue-50 flex flex-shrink-0 items-center justify-center text-blue-600 active:scale-90 transition-all gap-2">
-             <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-             <span className="text-[10px] font-black uppercase tracking-widest hidden xs:block">Help</span>
-         </button>
+         <div className="flex items-center gap-1.5">
+            <button 
+              type="button"
+              onClick={() => {
+                const targetUrl = order?.productLink || "";
+                window.open(`/app/review-finder?url=${encodeURIComponent(targetUrl)}&orderId=${id}`, '_blank');
+              }}
+              className="h-10 px-3 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex flex-shrink-0 items-center justify-center text-[9px] font-black uppercase tracking-widest active:scale-90 transition-all shadow-sm gap-1"
+              title="Open Flipkart Review Finder"
+            >
+              <Search className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span className="hidden xs:inline">Finder</span>
+            </button>
+            <button onClick={() => router.push('/app/samples')} className="h-10 px-3 md:px-4 md:w-auto w-10 rounded-full bg-blue-50 dark:bg-blue-950/60 flex flex-shrink-0 items-center justify-center text-blue-600 dark:text-blue-400 active:scale-90 transition-all gap-2">
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span className="text-[10px] font-black uppercase tracking-widest hidden xs:block">Help</span>
+            </button>
+         </div>
       </div>
 
       <div className="mx-auto max-w-4xl px-4 md:px-0 pt-6 md:pt-0">
@@ -389,22 +450,34 @@ export default function FillRefundPage() {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="hidden md:flex mb-12 flex-row items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <button onClick={() => router.back()} className="h-9 px-4 rounded-xl bg-white border border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 hover:text-slate-900 transition-all shadow-sm active:scale-95">
+              <button onClick={() => router.back()} className="h-9 px-4 rounded-xl bg-white dark:bg-[#0E1526] border border-slate-100 dark:border-slate-800 text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm active:scale-95">
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
                 Back
               </button>
               <button 
+                type="button"
+                onClick={() => {
+                  const targetUrl = order?.productLink || "";
+                  window.open(`/app/review-finder?url=${encodeURIComponent(targetUrl)}&orderId=${id}`, '_blank');
+                }} 
+                className="h-9 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2 hover:opacity-95 transition-all shadow-sm shadow-blue-500/20 active:scale-95"
+                title="Open Flipkart Review Finder"
+              >
+                <Search className="w-3.5 h-3.5 stroke-[2.5]" />
+                Review Finder
+              </button>
+              <button 
                 onClick={() => router.push('/app/samples')} 
-                className="h-9 px-4 rounded-xl bg-blue-50 border border-blue-100 text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2 hover:bg-blue-100 transition-all shadow-sm active:scale-95"
+                className="h-9 px-4 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900 text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest flex items-center gap-2 hover:bg-blue-100 transition-all shadow-sm active:scale-95"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 Need Help
               </button>
             </div>
-            <h1 className="text-5xl font-black text-slate-900 uppercase tracking-tight leading-none">Apply Refund</h1>
+            <h1 className="text-5xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none">Apply Refund</h1>
             <div className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-3 flex items-center gap-2 font-mono">
                <div className="h-1 w-1 rounded-full bg-blue-500" />
-               Order ID: <span className="text-blue-600 select-all">{order.userOrderId}</span>
+               Order ID: <span className="text-blue-600 dark:text-blue-400 select-all">{order.userOrderId}</span>
             </div>
           </div>
         </motion.div>
@@ -456,6 +529,31 @@ export default function FillRefundPage() {
                              </div>
                           )}
                        </div>
+
+                       {(isReviewDeal || isRatingDeal || isSubmittedDeal) && (
+                          <div className="rounded-2xl p-4 bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-violet-50/40 dark:from-[#111A30] dark:to-[#16203D] border border-blue-100 dark:border-blue-900/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                             <div className="flex items-center gap-3">
+                                <div className="h-9 w-9 rounded-xl bg-blue-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-500/20">
+                                   <Search className="w-4 h-4 stroke-[2.5]" />
+                                </div>
+                                <div>
+                                   <p className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-tight">Need Flipkart Review Proof?</p>
+                                   <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Search customer reviews, generate screenshot proof, and auto-fill in 1-click.</p>
+                                </div>
+                             </div>
+                             <button
+                                type="button"
+                                onClick={() => {
+                                  const targetUrl = order?.productLink || "";
+                                  window.open(`/app/review-finder?url=${encodeURIComponent(targetUrl)}&orderId=${id}`, '_blank');
+                                }}
+                                className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5 shrink-0"
+                             >
+                                <span>Open Finder</span>
+                                <ExternalLink className="w-3 h-3 stroke-[2.5]" />
+                             </button>
+                          </div>
+                       )}
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                          {(isReviewDeal || isRatingDeal || isSubmittedDeal) && (

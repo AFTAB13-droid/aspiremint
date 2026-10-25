@@ -23,6 +23,9 @@ import {
   ChevronRight,
   Maximize2,
   ClipboardPaste,
+  Sparkles,
+  Trash2,
+  ArrowRight,
 } from "lucide-react";
 
 interface FlipkartReview {
@@ -73,13 +76,25 @@ export default function ReviewFinderPage() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Autofill to Refund Modal State
+  const [showAutofillModal, setShowAutofillModal] = useState(false);
+  const [selectedReviewForAutofill, setSelectedReviewForAutofill] = useState<FlipkartReview | null>(null);
+  const [userOrders, setUserOrders] = useState<any[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [orderSearchQuery, setOrderSearchQuery] = useState("");
+  const [attachingOrderId, setAttachingOrderId] = useState<string | null>(null);
+
   const eventSourceRef = useRef<EventSource | null>(null);
   const reviewsMapRef = useRef<Map<string, FlipkartReview>>(new Map());
+  const isStoppedRef = useRef(false);
 
   // Clean up on unmount
   useEffect(() => {
     return () => {
+      isStoppedRef.current = true;
       if (eventSourceRef.current) {
+        eventSourceRef.current.onmessage = null;
+        eventSourceRef.current.onerror = null;
         eventSourceRef.current.close();
       }
     };
@@ -105,12 +120,40 @@ export default function ReviewFinderPage() {
   };
 
   const stopScan = () => {
+    isStoppedRef.current = true;
     if (eventSourceRef.current) {
+      eventSourceRef.current.onmessage = null;
+      eventSourceRef.current.onerror = null;
       eventSourceRef.current.close();
       eventSourceRef.current = null;
     }
     setIsScanning(false);
-    setStatusLog("Scan stopped.");
+    const count = reviewsMapRef.current.size;
+    setStatusLog(count > 0 ? `Scan stopped. Preserved ${count} reviews.` : "Scan stopped.");
+    toast("Scanning stopped. Current reviews preserved.", { icon: "⏸️" });
+  };
+
+  const clearAll = () => {
+    isStoppedRef.current = true;
+    if (eventSourceRef.current) {
+      eventSourceRef.current.onmessage = null;
+      eventSourceRef.current.onerror = null;
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+    setIsScanning(false);
+    setInputUrl("");
+    setReviews([]);
+    reviewsMapRef.current = new Map();
+    setTotalPagesFound(0);
+    setTotalReviewsCount(0);
+    setSearchQuery("");
+    setRatingFilter("ALL");
+    setWithPhotosOnly(false);
+    setVerifiedOnly(false);
+    setStatusLog("");
+    setCurrentPage(1);
+    toast.success("Search & reviews cleared.");
   };
 
   const startScan = (urlToScan?: string) => {
@@ -125,8 +168,16 @@ export default function ReviewFinderPage() {
       return;
     }
 
+    // Reset previous stream connection
+    if (eventSourceRef.current) {
+      eventSourceRef.current.onmessage = null;
+      eventSourceRef.current.onerror = null;
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+    isStoppedRef.current = false;
+
     // Reset state for new scan
-    stopScan();
     setReviews([]);
     reviewsMapRef.current = new Map();
     setTotalPagesFound(0);
@@ -140,10 +191,15 @@ export default function ReviewFinderPage() {
     const proxyUrl = `/api/tools/review-stream?url=${encodeURIComponent(rawTarget)}`;
 
     const initiateStream = (targetEndpoint: string, isFallback = false) => {
+      if (isStoppedRef.current) return;
       const es = new EventSource(targetEndpoint);
       eventSourceRef.current = es;
 
       es.onmessage = (event) => {
+        if (isStoppedRef.current) {
+          es.close();
+          return;
+        }
         try {
           const payload = JSON.parse(event.data);
           switch (payload.type) {
@@ -198,6 +254,7 @@ export default function ReviewFinderPage() {
 
       es.onerror = () => {
         es.close();
+        if (isStoppedRef.current) return;
         if (!isFallback && reviewsMapRef.current.size === 0) {
           // Attempt fallback through edge proxy
           initiateStream(proxyUrl, true);
@@ -215,6 +272,111 @@ export default function ReviewFinderPage() {
 
     initiateStream(directUrl, false);
   };
+
+  const handleOpenAutofillModal = async (review: FlipkartReview) => {
+    setSelectedReviewForAutofill(review);
+    setShowAutofillModal(true);
+    if (userOrders.length === 0) {
+      setLoadingOrders(true);
+      try {
+        const res = await fetch("/api/orders");
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          setUserOrders(json.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user orders:", err);
+        toast.error("Could not fetch orders list");
+      } finally {
+        setLoadingOrders(false);
+      }
+    }
+  };
+
+  const handleSelectOrderForAutofill = async (order: any) => {
+    if (!selectedReviewForAutofill) return;
+    setAttachingOrderId(order._id);
+
+    try {
+      const permalink = selectedReviewForAutofill.permalink || "";
+      const screenshotUrl = `${window.location.origin}/api/tools/review-screenshot?url=${encodeURIComponent(permalink)}`;
+
+      const storageKey = `refund_form_${order._id}`;
+      let existingDraft: any = {};
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) existingDraft = JSON.parse(saved);
+      } catch {}
+
+      const updatedDraft = {
+        ...existingDraft,
+        reviewScreenshot: screenshotUrl,
+        reviewLink: permalink,
+        autofilledAt: new Date().toISOString(),
+        autofilledAuthor: selectedReviewForAutofill.name,
+        autofilledRating: selectedReviewForAutofill.rating,
+      };
+
+      localStorage.setItem(storageKey, JSON.stringify(updatedDraft));
+      localStorage.setItem(
+        `review_finder_autofill_${order._id}`,
+        JSON.stringify({
+          reviewScreenshot: screenshotUrl,
+          reviewLink: permalink,
+          author: selectedReviewForAutofill.name,
+          rating: selectedReviewForAutofill.rating,
+        })
+      );
+
+      toast.success(`Attaching proof to Order #${order.userOrderId}...`);
+      setShowAutofillModal(false);
+      router.push(`/app/refunds/fill/${order._id}?autofill=1`);
+    } catch (err: any) {
+      toast.error("Failed to attach proof: " + err.message);
+      setAttachingOrderId(null);
+    }
+  };
+
+  const filteredOrders = useMemo(() => {
+    if (!Array.isArray(userOrders)) return [];
+
+    let list = userOrders.filter((o) => {
+      return (
+        o.status === "REFUND_FORM_PENDING" ||
+        o.status === "UNDER_VERIFICATION" ||
+        o.status === "REFUND_REJECTED"
+      );
+    });
+
+    if (orderSearchQuery.trim()) {
+      const q = orderSearchQuery.toLowerCase().trim();
+      list = list.filter(
+        (o) =>
+          o.userOrderId?.toLowerCase().includes(q) ||
+          o.brandName?.toLowerCase().includes(q) ||
+          o.productCode?.toLowerCase().includes(q) ||
+          o.marketplace?.toLowerCase().includes(q)
+      );
+    }
+
+    list.sort((a, b) => {
+      const aMatches =
+        (inputUrl && a.productLink && inputUrl.includes(a.productLink)) ||
+        (a.productLink && inputUrl.includes(a.productLink));
+      const bMatches =
+        (inputUrl && b.productLink && inputUrl.includes(b.productLink)) ||
+        (b.productLink && inputUrl.includes(b.productLink));
+      if (aMatches && !bMatches) return -1;
+      if (!aMatches && bMatches) return 1;
+
+      if (a.status === "REFUND_FORM_PENDING" && b.status !== "REFUND_FORM_PENDING") return -1;
+      if (a.status !== "REFUND_FORM_PENDING" && b.status === "REFUND_FORM_PENDING") return 1;
+
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+    });
+
+    return list;
+  }, [userOrders, orderSearchQuery, inputUrl]);
 
   const handleCopyLink = async (permalink: string, id: string) => {
     if (!permalink) {
@@ -405,25 +567,39 @@ export default function ReviewFinderPage() {
             </div>
           </div>
 
-          {/* Action Button: Big & Touch-Friendly */}
-          {isScanning ? (
-            <button
-              type="button"
-              onClick={stopScan}
-              className="w-full sm:w-auto h-14 sm:h-16 px-8 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-rose-600/25 active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0"
-            >
-              <RefreshCw className="w-4 h-4 animate-spin" />
-              <span>Stop Scan</span>
-            </button>
-          ) : (
-            <button
-              type="submit"
-              className="w-full sm:w-auto h-14 sm:h-16 px-8 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-wider shadow-xl shadow-blue-600/30 active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
-            >
-              <Search className="w-4 h-4" />
-              <span>Scan Reviews</span>
-            </button>
-          )}
+          {/* Action Buttons: Big & Touch-Friendly */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            {(inputUrl || reviews.length > 0) && (
+              <button
+                type="button"
+                onClick={clearAll}
+                className="w-full sm:w-auto h-14 sm:h-16 px-5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-black text-xs uppercase tracking-wider active:scale-95 transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                title="Clear input link and all loaded reviews"
+              >
+                <Trash2 className="w-4 h-4 text-slate-400" />
+                <span>Clear All</span>
+              </button>
+            )}
+
+            {isScanning ? (
+              <button
+                type="button"
+                onClick={stopScan}
+                className="w-full sm:w-auto h-14 sm:h-16 px-8 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-rose-600/25 active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+              >
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Stop Scan</span>
+              </button>
+            ) : (
+              <button
+                type="submit"
+                className="w-full sm:w-auto h-14 sm:h-16 px-8 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-wider shadow-xl shadow-blue-600/30 active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+              >
+                <Search className="w-4 h-4" />
+                <span>Scan Reviews</span>
+              </button>
+            )}
+          </div>
         </form>
 
         {/* Live Status Bar */}
@@ -683,13 +859,24 @@ export default function ReviewFinderPage() {
                       <span>{review.helpful ? `${review.helpful} Helpful` : "Helpful feedback"}</span>
                     </div>
 
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                      {/* Auto Fill to Refund */}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenAutofillModal(review)}
+                        className="flex-1 sm:flex-initial h-10 px-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-blue-600/25 flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                        title="Auto-fill this review & proof into a pending refund form"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-blue-200" />
+                        <span>Auto Fill to Refund</span>
+                      </button>
+
                       {/* Copy Permalink */}
                       <button
                         type="button"
                         onClick={() => handleCopyLink(review.permalink || "", review.id)}
                         disabled={!review.permalink}
-                        className="flex-1 sm:flex-initial h-10 px-4 rounded-xl bg-slate-100 dark:bg-[#111827] hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50"
+                        className="flex-1 sm:flex-initial h-10 px-3.5 rounded-xl bg-slate-100 dark:bg-[#111827] hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50"
                         title="Copy official Flipkart review link"
                       >
                         {isCopied ? (
@@ -710,7 +897,7 @@ export default function ReviewFinderPage() {
                         type="button"
                         onClick={() => handleDownloadScreenshot(review.permalink || "", review.id)}
                         disabled={!review.permalink || isDownloading}
-                        className="flex-1 sm:flex-initial h-10 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-60 cursor-pointer"
+                        className="flex-1 sm:flex-initial h-10 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-60 cursor-pointer"
                         title="Generate high-resolution PNG receipt"
                       >
                         {isDownloading ? (
@@ -721,7 +908,7 @@ export default function ReviewFinderPage() {
                         ) : (
                           <>
                             <Download className="w-3.5 h-3.5" />
-                            <span>Screenshot Proof</span>
+                            <span>Screenshot</span>
                           </>
                         )}
                       </button>
@@ -921,6 +1108,194 @@ export default function ReviewFinderPage() {
                 alt="Enlarged review photo"
                 className="max-h-[80vh] w-auto object-contain rounded-2xl mx-auto"
               />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Autofill to Refund Modal */}
+      <AnimatePresence>
+        {showAutofillModal && (
+          <div className="fixed inset-0 z-[250] flex items-center justify-center p-3 sm:p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAutofillModal(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-xl max-h-[90vh] bg-white dark:bg-[#0E1526] rounded-[28px] sm:rounded-[36px] border border-slate-100 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden z-10"
+            >
+              {/* Modal Header */}
+              <div className="p-5 sm:p-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-blue-500" />
+                    <span>Auto-Fill to Refund</span>
+                  </h3>
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5">
+                    Select a pending order to attach this review screenshot proof
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAutofillModal(false)}
+                  className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Review Summary Card */}
+              {selectedReviewForAutofill && (
+                <div className="px-5 sm:px-6 pt-3 pb-2 shrink-0">
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-[#111827] border border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black uppercase text-slate-900 dark:text-white truncate">
+                          {selectedReviewForAutofill.name || "Customer Review"}
+                        </span>
+                        <div className="flex items-center gap-0.5 text-amber-500 text-[10px] font-black">
+                          <Star className="w-3 h-3 fill-amber-500" />
+                          <span>{selectedReviewForAutofill.rating}</span>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        {selectedReviewForAutofill.title || selectedReviewForAutofill.text || "Verified purchase review"}
+                      </p>
+                    </div>
+                    <span className="px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-black uppercase tracking-wider shrink-0">
+                      Proof Ready
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Order Search Filter */}
+              <div className="px-5 sm:px-6 py-2 shrink-0">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={orderSearchQuery}
+                    onChange={(e) => setOrderSearchQuery(e.target.value)}
+                    placeholder="Search your pending orders by ID, Brand, Product..."
+                    className="w-full h-11 pl-10 pr-4 rounded-xl bg-slate-50 dark:bg-[#111827] border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-blue-500 transition-all"
+                  />
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Scrollable Order List */}
+              <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-2 space-y-2.5">
+                {loadingOrders ? (
+                  <div className="py-12 flex flex-col items-center justify-center text-center">
+                    <RefreshCw className="w-6 h-6 text-blue-500 animate-spin mb-3" />
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-400">Loading your pending refunds...</p>
+                  </div>
+                ) : filteredOrders.length > 0 ? (
+                  filteredOrders.map((ord) => {
+                    const isAttaching = attachingOrderId === ord._id;
+                    const isMatching =
+                      (inputUrl && ord.productLink && inputUrl.includes(ord.productLink)) ||
+                      (ord.productLink && inputUrl.includes(ord.productLink));
+
+                    return (
+                      <div
+                        key={ord._id}
+                        className={`p-3.5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                          isMatching
+                            ? "bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800/60"
+                            : "bg-white dark:bg-[#111827] border-slate-100 dark:border-slate-800/80 hover:border-slate-200"
+                        }`}
+                      >
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[9px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                              {ord.brandName || "Brand"}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold text-slate-900 dark:text-white select-all">
+                              {ord.userOrderId}
+                            </span>
+                            {isMatching && (
+                              <span className="px-2 py-0.5 rounded-md bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-600 dark:text-emerald-400 text-[8px] font-black uppercase tracking-wider flex items-center gap-1">
+                                <Sparkles className="w-2.5 h-2.5" />
+                                <span>Matching Product</span>
+                              </span>
+                            )}
+                            <span className="px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[8px] font-black uppercase tracking-wider">
+                              {ord.status === "REFUND_FORM_PENDING" ? "Form Pending" : ord.status}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400">
+                            <span>Payout: ₹{ord.refundDetails?.expectedPayout || ord.amount || 0}</span>
+                            <span>•</span>
+                            <span>Type: {ord.reviewType || "REVIEW"}</span>
+                            {ord.marketplace && (
+                              <>
+                                <span>•</span>
+                                <span>{ord.marketplace}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleSelectOrderForAutofill(ord)}
+                          disabled={isAttaching}
+                          className="w-full sm:w-auto h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-blue-600/20 flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50 shrink-0 cursor-pointer"
+                        >
+                          {isAttaching ? (
+                            <>
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                              <span>Attaching...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>Attach & Open</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="py-10 text-center space-y-2">
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-400">
+                      {orderSearchQuery ? "No matching pending refunds found." : "No pending refunds found."}
+                    </p>
+                    <p className="text-[10px] text-slate-500">
+                      You don't have any orders waiting for refund submission.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => router.push("/app/orders")}
+                      className="mt-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider cursor-pointer"
+                    >
+                      View All Orders
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold text-slate-400 shrink-0">
+                <span>{filteredOrders.length} Eligible Orders</span>
+                <button
+                  type="button"
+                  onClick={() => setShowAutofillModal(false)}
+                  className="px-3 py-1 text-slate-500 hover:text-slate-800 dark:hover:text-white uppercase font-black tracking-wider cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
