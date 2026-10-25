@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
@@ -14,7 +15,6 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // If URL is shortened (dl.flipkart.com, fkrt.it, etc.), follow redirect first
     let resolvedUrl = targetUrl;
     if (targetUrl.includes("dl.flipkart.com") || targetUrl.includes("fkrt.it")) {
       try {
@@ -30,11 +30,10 @@ export async function GET(req: NextRequest) {
           resolvedUrl = headRes.url;
         }
       } catch (redirectErr) {
-        console.warn("Could not follow redirect, trying original URL:", redirectErr);
+        console.warn("Could not follow redirect, using original URL:", redirectErr);
       }
     }
 
-    // Call Rikome's SSE streaming endpoint
     const upstreamUrl = `https://rikome.com/api/review-finder?url=${encodeURIComponent(resolvedUrl)}`;
     const upstreamRes = await fetch(upstreamUrl, {
       headers: {
@@ -54,25 +53,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Pipe the SSE stream directly to client
-    const stream = new ReadableStream({
-      async start(controller) {
-        const reader = upstreamRes.body!.getReader();
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            controller.enqueue(value);
-          }
-        } catch (streamErr) {
-          console.error("Stream read error:", streamErr);
-        } finally {
-          controller.close();
-        }
-      },
-    });
-
-    return new Response(stream, {
+    return new Response(upstreamRes.body, {
       headers: {
         "Content-Type": "text/event-stream; charset=utf-8",
         "Cache-Control": "no-cache, no-transform",
