@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import {
@@ -100,6 +101,8 @@ function parseFlipkartDate(dateStr?: string): number {
 export default function ReviewFinderPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { data: session } = useSession();
+  const isGuest = !session?.user;
 
   const initialUrl = searchParams.get("url") || "";
   const linkedOrderId = searchParams.get("orderId") || "";
@@ -615,6 +618,51 @@ export default function ReviewFinderPage() {
         </button>
       </div>
 
+      {/* Guest VIP Promotion Banner */}
+      {isGuest && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative overflow-hidden rounded-[26px] bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-700 p-4 sm:p-5 text-white shadow-xl shadow-emerald-500/10 border border-emerald-400/30"
+        >
+          <div className="absolute top-0 right-0 -mr-10 -mt-10 w-44 h-44 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-black uppercase tracking-wider text-emerald-100">
+                <Sparkles className="w-3 h-3 text-amber-300" />
+                <span>VIP Deals Community</span>
+              </div>
+              <h3 className="text-base sm:text-lg font-black tracking-tight leading-snug">
+                Get 100% Cashback & Free Products on Flipkart & Amazon!
+              </h3>
+              <p className="text-xs text-white/85 max-w-xl font-medium leading-relaxed">
+                Join 10,000+ smart shoppers in our WhatsApp group for daily free product deals, or register a free account to claim automated refunds.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 shrink-0">
+              <a
+                href="https://bit.ly/GroupLink-Toufik"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-10 sm:h-11 px-4 sm:px-5 rounded-xl bg-white text-emerald-700 font-black text-xs uppercase tracking-wider hover:bg-emerald-50 active:scale-95 transition-all flex items-center gap-2 shadow-md shadow-black/10"
+              >
+                <svg className="w-4 h-4 fill-[#25D366] shrink-0" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                </svg>
+                <span>Join WhatsApp</span>
+              </a>
+              <a
+                href="/signup"
+                className="h-10 sm:h-11 px-4 rounded-xl bg-white/15 hover:bg-white/25 text-white font-black text-xs uppercase tracking-wider backdrop-blur-sm border border-white/20 active:scale-95 transition-all flex items-center justify-center"
+              >
+                <span>Register Free</span>
+              </a>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Prominent, High-End Search Bar */}
       <div className="w-full bg-white dark:bg-[#0E1526] p-3 sm:p-4 rounded-[28px] sm:rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3">
         <form
@@ -703,6 +751,45 @@ export default function ReviewFinderPage() {
           </div>
         )}
       </div>
+
+      {/* Guest Perks Banner on Search Results */}
+      {isGuest && reviews.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-purple-600/10 border border-blue-200/80 dark:border-blue-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/25">
+              <Sparkles className="w-5 h-5 text-amber-300" />
+            </div>
+            <div>
+              <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-tight">
+                Want 100% Cashback Refunds for this Flipkart Product?
+              </p>
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                AspireMint members get full automated UPI refunds on verified purchases. Join our WhatsApp group or sign in to start!
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href="https://bit.ly/GroupLink-Toufik"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-10 px-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md shadow-emerald-500/20 active:scale-95"
+            >
+              <span>WhatsApp Group</span>
+            </a>
+            <a
+              href="/login"
+              className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md shadow-blue-600/20 active:scale-95"
+            >
+              <span>Log In</span>
+            </a>
+          </div>
+        </motion.div>
+      )}
 
       {/* Filter and In-Review Search Hub */}
       {reviews.length > 0 && (
@@ -950,15 +1037,17 @@ export default function ReviewFinderPage() {
 
                     <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                       {/* Auto Fill to Refund */}
-                      <button
-                        type="button"
-                        onClick={() => handleOpenAutofillModal(review)}
-                        className="flex-1 sm:flex-initial h-10 px-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-blue-600/25 flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
-                        title="Auto-fill this review & proof into a pending refund form"
-                      >
-                        <Sparkles className="w-3.5 h-3.5 text-blue-200" />
-                        <span>Auto Fill to Refund</span>
-                      </button>
+                      {!isGuest && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenAutofillModal(review)}
+                          className="flex-1 sm:flex-initial h-10 px-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-blue-600/25 flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                          title="Auto-fill this review & proof into a pending refund form"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-blue-200" />
+                          <span>Auto Fill to Refund</span>
+                        </button>
+                      )}
 
                       {/* Copy Permalink */}
                       <button
@@ -1413,6 +1502,24 @@ export default function ReviewFinderPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Floating WhatsApp Community Button */}
+      <a
+        href="https://bit.ly/GroupLink-Toufik"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-[#25D366] hover:bg-[#20bd5a] text-white shadow-2xl shadow-emerald-500/40 hover:scale-105 active:scale-95 transition-all group cursor-pointer border-2 border-white dark:border-slate-900"
+        title="Join AspireMint VIP WhatsApp Community"
+      >
+        <span className="relative flex h-3 w-3">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+        </span>
+        <svg className="w-5 h-5 fill-white shrink-0" viewBox="0 0 24 24">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+        </svg>
+        <span className="text-xs font-black uppercase tracking-wider hidden sm:inline-block">Join VIP Deals</span>
+      </a>
     </div>
   );
 }

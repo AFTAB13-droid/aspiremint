@@ -74,16 +74,19 @@ export default function DashboardLayout({
     };
   }, []);
 
+  const isGuestRoute = pathname === "/app/review-finder";
+
   if (status === "loading") {
     return <PremiumLoader />;
   }
 
   // Fallback protection in case middleware allows an unauthenticated state
-  if (status === "unauthenticated" || !session?.user) {
+  if ((status === "unauthenticated" || !session?.user) && !isGuestRoute) {
     redirect("/login");
   }
 
-  const role = (session.user as any).role || "USER";
+  const isGuest = !session?.user;
+  const role = isGuest ? "GUEST" : ((session.user as any).role || "USER");
 
   return (
     <div className={`flex h-[100dvh] w-full bg-[#f8fafc] dark:bg-[#0B0F19] overflow-hidden text-slate-900 dark:text-slate-100 transition-colors duration-500 ${themeClass}`}>
@@ -94,13 +97,14 @@ export default function DashboardLayout({
         isCollapsed={isDesktopCollapsed}
         setCollapsed={setDesktopCollapsed}
         isBanned={!!profileData?.isTerminated}
-        userAvatar={profileData?.avatar || profileData?.profileImage || (session.user as any)?.avatar || session.user?.image || ""}
-        userName={profileData?.name || session.user?.name || ""}
+        userAvatar={profileData?.avatar || profileData?.profileImage || (session?.user as any)?.avatar || session?.user?.image || ""}
+        userName={profileData?.name || session?.user?.name || ""}
+        isGuest={isGuest}
       />
       
       {/* Main Content Area */}
       <div className={`flex flex-1 flex-col transition-all duration-300 overflow-hidden relative ${isDesktopCollapsed ? 'lg:pl-20' : 'lg:pl-72'}`}>
-        <OnboardingModal />
+        {!isGuest && <OnboardingModal />}
         
         {/* Conditional Global Header: Hidden on mobile for specific transaction pages */}
         {!(
@@ -114,14 +118,15 @@ export default function DashboardLayout({
           <Header 
             setMobileOpen={setMobileOpen} 
             user={{
-              name: session.user.name,
-              email: session.user.email,
+              name: session?.user?.name,
+              email: session?.user?.email,
               role: role,
-              avatar: profileData?.avatar || profileData?.profileImage || (session.user as any)?.avatar || session.user.image || "",
-              totalCompletedOrders: (session.user as any).totalCompletedOrders,
+              avatar: profileData?.avatar || profileData?.profileImage || (session?.user as any)?.avatar || session?.user?.image || "",
+              totalCompletedOrders: (session?.user as any)?.totalCompletedOrders,
               leaderboardBadge: profileData?.leaderboardBadge
             }} 
             isFestiveActive={!!themeClass}
+            isGuest={isGuest}
           />
         ) : (
           /* Desktop Header remains visible on transaction pages */
@@ -129,14 +134,15 @@ export default function DashboardLayout({
             <Header 
               setMobileOpen={setMobileOpen} 
               user={{
-                name: session.user.name,
-                email: session.user.email,
+                name: session?.user?.name,
+                email: session?.user?.email,
                 role: role,
-                avatar: profileData?.avatar || profileData?.profileImage || (session.user as any)?.avatar || session.user.image || "",
-                totalCompletedOrders: (session.user as any).totalCompletedOrders,
+                avatar: profileData?.avatar || profileData?.profileImage || (session?.user as any)?.avatar || session?.user?.image || "",
+                totalCompletedOrders: (session?.user as any)?.totalCompletedOrders,
                 leaderboardBadge: profileData?.leaderboardBadge
               }} 
               isFestiveActive={!!themeClass}
+              isGuest={isGuest}
             />
           </div>
         )}

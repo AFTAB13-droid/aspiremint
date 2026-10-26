@@ -26,9 +26,10 @@ interface HeaderProps {
     };
   };
   isFestiveActive?: boolean;
+  isGuest?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveActive }) => {
+export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveActive, isGuest = false }) => {
   const isAdm = user?.role === "ADMIN";
   const pathname = usePathname();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -85,6 +86,7 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
   const [avatarOverride, setAvatarOverride] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isGuest) return;
     fetchUnreadCount();
     // Poll for count updates every 10 seconds
     const interval = setInterval(fetchUnreadCount, 10000);
@@ -99,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
       clearInterval(interval);
       window.removeEventListener("PROFILE_AVATAR_UPDATED", handleAvatarUpdate);
     };
-  }, []);
+  }, [isGuest]);
 
   return (
     <header className={`sticky top-0 z-30 flex h-20 w-full items-center justify-between backdrop-blur-3xl px-6 lg:px-10 relative overflow-hidden transition-all duration-300 ${headerBgClass}`}>
@@ -204,74 +206,92 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
         {/* Animated Theme Toggle (Web & Mobile) */}
         <ThemeToggle variant="icon" />
 
-        {/* Notification Bell - Enhanced */}
-        <motion.button 
-          onClick={() => setIsNotifOpen(true)}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className={`relative h-12 w-12 flex items-center justify-center rounded-2xl text-slate-400 bg-white/50 hover:bg-white hover:text-blue-600 transition-all shadow-sm border border-slate-100/50 dark:bg-[#131B2E] dark:text-slate-300 dark:hover:bg-[#1A233A] dark:hover:text-blue-400 dark:border-slate-800/80 group overflow-visible`}
-        >
-          {unreadCount > 0 && (
-            <motion.span 
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute -top-1.5 -right-1.5 h-6 min-w-[24px] px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-4 border-white dark:border-[#131B2E] shadow-lg shadow-red-200 z-20"
+        {isGuest ? (
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link 
+              href="/login" 
+              className="px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-black text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-slate-200/80 dark:border-slate-800"
             >
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </motion.span>
-          )}
-          
-          <motion.div
-            animate={unreadCount > 0 ? {
-              rotate: [0, -10, 10, -10, 10, 0],
-              transition: { repeat: Infinity, duration: 2, repeatDelay: 1 }
-            } : {}}
-          >
-            <svg className="w-6 h-6 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-          </motion.div>
+              Log In
+            </Link>
+            <Link 
+              href="/signup" 
+              className="px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-md shadow-blue-500/20 active:scale-95 transition-all"
+            >
+              Sign Up
+            </Link>
+          </div>
+        ) : (
+          <>
+            {/* Notification Bell - Enhanced */}
+            <motion.button 
+              onClick={() => setIsNotifOpen(true)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`relative h-12 w-12 flex items-center justify-center rounded-2xl text-slate-400 bg-white/50 hover:bg-white hover:text-blue-600 transition-all shadow-sm border border-slate-100/50 dark:bg-[#131B2E] dark:text-slate-300 dark:hover:bg-[#1A233A] dark:hover:text-blue-400 dark:border-slate-800/80 group overflow-visible`}
+            >
+              {unreadCount > 0 && (
+                <motion.span 
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1.5 -right-1.5 h-6 min-w-[24px] px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-4 border-white dark:border-[#131B2E] shadow-lg shadow-red-200 z-20"
+                >
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </motion.span>
+              )}
+              
+              <motion.div
+                animate={unreadCount > 0 ? {
+                  rotate: [0, -10, 10, -10, 10, 0],
+                  transition: { repeat: Infinity, duration: 2, repeatDelay: 1 }
+                } : {}}
+              >
+                <svg className="w-6 h-6 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </motion.div>
 
-          {/* Subtle pulse effect when unread */}
-          {unreadCount > 0 && (
-            <span className="absolute inset-0 rounded-2xl bg-red-500/10 animate-ping pointer-events-none" />
-          )}
-        </motion.button>
+              {/* Subtle pulse effect when unread */}
+              {unreadCount > 0 && (
+                <span className="absolute inset-0 rounded-2xl bg-red-500/10 animate-ping pointer-events-none" />
+              )}
+            </motion.button>
 
+            <div className="h-8 w-[1px] bg-slate-200/50 dark:bg-slate-800 mx-2 hidden lg:block"></div>
 
-        <div className="h-8 w-[1px] bg-slate-200/50 dark:bg-slate-800 mx-2 hidden lg:block"></div>
-
-        {/* User Profile Summary - Refined */}
-        <Link href="/app/settings" className="hidden lg:flex">
-          <motion.div 
-            whileHover={{ scale: 1.02, x: 2 }}
-            className={`flex items-center gap-3 cursor-pointer group bg-white/80 hover:bg-white p-1.5 pr-5 rounded-3xl border border-slate-100 dark:bg-[#131B2E] dark:hover:bg-[#1A233A] dark:border-slate-800/80 dark:hover:border-slate-700 shadow-sm hover:shadow-md transition-all ${isAdm ? "hover:border-indigo-200" : "hover:border-blue-200"}`}
-          >
-            <div className={`h-[42px] w-[42px] overflow-hidden rounded-2xl border-2 border-white bg-slate-100 dark:border-slate-700 dark:bg-slate-800 object-cover flex items-center justify-center font-black shadow-sm group-hover:shadow-md transition-all shrink-0`}>
-              <img 
-                src={getUserAvatar(avatarOverride || user?.avatar || user?.image, user?.name)} 
-                alt={user?.name || "User"} 
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="hidden text-left lg:block">
-              <div className="flex items-center gap-2.5">
-                <p className="text-[15px] font-black text-slate-900 dark:text-white leading-none transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">{user?.name}</p>
-                {user?.leaderboardBadge?.active && (
-                  <span className="text-[9px] font-black px-1.5 py-0.5 bg-amber-500 text-white rounded-md uppercase tracking-tight animate-bounce" title="Monthly Leaderboard Winner!">
-                    🏆 #{user.leaderboardBadge.rank}
-                  </span>
-                )}
-                {user?.totalCompletedOrders !== undefined && (
-                  <UserBadge ordersCount={user.totalCompletedOrders} showIcon={false} showInfoIcon={false} className="scale-90 origin-left" />
-                )}
-              </div>
-              <div className="mt-1.5">
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-[0.15em] leading-none">{user?.role} ACCOUNT</p>
-              </div>
-            </div>
-          </motion.div>
-        </Link>
+            {/* User Profile Summary - Refined */}
+            <Link href="/app/settings" className="hidden lg:flex">
+              <motion.div 
+                whileHover={{ scale: 1.02, x: 2 }}
+                className={`flex items-center gap-3 cursor-pointer group bg-white/80 hover:bg-white p-1.5 pr-5 rounded-3xl border border-slate-100 dark:bg-[#131B2E] dark:hover:bg-[#1A233A] dark:border-slate-800/80 dark:hover:border-slate-700 shadow-sm hover:shadow-md transition-all ${isAdm ? "hover:border-indigo-200" : "hover:border-blue-200"}`}
+              >
+                <div className={`h-[42px] w-[42px] overflow-hidden rounded-2xl border-2 border-white bg-slate-100 dark:border-slate-700 dark:bg-slate-800 object-cover flex items-center justify-center font-black shadow-sm group-hover:shadow-md transition-all shrink-0`}>
+                  <img 
+                    src={getUserAvatar(avatarOverride || user?.avatar || user?.image, user?.name)} 
+                    alt={user?.name || "User"} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="hidden text-left lg:block">
+                  <div className="flex items-center gap-2.5">
+                    <p className="text-[15px] font-black text-slate-900 dark:text-white leading-none transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">{user?.name}</p>
+                    {user?.leaderboardBadge?.active && (
+                      <span className="text-[9px] font-black px-1.5 py-0.5 bg-amber-500 text-white rounded-md uppercase tracking-tight animate-bounce" title="Monthly Leaderboard Winner!">
+                        🏆 #{user.leaderboardBadge.rank}
+                      </span>
+                    )}
+                    {user?.totalCompletedOrders !== undefined && (
+                      <UserBadge ordersCount={user.totalCompletedOrders} showIcon={false} showInfoIcon={false} className="scale-90 origin-left" />
+                    )}
+                  </div>
+                  <div className="mt-1.5">
+                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-[0.15em] leading-none">{user?.role} ACCOUNT</p>
+                  </div>
+                </div>
+              </motion.div>
+            </Link>
+          </>
+        )}
       </div>
       
       <NotificationSidebar isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} userRole={user?.role} />

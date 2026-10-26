@@ -11,6 +11,11 @@ export default withAuth(
       return NextResponse.redirect(new URL("/app", req.url));
     }
 
+    // Redirect unauthenticated guest visitors to Review Finder
+    if (!token && (path === "/" || path === "/app")) {
+      return NextResponse.redirect(new URL("/app/review-finder", req.url));
+    }
+
     // Enforce Admin MFA redirection
     if (token?.mfaPending && path !== "/admin/mfa") {
       return NextResponse.redirect(new URL("/admin/mfa", req.url));
@@ -47,7 +52,12 @@ export default withAuth(
       authorized: ({ token, req }) => {
         const path = req.nextUrl.pathname;
         // Public paths don't require a token
-        if (path === "/login" || path === "/signup" || path === "/") {
+        if (
+          path === "/login" ||
+          path === "/signup" ||
+          path === "/" ||
+          path === "/app/review-finder"
+        ) {
           return true;
         }
         return !!token;

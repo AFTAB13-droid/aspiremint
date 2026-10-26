@@ -10,6 +10,7 @@ import { UserBadge } from "@/components/ui/UserBadge";
 import { InstallPWA } from "@/components/ui/InstallPWA";
 import { getUserAvatar } from "@/data/avatars";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { Lock } from "lucide-react";
 
 interface NavLink {
   name: string;
@@ -222,7 +223,7 @@ const navLinks: NavLink[] = [
 ];
 
 interface SidebarProps {
-  userRole: "USER" | "MEDIATOR" | "ADMIN" | "SUBADMIN";
+  userRole: "USER" | "MEDIATOR" | "ADMIN" | "SUBADMIN" | "GUEST";
   isMobileOpen: boolean;
   setMobileOpen: (open: boolean) => void;
   isCollapsed?: boolean;
@@ -230,6 +231,7 @@ interface SidebarProps {
   isBanned?: boolean;
   userAvatar?: string | null;
   userName?: string | null;
+  isGuest?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -240,13 +242,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setCollapsed,
   isBanned = false,
   userAvatar,
-  userName
+  userName,
+  isGuest = false
 }) => {
   const pathname = usePathname();
   const { data: session } = useSession();
   const isActiveSettings = pathname === "/app/settings";
   
   const [currentAvatar, setCurrentAvatar] = useState<string | null>(userAvatar || null);
+  const [guestLockModal, setGuestLockModal] = useState<{ open: boolean; title?: string }>({ open: false });
 
   React.useEffect(() => {
     if (userAvatar) {
@@ -304,7 +308,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }, [isMobileOpen]);
 
   // Filter links by user role
-  let filteredLinks = navLinks.filter(link => link.roles.includes(userRole));
+  let filteredLinks = isGuest 
+    ? navLinks.filter(link => link.roles.includes("USER"))
+    : navLinks.filter(link => link.roles.includes(userRole as any));
   if (isBanned) {
     filteredLinks = filteredLinks.filter(link => ["Support", "Support Hub"].includes(link.name));
   }
@@ -329,31 +335,54 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Header with Profile Info */}
         <div className="px-6 pt-10 pb-6 border-b border-blue-50/50 dark:border-slate-800/80 relative z-10">
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-200 to-indigo-200 dark:from-blue-600 dark:to-indigo-600 p-0.5 shadow-md">
-                <div className="h-full w-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-xl font-black text-slate-900 dark:text-white border-2 border-white dark:border-slate-700 overflow-hidden shadow-inner uppercase">
-                   <img 
-                     src={getUserAvatar(effectiveAvatar, effectiveName)} 
-                     alt="" 
-                     className="w-full h-full object-cover" 
-                   />
+          <div className="flex items-start justify-between mb-4">
+            {isGuest ? (
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 p-0.5 shadow-md flex items-center justify-center text-white shrink-0">
+                  <div className="h-full w-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-xl font-black text-blue-600 dark:text-blue-400 border-2 border-white dark:border-slate-700 shadow-inner">
+                    <Lock className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none mb-1">Welcome</span>
+                  <span className="text-2xl font-black text-slate-900 dark:text-white leading-none tracking-tight">
+                    Guest 👋
+                  </span>
+                  <Link 
+                    href="/login" 
+                    onClick={() => setMobileOpen(false)}
+                    className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mt-2.5 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors bg-blue-50/50 dark:bg-blue-950/40 px-2.5 py-1 rounded-md self-start border border-blue-100/30 dark:border-blue-900/30"
+                  >
+                    Log In / Register
+                  </Link>
                 </div>
               </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none mb-1">Hello,</span>
-                <span className="text-2xl font-black text-slate-900 dark:text-white leading-none tracking-tight">
-                  {effectiveName?.split(' ')[0] || "User"}
-                </span>
-                <Link 
-                  href="/app/settings" 
-                  onClick={() => setMobileOpen(false)}
-                  className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mt-2.5 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors bg-blue-50/50 dark:bg-blue-950/40 px-2 py-1 rounded-md self-start border border-blue-100/30 dark:border-blue-900/30"
-                >
-                  Edit Profile
-                </Link>
+            ) : (
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-200 to-indigo-200 dark:from-blue-600 dark:to-indigo-600 p-0.5 shadow-md">
+                  <div className="h-full w-full rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-xl font-black text-slate-900 dark:text-white border-2 border-white dark:border-slate-700 overflow-hidden shadow-inner uppercase">
+                     <img 
+                       src={getUserAvatar(effectiveAvatar, effectiveName)} 
+                       alt="" 
+                       className="w-full h-full object-cover" 
+                     />
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-none mb-1">Hello,</span>
+                  <span className="text-2xl font-black text-slate-900 dark:text-white leading-none tracking-tight">
+                    {effectiveName?.split(' ')[0] || "User"}
+                  </span>
+                  <Link 
+                    href="/app/settings" 
+                    onClick={() => setMobileOpen(false)}
+                    className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mt-2.5 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors bg-blue-50/50 dark:bg-blue-950/40 px-2 py-1 rounded-md self-start border border-blue-100/30 dark:border-blue-900/30"
+                  >
+                    Edit Profile
+                  </Link>
+                </div>
               </div>
-            </div>
+            )}
             <button
               onClick={() => setMobileOpen(false)}
               className="p-2 -mr-2 bg-slate-50 dark:bg-[#131B2E] rounded-xl text-slate-400 dark:text-slate-300 hover:text-slate-600 dark:hover:text-white active:scale-95 transition-all border border-transparent dark:border-slate-800"
@@ -364,36 +393,66 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center justify-between gap-4">
-             <UserBadge ordersCount={(session?.user as any)?.totalCompletedOrders || 0} showProgression={false} />
-          </div>
+          {!isGuest && (
+            <div className="flex items-center justify-between gap-4 mt-2">
+               <UserBadge ordersCount={(session?.user as any)?.totalCompletedOrders || 0} showProgression={false} />
+            </div>
+          )}
         </div>
 
         {/* Navigation Section */}
         <div className="flex-1 overflow-y-auto py-6 px-4 relative z-10">
           <div className="space-y-1">
             {filteredLinks.map((link) => {
-              const isActive = pathname === link.href;
+              const isLocked = isGuest && link.href !== "/app/review-finder";
+              const isActive = !isLocked && pathname === link.href;
               return (
-                <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)}>
-                  <motion.div
-                    whileTap={{ scale: 0.98 }}
-                    className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all ${
-                      isActive 
-                        ? "bg-blue-50 text-blue-600 shadow-sm border border-blue-100 dark:bg-gradient-to-r dark:from-indigo-600/25 dark:to-blue-600/15 dark:text-blue-300 dark:border-indigo-500/30" 
-                        : "text-slate-500 active:bg-slate-50 dark:text-slate-400 dark:active:bg-[#131B2E]"
-                    }`}
+                <div
+                  key={link.href}
+                  onClick={(e) => {
+                    if (isLocked) {
+                      e.preventDefault();
+                      setGuestLockModal({ open: true, title: link.name });
+                    }
+                  }}
+                >
+                  <Link 
+                    href={isLocked ? "#" : link.href} 
+                    onClick={(e) => {
+                      if (isLocked) {
+                        e.preventDefault();
+                        setGuestLockModal({ open: true, title: link.name });
+                      } else {
+                        setMobileOpen(false);
+                      }
+                    }}
                   >
-                    <div className={`transition-transform ${isActive ? 'scale-110' : ''}`}>
-                      {React.cloneElement(link.icon as React.ReactElement, { 
-                        className: `w-6 h-6 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}` 
-                      })}
-                    </div>
-                    <span className={`text-base font-bold tracking-tight ${isActive ? 'text-blue-700 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
-                      {link.name}
-                    </span>
-                  </motion.div>
-                </Link>
+                    <motion.div
+                      whileTap={{ scale: 0.98 }}
+                      className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all ${
+                        isLocked
+                          ? "opacity-40 grayscale hover:opacity-60 cursor-pointer"
+                          : isActive 
+                            ? "bg-blue-50 text-blue-600 shadow-sm border border-blue-100 dark:bg-gradient-to-r dark:from-indigo-600/25 dark:to-blue-600/15 dark:text-blue-300 dark:border-indigo-500/30" 
+                            : "text-slate-500 active:bg-slate-50 dark:text-slate-400 dark:active:bg-[#131B2E]"
+                      }`}
+                    >
+                      <div className={`transition-transform ${isActive ? 'scale-110' : ''}`}>
+                        {React.cloneElement(link.icon as React.ReactElement, { 
+                          className: `w-6 h-6 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}` 
+                        })}
+                      </div>
+                      <span className={`text-base font-bold tracking-tight ${isActive ? 'text-blue-700 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
+                        {link.name}
+                      </span>
+                      {isLocked && (
+                        <div className="ml-auto flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                          <Lock className="w-3.5 h-3.5" />
+                        </div>
+                      )}
+                    </motion.div>
+                  </Link>
+                </div>
               );
             })}
           </div>
@@ -406,19 +465,52 @@ export const Sidebar: React.FC<SidebarProps> = ({
              <ThemeToggle variant="pill" />
            </div>
            <InstallPWA variant="mobile" />
-           <Link href="/app/settings" onClick={() => setMobileOpen(false)} className="w-full">
-              <button className="w-full h-14 bg-blue-50 text-blue-600 dark:bg-[#131B2E] dark:text-blue-400 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all text-[11px] font-black uppercase tracking-[0.2em] border border-blue-100/50 dark:border-slate-800 shadow-sm">
-                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                 My Profile
-              </button>
-           </Link>
-           <button 
-             onClick={() => signOut({ callbackUrl: "/login" })}
-             className="w-full h-14 bg-red-50 text-red-500 dark:bg-red-950/20 dark:text-red-400 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all text-[11px] font-black uppercase tracking-[0.2em] border border-red-100/50 dark:border-red-900/40"
-           >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-              Sign Out
-           </button>
+
+           {isGuest ? (
+             <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-600/25 space-y-3">
+               <div>
+                 <div className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-blue-200 mb-1">
+                   <span>VIP Membership</span>
+                 </div>
+                 <h4 className="text-sm font-black tracking-tight leading-snug">Unlock 100% Cashback Deals</h4>
+                 <p className="text-[11px] text-blue-100/80 mt-1 leading-normal">
+                   Get free products & instant refunds on top brands.
+                 </p>
+               </div>
+               <div className="flex items-center gap-2 pt-1">
+                 <Link
+                   href="/login"
+                   onClick={() => setMobileOpen(false)}
+                   className="flex-1 h-9 rounded-xl bg-white text-blue-600 font-black text-[10px] uppercase tracking-wider hover:bg-blue-50 active:scale-95 transition-all flex items-center justify-center shadow-sm"
+                 >
+                   Log In
+                 </Link>
+                 <Link
+                   href="/signup"
+                   onClick={() => setMobileOpen(false)}
+                   className="flex-1 h-9 rounded-xl bg-white/20 text-white font-black text-[10px] uppercase tracking-wider hover:bg-white/30 backdrop-blur-sm border border-white/20 active:scale-95 transition-all flex items-center justify-center"
+                 >
+                   Sign Up
+                 </Link>
+               </div>
+             </div>
+           ) : (
+             <>
+               <Link href="/app/settings" onClick={() => setMobileOpen(false)} className="w-full">
+                  <button className="w-full h-14 bg-blue-50 text-blue-600 dark:bg-[#131B2E] dark:text-blue-400 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all text-[11px] font-black uppercase tracking-[0.2em] border border-blue-100/50 dark:border-slate-800 shadow-sm">
+                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                     My Profile
+                  </button>
+               </Link>
+               <button 
+                 onClick={() => signOut({ callbackUrl: "/login" })}
+                 className="w-full h-14 bg-red-50 text-red-500 dark:bg-red-950/20 dark:text-red-400 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all text-[11px] font-black uppercase tracking-[0.2em] border border-red-100/50 dark:border-red-900/40"
+               >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                  Sign Out
+               </button>
+             </>
+           )}
         </div>
       </div>
     );
@@ -484,7 +576,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className={`flex flex-col transition-opacity duration-300 ${collapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}>
             <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white leading-none">AspireMint</span>
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400 mt-1">
-               {userRole === "ADMIN" ? "Admin Panel" : userRole === "MEDIATOR" ? "Mediator Panel" : "Buyers Panel"}
+               {isGuest ? "VIP Gateway" : userRole === "ADMIN" ? "Admin Panel" : userRole === "MEDIATOR" ? "Mediator Panel" : "Buyers Panel"}
             </span>
           </div>
         </div>
@@ -502,28 +594,49 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* MOBILE USER PROFILE CARD (Native App Feel) */}
       {!collapsed && (
         <div className="lg:hidden px-5 pt-6 pb-2">
-           <div className={`relative overflow-hidden p-5 rounded-[28px] border border-blue-100/30 shadow-sm transition-all bg-gradient-to-br ${isAdm ? "from-indigo-600 to-indigo-700" : "from-blue-600 to-blue-700"} text-white`}>
+          {isGuest ? (
+            <div className="relative overflow-hidden p-5 rounded-[28px] border border-blue-100/30 shadow-sm transition-all bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
               <div className="absolute top-0 right-0 h-24 w-24 bg-white/10 blur-2xl rounded-full -mr-12 -mt-12" />
               <div className="flex items-center gap-4 relative z-10">
-                 <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl font-black shadow-inner border border-white/20 overflow-hidden shrink-0">
-                    <img 
-                      src={getUserAvatar(effectiveAvatar, effectiveName)} 
-                      alt="" 
-                      className="w-full h-full object-cover" 
-                    />
-                 </div>
-                 <div className="overflow-hidden">
-                    <p className="text-[15px] font-black leading-none truncate">{effectiveName || "Guest"}</p>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-white/60 mt-1.5 opacity-80 truncate">{userRole} PROFILE</p>
-                 </div>
+                <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl font-black shadow-inner border border-white/20 shrink-0">
+                  <Lock className="w-6 h-6 text-white" />
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-[15px] font-black leading-none truncate">Welcome Guest 👋</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-white/70 mt-1.5">MEMBER DEALS PORTAL</p>
+                </div>
               </div>
               <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-end relative z-10">
-                 <Link href="/app/settings" onClick={() => setMobileOpen(false)} className="h-10 px-4 rounded-xl bg-white/10 flex items-center gap-2 hover:bg-white/20 transition-all text-[11px] font-black uppercase tracking-widest border border-white/10">
-                    <span>Manage Account</span>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                 </Link>
+                <Link href="/login" onClick={() => setMobileOpen(false)} className="h-10 px-4 rounded-xl bg-white/10 flex items-center gap-2 hover:bg-white/20 transition-all text-[11px] font-black uppercase tracking-widest border border-white/10">
+                  <span>Sign In / Register</span>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </Link>
               </div>
-           </div>
+            </div>
+          ) : (
+            <div className={`relative overflow-hidden p-5 rounded-[28px] border border-blue-100/30 shadow-sm transition-all bg-gradient-to-br ${isAdm ? "from-indigo-600 to-indigo-700" : "from-blue-600 to-blue-700"} text-white`}>
+               <div className="absolute top-0 right-0 h-24 w-24 bg-white/10 blur-2xl rounded-full -mr-12 -mt-12" />
+               <div className="flex items-center gap-4 relative z-10">
+                  <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl font-black shadow-inner border border-white/20 overflow-hidden shrink-0">
+                     <img 
+                       src={getUserAvatar(effectiveAvatar, effectiveName)} 
+                       alt="" 
+                       className="w-full h-full object-cover" 
+                     />
+                  </div>
+                  <div className="overflow-hidden">
+                     <p className="text-[15px] font-black leading-none truncate">{effectiveName || "Guest"}</p>
+                     <p className="text-[9px] font-black uppercase tracking-widest text-white/60 mt-1.5 opacity-80 truncate">{userRole} PROFILE</p>
+                  </div>
+               </div>
+               <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-end relative z-10">
+                  <Link href="/app/settings" onClick={() => setMobileOpen(false)} className="h-10 px-4 rounded-xl bg-white/10 flex items-center gap-2 hover:bg-white/20 transition-all text-[11px] font-black uppercase tracking-widest border border-white/10">
+                     <span>Manage Account</span>
+                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </Link>
+               </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -532,23 +645,54 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Desktop View: Flat list */}
         {collapsed ? (
           filteredLinks.map((link) => {
-            const isActive = pathname === link.href;
+            const isLocked = isGuest && link.href !== "/app/review-finder";
+            const isActive = !isLocked && pathname === link.href;
+
             return (
-              <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)} title={link.name}>
-                <motion.div
-                  whileTap={{ scale: 0.97 }}
-                  className={`group relative flex items-center justify-center rounded-2xl py-4 transition-all duration-300 ${isActive
-                      ? isAdm 
-                        ? "bg-indigo-500/10 text-indigo-700 border border-indigo-100/50 dark:bg-indigo-600/20 dark:text-indigo-300 dark:border-indigo-500/40 dark:shadow-[0_0_15px_rgba(99,102,241,0.2)]"
-                        : "bg-blue-500/10 text-blue-700 border border-blue-100/50 dark:bg-blue-600/20 dark:text-blue-300 dark:border-blue-500/40 dark:shadow-[0_0_15px_rgba(59,130,246,0.2)]"
-                      : "text-slate-500 hover:bg-white border border-transparent dark:text-slate-400 dark:hover:bg-[#131B2E] dark:hover:text-slate-200 dark:hover:border-slate-800/80"
-                    }`}
+              <div
+                key={link.href}
+                onClick={(e) => {
+                  if (isLocked) {
+                    e.preventDefault();
+                    setGuestLockModal({ open: true, title: link.name });
+                  }
+                }}
+              >
+                <Link 
+                  href={isLocked ? "#" : link.href} 
+                  onClick={(e) => {
+                    if (isLocked) {
+                      e.preventDefault();
+                      setGuestLockModal({ open: true, title: link.name });
+                    } else {
+                      setMobileOpen(false);
+                    }
+                  }} 
+                  title={isLocked ? `${link.name} (Exclusive Member Feature)` : link.name}
                 >
-                  <div className={`shrink-0 transition-all duration-300 ${isActive ? (isAdm ? "text-indigo-600 dark:text-indigo-400" : "text-blue-600 dark:text-blue-400") : 'group-hover:scale-110'}`}>
-                    {React.cloneElement(link.icon as React.ReactElement, { className: "w-6 h-6" })}
-                  </div>
-                </motion.div>
-              </Link>
+                  <motion.div
+                    whileTap={{ scale: 0.97 }}
+                    className={`group relative flex items-center justify-center rounded-2xl py-4 transition-all duration-300 ${
+                      isLocked
+                        ? "opacity-35 grayscale hover:opacity-60 cursor-pointer"
+                        : isActive
+                          ? isAdm 
+                            ? "bg-indigo-500/10 text-indigo-700 border border-indigo-100/50 dark:bg-indigo-600/20 dark:text-indigo-300 dark:border-indigo-500/40 dark:shadow-[0_0_15px_rgba(99,102,241,0.2)]"
+                            : "bg-blue-500/10 text-blue-700 border border-blue-100/50 dark:bg-blue-600/20 dark:text-blue-300 dark:border-blue-500/40 dark:shadow-[0_0_15px_rgba(59,130,246,0.2)]"
+                          : "text-slate-500 hover:bg-white border border-transparent dark:text-slate-400 dark:hover:bg-[#131B2E] dark:hover:text-slate-200 dark:hover:border-slate-800/80"
+                      }`}
+                  >
+                    <div className={`shrink-0 transition-all duration-300 ${isActive ? (isAdm ? "text-indigo-600 dark:text-indigo-400" : "text-blue-600 dark:text-blue-400") : 'group-hover:scale-110'}`}>
+                      {React.cloneElement(link.icon as React.ReactElement, { className: "w-6 h-6" })}
+                    </div>
+                    {isLocked && (
+                      <div className="absolute top-2 right-2">
+                        <Lock className="w-2.5 h-2.5 text-slate-400" />
+                      </div>
+                    )}
+                  </motion.div>
+                </Link>
+              </div>
             );
           })
         ) : (
@@ -558,33 +702,64 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <h4 className="lg:hidden px-4 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-4">{section.title}</h4>
                 <div className="space-y-1.5">
                    {section.links.map((link) => {
-                     const isActive = pathname === link.href;
+                     const isLocked = isGuest && link.href !== "/app/review-finder";
+                     const isActive = !isLocked && pathname === link.href;
+
                      return (
-                       <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)}>
-                         <motion.div
-                           whileHover={{ x: 6 }}
-                           whileTap={{ scale: 0.97 }}
-                           className={`group relative flex items-center gap-4 rounded-2xl px-4 py-4 transition-all duration-300 ${isActive
-                               ? isAdm 
-                                 ? "bg-gradient-to-r from-indigo-500/10 to-indigo-500/5 text-indigo-700 shadow-sm border border-indigo-100/50 dark:from-indigo-600/25 dark:to-indigo-600/10 dark:text-indigo-300 dark:border-indigo-500/30 dark:shadow-[0_4px_20px_rgba(99,102,241,0.15)]"
-                                 : "bg-gradient-to-r from-blue-500/10 to-blue-500/5 text-blue-700 shadow-sm border border-blue-100/50 dark:from-blue-600/25 dark:to-indigo-600/10 dark:text-blue-300 dark:border-blue-500/30 dark:shadow-[0_4px_20px_rgba(59,130,246,0.15)]"
-                               : "text-slate-500 hover:bg-white border border-transparent hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#131B2E] dark:hover:text-slate-100 dark:hover:border-slate-800/80"
-                             }`}
+                       <div
+                         key={link.href}
+                         onClick={(e) => {
+                           if (isLocked) {
+                             e.preventDefault();
+                             setGuestLockModal({ open: true, title: link.name });
+                           }
+                         }}
+                       >
+                         <Link 
+                           href={isLocked ? "#" : link.href} 
+                           onClick={(e) => {
+                             if (isLocked) {
+                               e.preventDefault();
+                               setGuestLockModal({ open: true, title: link.name });
+                             } else {
+                               setMobileOpen(false);
+                             }
+                           }}
                          >
-                           {isActive && (
-                             <motion.div
-                               layoutId="activeSidebarLine"
-                               className={`absolute left-0 inset-y-0 my-auto w-1.5 h-7 rounded-r-lg ${isAdm ? "bg-indigo-600 dark:bg-indigo-400 dark:shadow-[0_0_10px_rgba(129,140,248,0.8)]" : "bg-blue-600 dark:bg-blue-400 dark:shadow-[0_0_10px_rgba(96,165,250,0.8)]"}`}
-                             />
-                           )}
-                           <div className={`shrink-0 transition-all duration-300 ${isActive ? (isAdm ? "text-indigo-600 dark:text-indigo-400" : "text-blue-600 dark:text-blue-400") : 'group-hover:scale-110'}`}>
-                             {React.cloneElement(link.icon as React.ReactElement, { className: "w-6 h-6" })}
-                           </div>
-                           <span className={`text-[15px] font-bold tracking-wide ${isActive ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white"}`}>
-                             {link.name}
-                           </span>
-                         </motion.div>
-                       </Link>
+                           <motion.div
+                             whileHover={{ x: isLocked ? 2 : 6 }}
+                             whileTap={{ scale: 0.97 }}
+                             className={`group relative flex items-center gap-4 rounded-2xl px-4 py-4 transition-all duration-300 ${
+                                 isLocked
+                                   ? "opacity-40 grayscale hover:opacity-60 cursor-pointer"
+                                   : isActive
+                                     ? isAdm 
+                                       ? "bg-gradient-to-r from-indigo-500/10 to-indigo-500/5 text-indigo-700 shadow-sm border border-indigo-100/50 dark:from-indigo-600/25 dark:to-indigo-600/10 dark:text-indigo-300 dark:border-indigo-500/30 dark:shadow-[0_4px_20px_rgba(99,102,241,0.15)]"
+                                       : "bg-gradient-to-r from-blue-500/10 to-blue-500/5 text-blue-700 shadow-sm border border-blue-100/50 dark:from-blue-600/25 dark:to-indigo-600/10 dark:text-blue-300 dark:border-blue-500/30 dark:shadow-[0_4px_20px_rgba(59,130,246,0.15)]"
+                                     : "text-slate-500 hover:bg-white border border-transparent hover:text-slate-900 dark:text-slate-400 dark:hover:bg-[#131B2E] dark:hover:text-slate-100 dark:hover:border-slate-800/80"
+                               }`}
+                           >
+                             {isActive && (
+                               <motion.div
+                                 layoutId="activeSidebarLine"
+                                 className={`absolute left-0 inset-y-0 my-auto w-1.5 h-7 rounded-r-lg ${isAdm ? "bg-indigo-600 dark:bg-indigo-400 dark:shadow-[0_0_10px_rgba(129,140,248,0.8)]" : "bg-blue-600 dark:bg-blue-400 dark:shadow-[0_0_10px_rgba(96,165,250,0.8)]"}`}
+                               />
+                             )}
+                             <div className={`shrink-0 transition-all duration-300 ${isActive ? (isAdm ? "text-indigo-600 dark:text-indigo-400" : "text-blue-600 dark:text-blue-400") : 'group-hover:scale-110'}`}>
+                               {React.cloneElement(link.icon as React.ReactElement, { className: "w-6 h-6" })}
+                             </div>
+                             <span className={`text-[15px] font-bold tracking-wide ${isActive ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white"}`}>
+                               {link.name}
+                             </span>
+                             {isLocked && (
+                               <div className="ml-auto flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/60 px-2 py-0.5 rounded-md border border-slate-200/50 dark:border-slate-800">
+                                 <Lock className="w-3 h-3 text-slate-400" />
+                                 <span>Locked</span>
+                               </div>
+                             )}
+                           </motion.div>
+                         </Link>
+                       </div>
                      );
                    })}
                 </div>
@@ -609,47 +784,89 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <InstallPWA variant={collapsed ? "desktop_collapsed" : "sidebar"} />
 
-        {/* Profile Link */}
-        <Link href="/app/settings" title={collapsed ? "Profile Settings" : ""}>
-          <motion.div
-            whileHover={{ x: collapsed ? 0 : 6 }}
-            whileTap={{ scale: 0.97 }}
-            className={`group relative flex items-center rounded-2xl py-3.5 transition-all duration-300 text-slate-500 hover:bg-white inset-shadow hover:shadow-[0_4px_20px_-8px_rgba(0,0,0,0.1)] hover:border-slate-100 hover:text-slate-900 border border-transparent dark:text-slate-400 dark:hover:bg-[#131B2E] dark:hover:text-white dark:hover:border-slate-800/80 ${collapsed ? 'justify-center px-0' : 'gap-3.5 px-4'
-              }`}
-          >
-            <div className={`shrink-0 transition-all duration-300 group-hover:scale-110 ${isActiveSettings ? (isAdm ? 'text-indigo-600 dark:text-indigo-400' : 'text-blue-600 dark:text-blue-400') : 'group-hover:text-slate-800 dark:group-hover:text-white'}`}>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+        {isGuest ? (
+          collapsed ? (
+            <Link href="/login" title="Log In / Sign Up">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/30 cursor-pointer"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+              </motion.div>
+            </Link>
+          ) : (
+            <div className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-600/20 space-y-2.5">
+              <div>
+                <span className="text-[9px] font-black uppercase tracking-wider text-blue-200">AspireMint Perks</span>
+                <h4 className="text-xs font-black tracking-tight leading-snug mt-0.5">Unlock 100% Cashback</h4>
+                <p className="text-[10px] text-blue-100/80 mt-0.5 leading-tight">
+                  Join free & claim 100% refunds on top brands.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 pt-1">
+                <Link
+                  href="/login"
+                  className="flex-1 h-8 rounded-lg bg-white text-blue-600 font-black text-[10px] uppercase tracking-wider hover:bg-blue-50 active:scale-95 transition-all flex items-center justify-center shadow-sm"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/signup"
+                  className="flex-1 h-8 rounded-lg bg-white/20 text-white font-black text-[10px] uppercase tracking-wider hover:bg-white/30 backdrop-blur-sm border border-white/20 active:scale-95 transition-all flex items-center justify-center"
+                >
+                  Sign Up
+                </Link>
+              </div>
             </div>
-            <span className={`text-[15px] font-bold transition-all duration-300 overflow-hidden whitespace-nowrap tracking-wide ${collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
-              My Profile
-            </span>
-          </motion.div>
-        </Link>
+          )
+        ) : (
+          <>
+            {/* Profile Link */}
+            <Link href="/app/settings" title={collapsed ? "Profile Settings" : ""}>
+              <motion.div
+                whileHover={{ x: collapsed ? 0 : 6 }}
+                whileTap={{ scale: 0.97 }}
+                className={`group relative flex items-center rounded-2xl py-3.5 transition-all duration-300 text-slate-500 hover:bg-white inset-shadow hover:shadow-[0_4px_20px_-8px_rgba(0,0,0,0.1)] hover:border-slate-100 hover:text-slate-900 border border-transparent dark:text-slate-400 dark:hover:bg-[#131B2E] dark:hover:text-white dark:hover:border-slate-800/80 ${collapsed ? 'justify-center px-0' : 'gap-3.5 px-4'
+                  }`}
+              >
+                <div className={`shrink-0 transition-all duration-300 group-hover:scale-110 ${isActiveSettings ? (isAdm ? 'text-indigo-600 dark:text-indigo-400' : 'text-blue-600 dark:text-blue-400') : 'group-hover:text-slate-800 dark:group-hover:text-white'}`}>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <span className={`text-[15px] font-bold transition-all duration-300 overflow-hidden whitespace-nowrap tracking-wide ${collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
+                  My Profile
+                </span>
+              </motion.div>
+            </Link>
 
-        {/* Logout Button */}
-        <button 
-          onClick={() => signOut({ callbackUrl: "/login" })} 
-          className="w-full text-left focus:outline-none" 
-          title={collapsed ? "Log Out" : ""}
-        >
-          <motion.div
-            whileHover={{ x: collapsed ? 0 : 6 }}
-            whileTap={{ scale: 0.97 }}
-            className={`group relative flex w-full items-center rounded-2xl py-3.5 transition-all duration-300 text-slate-400 hover:bg-red-50/50 hover:border-red-100 hover:text-red-600 border border-transparent hover:shadow-[0_4px_20px_-8px_rgba(239,68,68,0.15)] dark:text-slate-400 dark:hover:bg-red-950/20 dark:hover:border-red-900/40 dark:hover:text-red-400 ${collapsed ? 'justify-center px-0' : 'gap-3.5 px-4'
-              }`}
-          >
-            <div className="shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:text-red-500">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-            </div>
-            <span className={`text-[15px] font-bold transition-all duration-300 overflow-hidden whitespace-nowrap tracking-wide ${collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
-              Secure Log Out
-            </span>
-          </motion.div>
-        </button>
+            {/* Logout Button */}
+            <button 
+              onClick={() => signOut({ callbackUrl: "/login" })} 
+              className="w-full text-left focus:outline-none" 
+              title={collapsed ? "Log Out" : ""}
+            >
+              <motion.div
+                whileHover={{ x: collapsed ? 0 : 6 }}
+                whileTap={{ scale: 0.97 }}
+                className={`group relative flex w-full items-center rounded-2xl py-3.5 transition-all duration-300 text-slate-400 hover:bg-red-50/50 hover:border-red-100 hover:text-red-600 border border-transparent hover:shadow-[0_4px_20px_-8px_rgba(239,68,68,0.15)] dark:text-slate-400 dark:hover:bg-red-950/20 dark:hover:border-red-900/40 dark:hover:text-red-400 ${collapsed ? 'justify-center px-0' : 'gap-3.5 px-4'
+                  }`}
+              >
+                <div className="shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:text-red-500">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </div>
+                <span className={`text-[15px] font-bold transition-all duration-300 overflow-hidden whitespace-nowrap tracking-wide ${collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
+                  Secure Log Out
+                </span>
+              </motion.div>
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -684,6 +901,75 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </motion.aside>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* Guest Locked Feature In-Place Modal */}
+      <AnimatePresence>
+        {guestLockModal.open && (
+          <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setGuestLockModal({ open: false })}
+              className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-md rounded-3xl bg-white dark:bg-[#0E1526] border border-slate-200/80 dark:border-slate-800 p-6 sm:p-7 shadow-2xl z-10 text-center"
+            >
+              <button
+                onClick={() => setGuestLockModal({ open: false })}
+                className="absolute right-4 top-4 p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 mb-4">
+                <Lock className="w-7 h-7" />
+              </div>
+
+              <span className="inline-block px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-wider mb-2 border border-blue-100 dark:border-blue-900/40">
+                Exclusive Member Feature
+              </span>
+
+              <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                Unlock {guestLockModal.title || "Feature"}
+              </h3>
+              <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                Log in or create a free account to access 100% cashback deals, manage orders, and get automatic refunds directly into your UPI account.
+              </p>
+
+              <div className="mt-6 space-y-2.5">
+                <Link
+                  href="/login"
+                  onClick={() => setGuestLockModal({ open: false })}
+                  className="w-full h-12 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-blue-600/25 active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  <span>Log In to Account</span>
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={() => setGuestLockModal({ open: false })}
+                  className="w-full h-12 rounded-xl bg-slate-100 dark:bg-[#131B2E] hover:bg-slate-200 dark:hover:bg-[#1A233A] text-slate-700 dark:text-slate-200 font-black text-xs uppercase tracking-wider border border-slate-200 dark:border-slate-800 active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  <span>Create Free Account</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setGuestLockModal({ open: false })}
+                  className="w-full py-2 text-[11px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
+                >
+                  Continue with Review Finder
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </>
