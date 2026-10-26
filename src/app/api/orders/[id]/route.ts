@@ -39,6 +39,40 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
+async function ensureCloudinaryScreenshot(url: string, userOrderId?: string): Promise<string> {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  if (trimmed.startsWith('https://res.cloudinary.com')) {
+    return trimmed;
+  }
+  if (!trimmed.startsWith('http')) {
+    return trimmed;
+  }
+
+  try {
+    const { v2: cloudinary } = await import('cloudinary');
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+
+    const cleanOrderId = (userOrderId || '').replace(/[^a-zA-Z0-9_-]/g, '');
+    const publicId = `flipkart_review_${cleanOrderId ? `${cleanOrderId}_` : ''}${Date.now()}`;
+
+    const uploadRes = await cloudinary.uploader.upload(trimmed, {
+      folder: 'aspiremint_orders',
+      resource_type: 'image',
+      public_id: publicId,
+    });
+
+    return uploadRes?.secure_url || trimmed;
+  } catch (err) {
+    console.warn('Could not auto-convert review screenshot to Cloudinary:', err);
+    return trimmed;
+  }
+}
+
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
@@ -388,10 +422,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
            }
 
            if (body.refundProof) {
-              updatePayload.refundProof = {
+              const rawProof = {
                  ...currentRefundProof,
                  ...body.refundProof
               };
+              if (rawProof.reviewScreenshot && !rawProof.reviewScreenshot.startsWith('https://res.cloudinary.com')) {
+                 rawProof.reviewScreenshot = await ensureCloudinaryScreenshot(
+                    rawProof.reviewScreenshot,
+                    order.userOrderId || order._id.toString()
+                 );
+              }
+              updatePayload.refundProof = rawProof;
            }
 
            // --- CALCULATE MEDIATOR PROFIT (COMMISSION) ---

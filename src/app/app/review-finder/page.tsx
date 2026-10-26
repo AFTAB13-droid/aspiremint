@@ -44,6 +44,59 @@ interface FlipkartReview {
   ref?: string;
 }
 
+function parseFlipkartDate(dateStr?: string): number {
+  if (!dateStr || typeof dateStr !== "string") return 0;
+  const s = dateStr.trim().toLowerCase();
+
+  // Relative dates
+  if (s.includes("today") || s.includes("just now") || s.includes("hour")) {
+    return Date.now();
+  }
+  if (s.includes("yesterday")) {
+    return Date.now() - 24 * 60 * 60 * 1000;
+  }
+  const daysMatch = s.match(/(\d+)\s*(day|days)\s*ago/);
+  if (daysMatch) {
+    const days = parseInt(daysMatch[1], 10);
+    return Date.now() - days * 24 * 60 * 60 * 1000;
+  }
+  const monthsMatch = s.match(/(\d+)\s*(month|months)\s*ago/);
+  if (monthsMatch) {
+    const months = parseInt(monthsMatch[1], 10);
+    return Date.now() - months * 30 * 24 * 60 * 60 * 1000;
+  }
+  const yearsMatch = s.match(/(\d+)\s*(year|years)\s*ago/);
+  if (yearsMatch) {
+    const years = parseInt(yearsMatch[1], 10);
+    return Date.now() - years * 365 * 24 * 60 * 60 * 1000;
+  }
+
+  // Common Flipkart string formats: "24 Oct, 2026", "24 Oct 2026", "Oct, 2026", "Oct 2026"
+  const clean = s.replace(/,/g, " ").replace(/\s+/g, " ").trim();
+
+  // Standard Date.parse
+  const parsed = Date.parse(clean);
+  if (!isNaN(parsed)) {
+    return parsed;
+  }
+
+  // Month Year: "oct 2026" -> Date.parse("01 oct 2026")
+  const myMatch = clean.match(/^([a-z]+)\s+(\d{4})$/);
+  if (myMatch) {
+    const p = Date.parse(`01 ${myMatch[1]} ${myMatch[2]}`);
+    if (!isNaN(p)) return p;
+  }
+
+  // Day Month: "24 oct" -> Date.parse("24 oct <currentYear>")
+  const dmMatch = clean.match(/^(\d{1,2})\s+([a-z]+)$/);
+  if (dmMatch) {
+    const p = Date.parse(`${dmMatch[1]} ${dmMatch[2]} ${new Date().getFullYear()}`);
+    if (!isNaN(p)) return p;
+  }
+
+  return 0;
+}
+
 export default function ReviewFinderPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -296,10 +349,34 @@ export default function ReviewFinderPage() {
   const handleSelectOrderForAutofill = async (order: any) => {
     if (!selectedReviewForAutofill) return;
     setAttachingOrderId(order._id);
+    const toastId = toast.loading("Uploading review screenshot to Cloudinary...");
 
     try {
       const permalink = selectedReviewForAutofill.permalink || "";
-      const screenshotUrl = `${window.location.origin}/api/tools/review-screenshot?url=${encodeURIComponent(permalink)}`;
+      let screenshotUrl = "";
+
+      // 1. Upload review screenshot to Cloudinary
+      try {
+        const cRes = await fetch("/api/tools/review-cloudinary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            url: permalink,
+            orderId: order.userOrderId || order._id,
+          }),
+        });
+        const cData = await cRes.json();
+        if (cData.success && cData.secure_url) {
+          screenshotUrl = cData.secure_url;
+        }
+      } catch (cErr) {
+        console.warn("Direct Cloudinary upload error, using local fallback:", cErr);
+      }
+
+      // Fallback to proxy screenshot URL if Cloudinary endpoint failed
+      if (!screenshotUrl) {
+        screenshotUrl = `${window.location.origin}/api/tools/review-screenshot?url=${encodeURIComponent(permalink)}`;
+      }
 
       const storageKey = `refund_form_${order._id}`;
       let existingDraft: any = {};
@@ -328,11 +405,11 @@ export default function ReviewFinderPage() {
         })
       );
 
-      toast.success(`Attaching proof to Order #${order.userOrderId}...`);
+      toast.success(`Cloudinary proof attached to Order #${order.userOrderId}!`, { id: toastId });
       setShowAutofillModal(false);
       router.push(`/app/refunds/fill/${order._id}?autofill=1`);
     } catch (err: any) {
-      toast.error("Failed to attach proof: " + err.message);
+      toast.error("Failed to attach proof: " + err.message, { id: toastId });
       setAttachingOrderId(null);
     }
   };
@@ -340,12 +417,18 @@ export default function ReviewFinderPage() {
   const filteredOrders = useMemo(() => {
     if (!Array.isArray(userOrders)) return [];
 
+    // ONLY show orders with CANCELLED, REFUND_REJECTED, and REFUND_FORM_PENDING status (NO UNDER_VERIFICATION)
+    const allowedStatuses = [
+      "REFUND_FORM_PENDING",
+      "CANCELLED",
+      "CANCELED",
+      "REFUND_REJECTED",
+      "REJECTED"
+    ];
+
     let list = userOrders.filter((o) => {
-      return (
-        o.status === "REFUND_FORM_PENDING" ||
-        o.status === "UNDER_VERIFICATION" ||
-        o.status === "REFUND_REJECTED"
-      );
+      const st = (o.status || "").toUpperCase();
+      return allowedStatuses.includes(st) && st !== "UNDER_VERIFICATION";
     });
 
     if (orderSearchQuery.trim()) {
@@ -354,8 +437,8 @@ export default function ReviewFinderPage() {
         (o) =>
           o.userOrderId?.toLowerCase().includes(q) ||
           o.brandName?.toLowerCase().includes(q) ||
-          o.productCode?.toLowerCase().includes(q) ||
-          o.marketplace?.toLowerCase().includes(q)
+          o.reviewName?.toLowerCase().includes(q) ||
+          o.productCode?.toLowerCase().includes(q)
       );
     }
 
@@ -475,6 +558,12 @@ export default function ReviewFinderPage() {
     }
 
     list.sort((a, b) => {
+      if (sortBy === "recent") {
+        const dateA = parseFlipkartDate(a.date);
+        const dateB = parseFlipkartDate(b.date);
+        if (dateB !== dateA) return dateB - dateA;
+        return 0;
+      }
       if (sortBy === "rating-high") {
         return Number(b.rating || 0) - Number(a.rating || 0);
       }
@@ -1213,35 +1302,59 @@ export default function ReviewFinderPage() {
                             : "bg-white dark:bg-[#111827] border-slate-100 dark:border-slate-800/80 hover:border-slate-200"
                         }`}
                       >
-                        <div className="min-w-0 space-y-1">
+                        <div className="min-w-0 space-y-1.5">
+                          {/* Top row: Brand badge, Order ID, Status, Matching badge */}
                           <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[9px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                            <span className="px-2 py-0.5 rounded-md bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-[9px] font-black uppercase tracking-wider">
                               {ord.brandName || "Brand"}
                             </span>
-                            <span className="text-[10px] font-mono font-bold text-slate-900 dark:text-white select-all">
+                            <span className="text-[11px] font-mono font-black text-slate-900 dark:text-white select-all">
                               {ord.userOrderId}
                             </span>
                             {isMatching && (
-                              <span className="px-2 py-0.5 rounded-md bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-600 dark:text-emerald-400 text-[8px] font-black uppercase tracking-wider flex items-center gap-1">
+                              <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[8px] font-black uppercase tracking-wider flex items-center gap-1">
                                 <Sparkles className="w-2.5 h-2.5" />
                                 <span>Matching Product</span>
                               </span>
                             )}
-                            <span className="px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[8px] font-black uppercase tracking-wider">
-                              {ord.status === "REFUND_FORM_PENDING" ? "Form Pending" : ord.status}
+                            <span
+                              className={`px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider ${
+                                ord.status === "REFUND_FORM_PENDING"
+                                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                  : ord.status === "CANCELLED" || ord.status === "CANCELED"
+                                  ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                                  : "bg-red-500/10 text-red-600 dark:text-red-400"
+                              }`}
+                            >
+                              {ord.status === "REFUND_FORM_PENDING"
+                                ? "Refund Form Pending"
+                                : ord.status === "CANCELLED" || ord.status === "CANCELED"
+                                ? "Cancelled"
+                                : "Rejected"}
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400">
-                            <span>Payout: ₹{ord.refundDetails?.expectedPayout || ord.amount || 0}</span>
+                          {/* Details row: Review Name + Order Filled Date ONLY */}
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center gap-1">
+                              <span className="text-slate-400 uppercase text-[9px] font-black">Review Name:</span>
+                              <span className="text-slate-800 dark:text-slate-200 font-black">
+                                {ord.reviewName || "Not specified"}
+                              </span>
+                            </div>
                             <span>•</span>
-                            <span>Type: {ord.reviewType || "REVIEW"}</span>
-                            {ord.marketplace && (
-                              <>
-                                <span>•</span>
-                                <span>{ord.marketplace}</span>
-                              </>
-                            )}
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3 text-slate-400" />
+                              <span>
+                                {ord.createdAt
+                                  ? new Date(ord.createdAt).toLocaleDateString("en-IN", {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                    })
+                                  : "N/A"}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
@@ -1254,7 +1367,7 @@ export default function ReviewFinderPage() {
                           {isAttaching ? (
                             <>
                               <RefreshCw className="w-3 h-3 animate-spin" />
-                              <span>Attaching...</span>
+                              <span>Uploading to Cloudinary...</span>
                             </>
                           ) : (
                             <>
@@ -1269,10 +1382,10 @@ export default function ReviewFinderPage() {
                 ) : (
                   <div className="py-10 text-center space-y-2">
                     <p className="text-xs font-black uppercase tracking-wider text-slate-400">
-                      {orderSearchQuery ? "No matching pending refunds found." : "No pending refunds found."}
+                      {orderSearchQuery ? "No matching orders found." : "No pending, cancelled, or rejected orders found."}
                     </p>
                     <p className="text-[10px] text-slate-500">
-                      You don't have any orders waiting for refund submission.
+                      Only orders with Refund Pending, Rejected, or Cancelled status can be auto-filled.
                     </p>
                     <button
                       type="button"
