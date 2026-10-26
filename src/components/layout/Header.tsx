@@ -180,7 +180,7 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
           </svg>
         </button>
         
-        <div className="flex items-center gap-4">
+        <Link href={isGuest ? "/app/review-finder" : "/app"} className="flex items-center gap-4">
           <Logo size={36} variant="blue" className="hidden lg:block drop-shadow-sm hover:scale-110 transition-transform cursor-pointer" />
           <div className="flex flex-col">
             <h2 className="text-[20px] sm:text-[22px] font-black tracking-tight leading-none group">
@@ -199,7 +199,7 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
               </span>
             </h2>
           </div>
-        </div>
+        </Link>
       </div>
 
       <div className="flex items-center gap-2.5 sm:gap-4 relative z-10">

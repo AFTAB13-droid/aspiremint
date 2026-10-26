@@ -6,14 +6,27 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
-    // Redirect authenticated users away from public/auth pages instantly
-    if (token && (path === "/login" || path === "/signup" || path === "/")) {
-      return NextResponse.redirect(new URL("/app", req.url));
+    // 1. Unauthenticated Guest Users
+    if (!token) {
+      // Allowed public guest routes: login, signup/register, forgot-password, registration-pending, review-finder
+      const isAllowedPublicPath =
+        path === "/login" ||
+        path === "/signup" ||
+        path === "/forgot-password" ||
+        path === "/registration-pending" ||
+        path === "/app/review-finder";
+
+      // If guest clicks or navigates to any other path (e.g. /, /app, /app/orders, /app/activedeals, /app/refunds, etc.)
+      if (!isAllowedPublicPath) {
+        return NextResponse.redirect(new URL("/app/review-finder", req.url));
+      }
+      return NextResponse.next();
     }
 
-    // Redirect unauthenticated guest visitors to Review Finder
-    if (!token && (path === "/" || path === "/app")) {
-      return NextResponse.redirect(new URL("/app/review-finder", req.url));
+    // 2. Authenticated Logged-In Users
+    // Redirect authenticated users away from public auth pages to dashboard
+    if (path === "/login" || path === "/signup" || path === "/" || path === "/forgot-password") {
+      return NextResponse.redirect(new URL("/app", req.url));
     }
 
     // Enforce Admin MFA redirection
@@ -49,27 +62,22 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token, req }) => {
-        const path = req.nextUrl.pathname;
-        // Public paths don't require a token
-        if (
-          path === "/login" ||
-          path === "/signup" ||
-          path === "/" ||
-          path === "/app/review-finder"
-        ) {
-          return true;
-        }
-        return !!token;
-      },
-    },
-    pages: {
-      signIn: "/login",
+      // By returning true here, NextAuth does not automatically redirect unauthenticated users to /login.
+      // Our middleware logic above explicitly redirects unauthenticated users to /app/review-finder.
+      authorized: () => true,
     },
   }
 );
 
 // Protect the dashboard, auth routes, and any other private routes
 export const config = {
-  matcher: ["/app/:path*", "/admin/mfa", "/login", "/signup", "/"],
+  matcher: [
+    "/app/:path*",
+    "/admin/:path*",
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/registration-pending",
+    "/",
+  ],
 };

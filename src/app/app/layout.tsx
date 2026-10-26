@@ -82,7 +82,7 @@ export default function DashboardLayout({
 
   // Fallback protection in case middleware allows an unauthenticated state
   if ((status === "unauthenticated" || !session?.user) && !isGuestRoute) {
-    redirect("/login");
+    redirect("/app/review-finder");
   }
 
   const isGuest = !session?.user;

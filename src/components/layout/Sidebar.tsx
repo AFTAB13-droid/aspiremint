@@ -571,7 +571,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Brand Header */}
       <div className={`flex h-24 items-center border-b border-slate-50/50 dark:border-slate-800/60 transition-all duration-300 relative z-10 ${collapsed ? 'justify-center px-0' : 'justify-between px-8'}`}>
-        <div className="flex items-center gap-4 overflow-hidden">
+        <Link href={isGuest ? "/app/review-finder" : "/app"} className="flex items-center gap-4 overflow-hidden">
           <Logo size={48} variant="blue" className="shrink-0 drop-shadow-blue" />
           <div className={`flex flex-col transition-opacity duration-300 ${collapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}>
             <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white leading-none">AspireMint</span>
@@ -579,7 +579,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                {isGuest ? "VIP Gateway" : userRole === "ADMIN" ? "Admin Panel" : userRole === "MEDIATOR" ? "Mediator Panel" : "Buyers Panel"}
             </span>
           </div>
-        </div>
+        </Link>
         {/* Mobile Close Button */}
         <button
           onClick={() => setMobileOpen(false)}
