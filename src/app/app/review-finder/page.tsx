@@ -590,9 +590,9 @@ export default function ReviewFinderPage() {
   }, [filteredReviews, currentPage, itemsPerPage]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 md:pb-12 space-y-5">
+    <div className="w-full max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-3 sm:py-6 pb-28 md:pb-12 space-y-3.5 sm:space-y-5">
       {/* Clean, Minimalist Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 sm:px-0">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
             Flipkart Review Finder
@@ -623,7 +623,7 @@ export default function ReviewFinderPage() {
         <motion.div
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-2xl sm:rounded-[26px] bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-700 p-3 sm:p-5 text-white shadow-lg sm:shadow-xl shadow-emerald-500/10 border border-emerald-400/30"
+          className="w-full relative overflow-hidden rounded-2xl sm:rounded-[26px] bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-700 p-3 sm:p-5 text-white shadow-lg sm:shadow-xl shadow-emerald-500/10 border border-emerald-400/30"
         >
           <div className="absolute top-0 right-0 -mr-10 -mt-10 w-44 h-44 bg-white/10 rounded-full blur-2xl pointer-events-none" />
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 relative z-10">
@@ -664,7 +664,7 @@ export default function ReviewFinderPage() {
       )}
 
       {/* Prominent, High-End Search Bar */}
-      <div className="w-full bg-white dark:bg-[#0E1526] p-3 sm:p-4 rounded-[28px] sm:rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3">
+      <div className="w-full bg-white dark:bg-[#0E1526] p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -757,7 +757,7 @@ export default function ReviewFinderPage() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-purple-600/10 border border-blue-200/80 dark:border-blue-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4"
+          className="w-full p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-purple-600/10 border border-blue-200/80 dark:border-blue-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4"
         >
           <div className="flex items-center gap-2.5 sm:gap-3.5">
             <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-md sm:shadow-lg shadow-blue-500/25">
@@ -793,7 +793,7 @@ export default function ReviewFinderPage() {
 
       {/* Filter and In-Review Search Hub */}
       {reviews.length > 0 && (
-        <div className="p-4 sm:p-5 rounded-3xl bg-white dark:bg-[#0E1526] border border-slate-100 dark:border-slate-800 shadow-sm space-y-3.5">
+        <div className="w-full p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-[#0E1526] border border-slate-100 dark:border-slate-800 shadow-sm space-y-3.5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             {/* Star Rating Pills */}
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
@@ -916,7 +916,7 @@ export default function ReviewFinderPage() {
       {/* Reviews Cards List (Full-Width on Mobile & Desktop) */}
       {filteredReviews.length > 0 ? (
         <div className="space-y-4">
-          <div className="flex items-center justify-between px-1">
+          <div className="flex items-center justify-between px-1 sm:px-0">
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
               Showing {paginatedReviews.length} of {filteredReviews.length} Reviews
             </span>
@@ -935,7 +935,7 @@ export default function ReviewFinderPage() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.03 }}
-                  className="w-full bg-white dark:bg-[#0E1526] rounded-[28px] p-5 sm:p-6 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-none hover:shadow-md transition-all space-y-4 relative overflow-hidden"
+                  className="w-full bg-white dark:bg-[#0E1526] rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-100 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-none hover:shadow-md transition-all space-y-3.5 sm:space-y-4 relative overflow-hidden"
                 >
                   {/* Review Top Header */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1172,7 +1172,7 @@ export default function ReviewFinderPage() {
         </div>
       ) : (
         /* Empty State */
-        <div className="p-12 rounded-[28px] bg-white dark:bg-[#0E1526] border border-dashed border-slate-200 dark:border-slate-800 text-center flex flex-col items-center justify-center space-y-2.5">
+        <div className="w-full p-8 sm:p-12 rounded-2xl sm:rounded-3xl bg-white dark:bg-[#0E1526] border border-dashed border-slate-200 dark:border-slate-800 text-center flex flex-col items-center justify-center space-y-2.5">
           <div className="h-14 w-14 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-1">
             <Search className="w-6 h-6" />
           </div>
