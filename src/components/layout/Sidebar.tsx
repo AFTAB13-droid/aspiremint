@@ -785,19 +785,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <InstallPWA variant={collapsed ? "desktop_collapsed" : "sidebar"} />
 
         {isGuest ? (
-          collapsed ? (
-            <Link href="/login" title="Log In / Sign Up">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/30 cursor-pointer"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                </svg>
-              </motion.div>
-            </Link>
-          ) : (
+          collapsed ? null : (
             <div className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-600/20 space-y-2.5">
               <div>
                 <span className="text-[9px] font-black uppercase tracking-wider text-blue-200">Become Our Member</span>
