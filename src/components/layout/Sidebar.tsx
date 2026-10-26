@@ -470,7 +470,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
              <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-600/25 space-y-3">
                <div>
                  <div className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-blue-200 mb-1">
-                   <span>VIP Membership</span>
+                   <span>Become Our Member</span>
                  </div>
                  <h4 className="text-sm font-black tracking-tight leading-snug">Unlock 100% Cashback Deals</h4>
                  <p className="text-[11px] text-blue-100/80 mt-1 leading-normal">
@@ -800,7 +800,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ) : (
             <div className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-600/20 space-y-2.5">
               <div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-blue-200">AspireMint Perks</span>
+                <span className="text-[9px] font-black uppercase tracking-wider text-blue-200">Become Our Member</span>
                 <h4 className="text-xs font-black tracking-tight leading-snug mt-0.5">Unlock 100% Cashback</h4>
                 <p className="text-[10px] text-blue-100/80 mt-0.5 leading-tight">
                   Join free & claim 100% refunds on top brands.

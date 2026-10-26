@@ -202,21 +202,23 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
         </Link>
       </div>
 
-      <div className="flex items-center gap-2.5 sm:gap-4 relative z-10">
-        {/* Animated Theme Toggle (Web & Mobile) */}
-        <ThemeToggle variant="icon" />
+      <div className="flex items-center gap-2.5 sm:gap-4 relative z-10 shrink-0">
+        {!isGuest && (
+          /* Animated Theme Toggle (Web & Mobile) - Member Only */
+          <ThemeToggle variant="icon" />
+        )}
 
         {isGuest ? (
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <Link 
               href="/login" 
-              className="px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-black text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-slate-200/80 dark:border-slate-800"
+              className="h-10 px-4 sm:px-5 text-xs sm:text-sm font-black text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-slate-200/90 dark:border-slate-800 flex items-center justify-center whitespace-nowrap active:scale-95 shadow-sm"
             >
               Log In
             </Link>
             <Link 
               href="/signup" 
-              className="px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-md shadow-blue-500/20 active:scale-95 transition-all"
+              className="h-10 px-4 sm:px-5 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-md shadow-blue-500/25 active:scale-95 transition-all flex items-center justify-center whitespace-nowrap"
             >
               Sign Up
             </Link>
