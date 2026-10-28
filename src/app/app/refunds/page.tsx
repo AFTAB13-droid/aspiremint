@@ -593,9 +593,11 @@ export default function RefundsPage() {
       ) : filteredOrders.length > 0 ? (
         <div className="space-y-4">
           
-          {role === "USER" ? (
-            /* Buyer View: Full-Width Cards on Mobile & Desktop matching mockup */
-            <div className="space-y-4 px-1 sm:px-0">
+          {/* Mobile Cards View (md:hidden) */}
+          <div className="md:hidden">
+            {role === "USER" ? (
+              /* Buyer Mobile Card View matching mockup */
+              <div className="space-y-4 px-1 sm:px-0">
               {paginatedOrders.map((order, idx) => {
                 const amount = order.refundDetails?.expectedPayout ?? (order.dealType === "Empty Box" ? (order.amount + (order.lessAmount || 0)) : (order.amount - (order.lessAmount || 0)));
                 const brandChar = (order.brandName || "R").charAt(0).toUpperCase();
@@ -735,11 +737,10 @@ export default function RefundsPage() {
                   </motion.div>
                 );
               })}
-            </div>
-          ) : (
-            <>
-              {/* Mobile View for ADMIN / MEDIATOR */}
-              <div className="md:hidden space-y-4 px-2 pt-0">
+              </div>
+            ) : (
+              /* Mobile View for ADMIN / MEDIATOR */
+              <div className="space-y-4 px-2 pt-0">
             {paginatedOrders.map((order, idx) => {
                const amount = order.refundDetails?.expectedPayout ?? (order.dealType === "Empty Box" ? (order.amount + (order.lessAmount || 0)) : (order.amount - (order.lessAmount || 0)));
                return (
@@ -850,9 +851,11 @@ export default function RefundsPage() {
                 </motion.div>
                );
             })}
+              </div>
+            )}
           </div>
 
-          {/* Desktop View */}
+          {/* Desktop Table View (hidden md:block) for all roles */}
           <div className="hidden md:block overflow-hidden rounded-[32px] border border-slate-100 dark:border-slate-800/80 bg-white dark:bg-[#0E1526] shadow-sm">
             <table className="w-full text-left border-separate border-spacing-0">
               <thead>
@@ -1037,11 +1040,21 @@ export default function RefundsPage() {
                               </button>
                             </>
                           ) : (
-                            <div className="flex flex-col items-end">
-                              <span className="text-[11px] font-black text-emerald-600 uppercase tracking-tighter italic">Paid By {order.paymentDetails?.paidByName || "System"}</span>
-                              <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">
-                                {order.updatedAt ? new Date(order.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + " • " + new Date(order.updatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
-                              </span>
+                            <div className="flex items-center justify-end gap-3">
+                              <div className="flex flex-col items-end">
+                                <span className="text-[11px] font-black text-emerald-600 uppercase tracking-tighter italic">Paid By {order.paymentDetails?.paidByName || order.mediator?.name || "System"}</span>
+                                <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">
+                                  {formatOrdinalDate(order.paymentDetails?.paidAt || order.refundDetails?.submittedAt || order.updatedAt)}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); router.push(`/app/orders/${order._id}`); }}
+                                className="h-8 w-8 rounded-xl bg-slate-100 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 flex items-center justify-center transition-all shadow-sm active:scale-95 shrink-0"
+                                title="View Order Details"
+                              >
+                                <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+                              </button>
                             </div>
                           )}
                         </div>
@@ -1052,13 +1065,12 @@ export default function RefundsPage() {
               </tbody>
             </table>
           </div>
-            </>
-          )}
+
           {/* Desktop Pagination Footer */}
           <div className="hidden md:flex flex-col md:flex-row items-center justify-between gap-6 px-4 mt-6 mb-10">
                  <div className="flex items-center gap-4">
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                      SHOWING <span className="text-indigo-600">{paginatedOrders.length}</span> OF <span className="text-slate-900">{filteredOrders.length}</span> CLAIMS
+                      SHOWING <span className="text-indigo-600">{paginatedOrders.length}</span> OF <span className="text-slate-900 dark:text-white">{filteredOrders.length}</span> {role === 'USER' ? 'REFUNDS' : 'CLAIMS'}
                     </p>
                     
                     <div className="flex items-center gap-2 pl-4 border-l border-slate-100">
