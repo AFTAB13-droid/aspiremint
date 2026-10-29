@@ -884,7 +884,9 @@ export default function RefundsPage() {
                     </>
                   )}
                   <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Mediator</th>
+                  {role !== "USER" && (
+                    <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Mediator</th>
+                  )}
                   <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">
                     {role === 'ADMIN' ? (
                       activeTab === 'VERIFYING' ? 'Verification Actions' :
@@ -969,17 +971,19 @@ export default function RefundsPage() {
                         <p className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">₹{amount.toLocaleString()}</p>
                         <p className="text-[8px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-widest">Gross Refund</p>
                       </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-2 group/mediator">
-                          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-black text-slate-400 dark:text-slate-300 group-hover/mediator:bg-blue-50 dark:group-hover/mediator:bg-blue-950/50 group-hover/mediator:text-blue-600 transition-colors">
-                            {order.mediator?.name?.[0] || "?"}
+                      {role !== "USER" && (
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2 group/mediator">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-black text-slate-400 dark:text-slate-300 group-hover/mediator:bg-blue-50 dark:group-hover/mediator:bg-blue-950/50 group-hover/mediator:text-blue-600 transition-colors">
+                              {order.mediator?.name?.[0] || "?"}
+                            </div>
+                            <div className="flex flex-col">
+                              <p className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-tighter line-clamp-1">{order.mediator?.name || "Unassigned"}</p>
+                              <p className="text-[8px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-widest line-clamp-1 truncate w-24">#{order.mediator?.aspireMintId || "---"}</p>
+                            </div>
                           </div>
-                          <div className="flex flex-col">
-                            <p className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-tighter line-clamp-1">{order.mediator?.name || "Unassigned"}</p>
-                            <p className="text-[8px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-widest line-clamp-1 truncate w-24">#{order.mediator?.aspireMintId || "---"}</p>
-                          </div>
-                        </div>
-                      </td>
+                        </td>
+                      )}
                       <td className="px-8 py-5 text-right">
                         <div className="flex items-center justify-end gap-3">
                           {role === 'ADMIN' ? (
