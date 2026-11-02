@@ -1,382 +1,235 @@
-import path from 'path';
-import fs from 'fs';
-import os from 'os';
-import QRCode from 'qrcode';
+/**
+ * Official Meta WhatsApp Cloud API Service
+ * 100% Serverless & Vercel Native (0 dependencies, 0 WebSockets, 0 disk operations)
+ */
 
-// Dynamic import types
-type WASocket = any;
-
-interface WhatsAppClientState {
-  socket: WASocket | null;
-  status: 'DISCONNECTED' | 'INITIALIZING' | 'WAITING_FOR_QR' | 'WAITING_FOR_PAIRING' | 'CONNECTED';
-  qrCodeDataUrl: string | null;
-  pairingCode: string | null;
-  connectedNumber: string | null;
-  connectedName: string | null;
-  lastConnectedAt: string | null;
-  lastError: string | null;
-  isStarting: boolean;
-  authDir: string;
+interface MetaWhatsAppConfig {
+  phoneNumberId: string;
+  accessToken: string;
+  businessAccountId?: string;
 }
 
-// Global singleton so hot-reloads and multiple Next.js API requests share the exact same socket
-const globalWithWhatsApp = global as unknown as {
-  __aspire_whatsapp_state?: WhatsAppClientState;
-};
+function getMetaConfig(): MetaWhatsAppConfig | null {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim();
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN?.trim();
+  const businessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID?.trim();
 
-function getAuthDirectory(): string {
-  // On Vercel / AWS Lambda (/var/task), the filesystem is read-only except /tmp
-  if (
-    process.env.VERCEL ||
-    process.env.AWS_LAMBDA_FUNCTION_NAME ||
-    (typeof process.cwd === 'function' && process.cwd().startsWith('/var/task'))
-  ) {
-    return path.join(os.tmpdir(), 'whatsapp_auth');
+  if (!phoneNumberId || !accessToken) {
+    return null;
   }
-  return path.join(process.cwd(), 'whatsapp_auth');
-}
 
-function getWhatsAppState(): WhatsAppClientState {
-  if (!globalWithWhatsApp.__aspire_whatsapp_state) {
-    const authDir = getAuthDirectory();
-    if (!fs.existsSync(authDir)) {
-      try {
-        fs.mkdirSync(authDir, { recursive: true });
-      } catch (e) {
-        console.error('Failed to create whatsapp_auth dir:', e);
-      }
-    }
-
-    globalWithWhatsApp.__aspire_whatsapp_state = {
-      socket: null,
-      status: 'DISCONNECTED',
-      qrCodeDataUrl: null,
-      pairingCode: null,
-      connectedNumber: null,
-      connectedName: null,
-      lastConnectedAt: null,
-      lastError: null,
-      isStarting: false,
-      authDir: authDir,
-    };
-  }
-  return globalWithWhatsApp.__aspire_whatsapp_state;
+  return { phoneNumberId, accessToken, businessAccountId };
 }
 
 /**
- * Clean and format any international or Indian phone number into a WhatsApp JID
+ * Format any phone number into a clean E.164-like WhatsApp format without '+'
+ * e.g. "09876543210" -> "919876543210", "+91 98765-43210" -> "919876543210"
  */
-export function formatWhatsAppJid(phone: string): string | null {
+export function formatWhatsAppNumber(phone: string): string | null {
   if (!phone || typeof phone !== 'string') return null;
   let digits = phone.replace(/\D/g, '');
   if (!digits) return null;
 
-  // Remove leading 0 (e.g. 09876543210 -> 9876543210)
   if (digits.startsWith('0')) {
     digits = digits.substring(1);
   }
 
-  // If 10 digits, assume India (+91)
   if (digits.length === 10) {
     digits = `91${digits}`;
   }
 
-  // Must have reasonable length for mobile (at least 10-15 digits)
   if (digits.length < 10 || digits.length > 15) {
     return null;
   }
 
-  return `${digits}@s.whatsapp.net`;
+  return digits;
 }
 
 /**
- * Initialize or get active WhatsApp socket connection
+ * Live health check of Meta WhatsApp Cloud API credentials
  */
-export async function initWhatsApp(forceReconnect = false): Promise<WhatsAppClientState> {
-  const state = getWhatsAppState();
+export async function getWhatsAppConfigStatus(): Promise<{
+  configured: boolean;
+  status: 'CONNECTED' | 'NOT_CONFIGURED' | 'AUTH_ERROR';
+  phoneNumberId?: string;
+  displayPhoneNumber?: string;
+  verifiedName?: string;
+  qualityRating?: string;
+  error?: string;
+}> {
+  const config = getMetaConfig();
 
-  if (state.socket && state.status === 'CONNECTED' && !forceReconnect) {
-    return state;
-  }
-
-  if (state.isStarting && !forceReconnect) {
-    return state;
-  }
-
-  state.isStarting = true;
-  state.status = 'INITIALIZING';
-  state.lastError = null;
-
-  try {
-    const {
-      default: makeWASocket,
-      DisconnectReason,
-      useMultiFileAuthState,
-      fetchLatestBaileysVersion,
-      makeCacheableSignalKeyStore,
-      Browsers,
-    } = await import('@whiskeysockets/baileys');
-    const pino = (await import('pino')).default;
-
-    if (forceReconnect && state.socket) {
-      try {
-        state.socket.end(undefined);
-      } catch {}
-      state.socket = null;
-    }
-
-    const { state: authState, saveCreds } = await useMultiFileAuthState(state.authDir);
-
-    let version: [number, number, number] = [2, 3000, 1043857760];
-    try {
-      const versionPromise = fetchLatestBaileysVersion();
-      const timeoutPromise = new Promise<null>((r) => setTimeout(() => r(null), 2000));
-      const fetched: any = await Promise.race([versionPromise, timeoutPromise]);
-      if (fetched?.version) version = fetched.version;
-    } catch {}
-
-    const socket = makeWASocket({
-      version,
-      logger: pino({ level: 'silent' }),
-      printQRInTerminal: false,
-      auth: {
-        creds: authState.creds,
-        keys: makeCacheableSignalKeyStore(authState.keys, pino({ level: 'silent' })),
-      },
-      generateHighQualityLinkPreview: true,
-      browser: Browsers.ubuntu('Chrome'),
-      connectTimeoutMs: 60000,
-      defaultQueryTimeoutMs: 60000,
-      keepAliveIntervalMs: 25000,
-      syncFullHistory: false,
-    });
-
-    state.socket = socket;
-
-    socket.ev.on('creds.update', saveCreds);
-
-    socket.ev.on('connection.update', async (update: any) => {
-      const { connection, lastDisconnect, qr } = update;
-
-      if (qr) {
-        state.status = 'WAITING_FOR_QR';
-        state.isStarting = false;
-        try {
-          state.qrCodeDataUrl = await QRCode.toDataURL(qr, {
-            margin: 2,
-            scale: 7,
-            color: { dark: '#0b141a', light: '#ffffff' },
-          });
-          if ((state as any)._onQrGenerated) {
-            (state as any)._onQrGenerated(state.qrCodeDataUrl);
-          }
-        } catch (qrErr) {
-          console.error('Failed to generate QR data URL:', qrErr);
-        }
-      }
-
-      if (connection === 'open') {
-        state.status = 'CONNECTED';
-        state.qrCodeDataUrl = null;
-        state.pairingCode = null;
-        state.lastConnectedAt = new Date().toISOString();
-        state.lastError = null;
-        state.isStarting = false;
-
-        const jid = socket.user?.id || '';
-        const num = jid.split(':')[0] || jid.split('@')[0];
-        state.connectedNumber = num ? `+${num}` : 'Connected Device';
-        state.connectedName = socket.user?.name || 'AspireMint WhatsApp';
-        console.log(`[WhatsApp Service] Connected successfully as ${state.connectedNumber}`);
-      }
-
-      if (connection === 'close') {
-        state.isStarting = false;
-        const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
-        const isLoggedOut = statusCode === DisconnectReason.loggedOut;
-
-        if (isLoggedOut) {
-          state.status = 'DISCONNECTED';
-          state.qrCodeDataUrl = null;
-          state.pairingCode = null;
-          state.lastError = 'Account logged out from phone. Please reconnect.';
-          state.connectedNumber = null;
-          state.connectedName = null;
-          try {
-            fs.rmSync(state.authDir, { recursive: true, force: true });
-          } catch {}
-          console.warn('[WhatsApp Service] Session logged out by client.');
-        } else {
-          // If we are currently waiting for QR, do not clear qrCodeDataUrl on routine socket rotation
-          if (state.status !== 'WAITING_FOR_QR' && state.status !== 'WAITING_FOR_PAIRING') {
-            state.status = 'DISCONNECTED';
-          }
-          state.lastError = (lastDisconnect?.error as Error)?.message || 'Reconnecting socket...';
-          console.log('[WhatsApp Service] Socket closed, auto-reconnecting if needed.');
-        }
-      }
-    });
-
-    state.isStarting = false;
-    return state;
-  } catch (error: any) {
-    state.isStarting = false;
-    state.status = 'DISCONNECTED';
-    state.lastError = error.message || 'Initialization failed';
-    console.error('[WhatsApp Service Init Error]:', error);
-    return state;
-  }
-}
-
-/**
- * Request an 8-digit pairing code for remote connection without camera/QR code
- */
-export async function requestWhatsAppPairingCode(phoneNumber: string): Promise<{ success: boolean; code?: string; error?: string }> {
-  try {
-    let digits = phoneNumber.replace(/\D/g, '');
-    if (digits.startsWith('0')) digits = digits.substring(1);
-    if (digits.length === 10) digits = `91${digits}`;
-
-    if (digits.length < 10 || digits.length > 15) {
-      return { success: false, error: 'Invalid phone number length. Please include full country code (e.g. 919876543210).' };
-    }
-
-    // Force fresh socket initialized without an open session
-    await initWhatsApp(true);
-    const state = getWhatsAppState();
-
-    if (!state.socket) {
-      return { success: false, error: 'Socket is not ready. Try again in 5 seconds.' };
-    }
-
-    // Give socket 1.5 seconds to establish basic transport
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    if (typeof state.socket.requestPairingCode !== 'function') {
-      return { success: false, error: 'Pairing code is not supported by current Baileys version.' };
-    }
-
-    const rawCode = await state.socket.requestPairingCode(digits);
-    const formattedCode = rawCode?.match(/.{1,4}/g)?.join('-') || rawCode;
-
-    state.pairingCode = formattedCode;
-    state.status = 'WAITING_FOR_PAIRING';
-    state.qrCodeDataUrl = null;
-
-    return { success: true, code: formattedCode };
-  } catch (err: any) {
-    console.error('[WhatsApp Pairing Code Error]:', err);
-    return { success: false, error: err.message || 'Failed to request pairing code' };
-  }
-}
-
-/**
- * Disconnect and unlink current WhatsApp session
- */
-export async function disconnectWhatsApp(): Promise<{ success: boolean; message: string }> {
-  const state = getWhatsAppState();
-  try {
-    if (state.socket) {
-      try {
-        await state.socket.logout();
-      } catch {}
-      try {
-        state.socket.end(undefined);
-      } catch {}
-      state.socket = null;
-    }
-
-    if (fs.existsSync(state.authDir)) {
-      try {
-        fs.rmSync(state.authDir, { recursive: true, force: true });
-      } catch {}
-    }
-
-    state.status = 'DISCONNECTED';
-    state.qrCodeDataUrl = null;
-    state.pairingCode = null;
-    state.connectedNumber = null;
-    state.connectedName = null;
-    state.lastError = null;
-
-    return { success: true, message: 'WhatsApp session unlinked successfully.' };
-  } catch (err: any) {
-    return { success: false, message: err.message || 'Failed to disconnect.' };
-  }
-}
-
-/**
- * Return current status for Admin UI
- */
-export function getWhatsAppStatus() {
-  const state = getWhatsAppState();
-  return {
-    status: state.status,
-    qrCodeDataUrl: state.qrCodeDataUrl,
-    pairingCode: state.pairingCode,
-    connectedNumber: state.connectedNumber,
-    connectedName: state.connectedName,
-    lastConnectedAt: state.lastConnectedAt,
-    lastError: state.lastError,
-  };
-}
-
-/**
- * Wait for QR code to be generated (resolves as soon as QR is ready)
- */
-export async function waitForQRCode(timeoutMs = 8000): Promise<string | null> {
-  const state = getWhatsAppState();
-  if (state.qrCodeDataUrl) return state.qrCodeDataUrl;
-  if (state.status === 'CONNECTED') return null;
-
-  return new Promise((resolve) => {
-    const timer = setTimeout(() => {
-      resolve(state.qrCodeDataUrl);
-    }, timeoutMs);
-
-    (state as any)._onQrGenerated = (qrUrl: string) => {
-      clearTimeout(timer);
-      (state as any)._onQrGenerated = null;
-      resolve(qrUrl);
+  if (!config) {
+    return {
+      configured: false,
+      status: 'NOT_CONFIGURED',
+      error: 'Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN in environment variables.',
     };
-  });
-}
+  }
 
-/**
- * Send raw text message (Non-blocking and safe)
- */
-export async function sendWhatsAppMessage(toPhone: string, text: string): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
-    const state = getWhatsAppState();
-    if (state.status !== 'CONNECTED' || !state.socket) {
+    const res = await fetch(
+      `https://graph.facebook.com/v20.0/${config.phoneNumberId}?fields=verified_name,display_phone_number,quality_rating,code_verification_status`,
+      {
+        headers: {
+          Authorization: `Bearer ${config.accessToken}`,
+        },
+        cache: 'no-store',
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
       return {
-        success: false,
-        error: 'WhatsApp is not connected. Please connect your phone from Admin > WhatsApp Gateway.',
+        configured: false,
+        status: 'AUTH_ERROR',
+        phoneNumberId: config.phoneNumberId,
+        error: data.error?.message || `Meta API returned HTTP ${res.status}`,
       };
     }
 
-    const jid = formatWhatsAppJid(toPhone);
-    if (!jid) {
-      return { success: false, error: `Invalid recipient phone number: "${toPhone}".` };
-    }
-
-    const result = await state.socket.sendMessage(jid, { text });
-    return { success: true, messageId: result?.key?.id || 'SENT' };
+    return {
+      configured: true,
+      status: 'CONNECTED',
+      phoneNumberId: config.phoneNumberId,
+      displayPhoneNumber: data.display_phone_number || config.phoneNumberId,
+      verifiedName: data.verified_name || 'AspireMint',
+      qualityRating: data.quality_rating || 'GREEN',
+    };
   } catch (err: any) {
-    console.error('[WhatsApp send error]:', err);
-    return { success: false, error: err.message || 'Failed to dispatch message.' };
+    return {
+      configured: false,
+      status: 'AUTH_ERROR',
+      phoneNumberId: config.phoneNumberId,
+      error: err.message || 'Failed to connect to Meta Graph API',
+    };
   }
 }
 
 /**
- * SAFETY WRAPPER: Ensures that if WhatsApp is offline, blocked, or fails,
- * it NEVER throws an unhandled rejection, blocks database updates, or stops the order flow.
+ * Send standard text message via Meta Cloud API
+ */
+export async function sendWhatsAppMessage(
+  toPhone: string,
+  message: string
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  try {
+    const config = getMetaConfig();
+    if (!config) {
+      return {
+        success: false,
+        error: 'WhatsApp Meta API is not configured. Please add WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN in Vercel.',
+      };
+    }
+
+    const cleanTo = formatWhatsAppNumber(toPhone);
+    if (!cleanTo) {
+      return { success: false, error: `Invalid recipient phone number: "${toPhone}".` };
+    }
+
+    const res = await fetch(`https://graph.facebook.com/v20.0/${config.phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${config.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: cleanTo,
+        type: 'text',
+        text: {
+          preview_url: false,
+          body: message,
+        },
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      const errMsg = data.error?.error_user_msg || data.error?.message || `Meta API Error (${res.status})`;
+      console.error('[Meta WhatsApp Cloud API Error]:', data.error);
+      return { success: false, error: errMsg };
+    }
+
+    const messageId = data.messages?.[0]?.id || 'SENT';
+    return { success: true, messageId };
+  } catch (err: any) {
+    console.error('[Meta WhatsApp Network Error]:', err);
+    return { success: false, error: err.message || 'Network error dispatching WhatsApp message' };
+  }
+}
+
+/**
+ * Send pre-approved Meta Template message (Utility / Transactional)
+ */
+export async function sendWhatsAppTemplateMessage(
+  toPhone: string,
+  templateName: string,
+  languageCode = 'en',
+  bodyParameters: string[] = []
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  try {
+    const config = getMetaConfig();
+    if (!config) {
+      return { success: false, error: 'Meta WhatsApp credentials missing.' };
+    }
+
+    const cleanTo = formatWhatsAppNumber(toPhone);
+    if (!cleanTo) {
+      return { success: false, error: `Invalid phone number: ${toPhone}` };
+    }
+
+    const components: any[] = [];
+    if (bodyParameters.length > 0) {
+      components.push({
+        type: 'body',
+        parameters: bodyParameters.map((text) => ({ type: 'text', text })),
+      });
+    }
+
+    const res = await fetch(`https://graph.facebook.com/v20.0/${config.phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${config.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: cleanTo,
+        type: 'template',
+        template: {
+          name: templateName,
+          language: { code: languageCode },
+          components,
+        },
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      const errMsg = data.error?.error_user_msg || data.error?.message || 'Failed to dispatch template';
+      return { success: false, error: errMsg };
+    }
+
+    return { success: true, messageId: data.messages?.[0]?.id || 'SENT' };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Template dispatch failed' };
+  }
+}
+
+/**
+ * SAFETY WRAPPER: Ensures that if Meta API is unconfigured, token expired, or rate-limited,
+ * it NEVER throws, blocks the UI, or crashes order/refund transactions.
  */
 export async function safeDispatchWhatsApp(fn: () => Promise<any>): Promise<void> {
   try {
     await fn();
   } catch (err) {
-    console.warn('[WhatsApp Notification Skipped / Failed - Non-Fatal]:', err);
+    console.warn('[WhatsApp Meta Dispatcher Skipped / Failed - Non-Fatal]:', err);
   }
 }
 

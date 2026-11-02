@@ -18,9 +18,6 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    serverComponentsExternalPackages: ['@whiskeysockets/baileys', 'pino'],
-  },
   async headers() {
     return [
       {

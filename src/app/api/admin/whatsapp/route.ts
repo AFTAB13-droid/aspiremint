@@ -2,11 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import {
-  initWhatsApp,
-  getWhatsAppStatus,
-  waitForQRCode,
-  requestWhatsAppPairingCode,
-  disconnectWhatsApp,
+  getWhatsAppConfigStatus,
   sendWhatsAppMessage,
 } from '@/services/whatsappService';
 
@@ -20,22 +16,14 @@ export async function GET() {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
     }
 
-    let currentStatus = getWhatsAppStatus();
-
-    // If completely disconnected and not initializing, trigger background init
-    if (currentStatus.status === 'DISCONNECTED') {
-      initWhatsApp().catch((err) => console.error('Background WhatsApp init error:', err));
-      await waitForQRCode(3000);
-    } else if (currentStatus.status === 'INITIALIZING' && !currentStatus.qrCodeDataUrl) {
-      await waitForQRCode(3000);
-    }
+    const status = await getWhatsAppConfigStatus();
 
     return NextResponse.json({
       success: true,
-      data: getWhatsAppStatus(),
+      data: status,
     });
   } catch (error: any) {
-    console.error('WhatsApp Status API Error:', error);
+    console.error('Meta WhatsApp Status API Error:', error);
     return NextResponse.json(
       { success: false, message: error.message || 'Internal server error' },
       { status: 500 }
@@ -54,30 +42,12 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { action } = body;
 
-    if (action === 'init' || action === 'refresh_qr') {
-      await initWhatsApp(true);
-      await waitForQRCode(7000);
+    if (action === 'check') {
+      const status = await getWhatsAppConfigStatus();
       return NextResponse.json({
         success: true,
-        data: getWhatsAppStatus(),
+        data: status,
       });
-    }
-
-    if (action === 'pair') {
-      const { phoneNumber } = body;
-      if (!phoneNumber) {
-        return NextResponse.json(
-          { success: false, message: 'Phone number is required for pairing code.' },
-          { status: 400 }
-        );
-      }
-      const pairResult = await requestWhatsAppPairingCode(phoneNumber);
-      return NextResponse.json(pairResult);
-    }
-
-    if (action === 'disconnect') {
-      const result = await disconnectWhatsApp();
-      return NextResponse.json(result);
     }
 
     if (action === 'send-test') {
@@ -95,7 +65,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: false, message: `Unknown action "${action}"` }, { status: 400 });
   } catch (error: any) {
-    console.error('WhatsApp Action API Error:', error);
+    console.error('Meta WhatsApp Action API Error:', error);
     return NextResponse.json(
       { success: false, message: error.message || 'Failed to process request' },
       { status: 500 }
