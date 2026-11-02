@@ -5,6 +5,7 @@ import connectToDatabase from '@/lib/db';
 import { Order, OrderStatus } from '@/modules/order/order.model';
 import { User } from '@/modules/user/user.model';
 import { sendOrderPaymentEmail, dispatchInBatches } from '@/services/emailService';
+import { sendWhatsAppRefundPaid, safeDispatchWhatsApp } from '@/services/whatsappService';
 import { NotificationService } from '@/services/notification.service';
 import { NotificationType } from '@/modules/notification/notification.model';
 
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
 
     // Fetch orders with buyer and mediator info before updating
     const ordersToComplete = await Order.find(query)
-      .populate('buyer', 'name email')
+      .populate('buyer', 'name email mobile')
       .populate('mediator', 'name systemDisplayName');
     
     if (ordersToComplete.length === 0) {
@@ -137,6 +138,24 @@ export async function POST(req: Request) {
         } catch (emailErr) {
           console.error(`Bulk-pay email error for order ${ord.userOrderId || ord.aspireOrderId}:`, emailErr);
         }
+      }
+
+      // Safe, non-blocking WhatsApp alert alongside email
+      const buyerMobile = buyer?.mobile || (ord as any).buyerMobile;
+      if (buyerMobile) {
+        await safeDispatchWhatsApp(async () => {
+          await sendWhatsAppRefundPaid({
+            phone: buyerMobile,
+            buyerName: recipientName,
+            orderId: ord.userOrderId || ord.aspireOrderId,
+            brandName: ord.brandName,
+            productCode: ord.productCode,
+            amount: refundAmt,
+            paidByName: finalPayerName,
+            transactionId: finalTxId,
+            orderUrl: `https://deals.aspiremint.in/app/orders/${ord._id}`
+          });
+        });
       }
     });
 

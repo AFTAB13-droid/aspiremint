@@ -5,6 +5,7 @@ import connectToDatabase from '@/lib/db';
 import { Order, OrderStatus } from '@/modules/order/order.model';
 import { User } from '@/modules/user/user.model';
 import { sendOrderStatusEmail, dispatchInBatches } from '@/services/emailService';
+import { sendWhatsAppRefundApproved, sendWhatsAppRefundRejected, safeDispatchWhatsApp } from '@/services/whatsappService';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
     }
 
     // Fetch orders first to get buyer information for notifications and emails
-    const affectedOrders = await Order.find(queryFilter).populate('buyer', 'name email');
+    const affectedOrders = await Order.find(queryFilter).populate('buyer', 'name email mobile');
     
     if (affectedOrders.length === 0) {
       return NextResponse.json({ success: false, message: 'No eligible orders found' }, { status: 404 });
@@ -135,6 +136,32 @@ export async function POST(req: Request) {
           } catch (emailErr) {
             console.error(`Failed to send status update email for order ${order.aspireOrderId || order.userOrderId}:`, emailErr);
           }
+        }
+
+        // Safe, non-blocking WhatsApp alert alongside email
+        const buyerMobile = buyer?.mobile || (order as any).buyerMobile;
+        if (buyerMobile) {
+          await safeDispatchWhatsApp(async () => {
+            if (action === 'APPROVE') {
+              await sendWhatsAppRefundApproved({
+                phone: buyerMobile,
+                buyerName: recipientName,
+                orderId: order.userOrderId || order.aspireOrderId,
+                brandName: order.brandName,
+                amount: refundAmt,
+                orderUrl: `https://deals.aspiremint.in/app/orders/${order._id}`
+              });
+            } else if (action === 'REJECT') {
+              await sendWhatsAppRefundRejected({
+                phone: buyerMobile,
+                buyerName: recipientName,
+                orderId: order.userOrderId || order.aspireOrderId,
+                brandName: order.brandName,
+                reason: note || "Bulk rejection processed by Admin.",
+                orderUrl: `https://deals.aspiremint.in/app/orders/${order._id}`
+              });
+            }
+          });
         }
       });
     }
