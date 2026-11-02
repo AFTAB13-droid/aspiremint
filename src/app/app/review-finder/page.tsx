@@ -28,6 +28,7 @@ import {
   Trash2,
   ArrowRight,
 } from "lucide-react";
+import { trackEvent } from "@/lib/gtag";
 
 interface FlipkartReview {
   id: string;
@@ -223,6 +224,12 @@ export default function ReviewFinderPage() {
       toast.error("Please enter a valid Flipkart product link.");
       return;
     }
+
+    // Track GA4 Search Event
+    trackEvent("scan_reviews", {
+      event_category: "ReviewFinder",
+      event_label: rawTarget.split("?")[0],
+    });
 
     // Reset previous stream connection
     if (eventSourceRef.current) {
@@ -473,6 +480,10 @@ export default function ReviewFinderPage() {
       await navigator.clipboard.writeText(permalink);
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2500);
+      trackEvent("copy_permalink", {
+        event_category: "ReviewFinder",
+        review_id: id,
+      });
       toast.success("Review link copied!");
     } catch {
       toast.error("Failed to copy link.");
@@ -489,6 +500,10 @@ export default function ReviewFinderPage() {
     const toastId = toast.loading("Generating review proof screenshot...");
 
     try {
+      trackEvent("download_screenshot", {
+        event_category: "ReviewFinder",
+        review_id: id,
+      });
       // Use direct screenshot generator or local proxy
       const downloadUrl = `https://rikome.com/api/review-screenshot?url=${encodeURIComponent(permalink)}`;
       const res = await fetch(downloadUrl);
@@ -591,6 +606,28 @@ export default function ReviewFinderPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-3 sm:py-6 pb-28 md:pb-12 space-y-3.5 sm:space-y-5">
+      {/* Schema.org WebApplication JSON-LD for Google Search Rich Snippets */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: "AspireMint Flipkart Review Finder",
+            url: "https://deals.aspiremint.in/app/review-finder",
+            description:
+              "Free tool to scan Flipkart product reviews, copy official permalinks, and download high-resolution screenshot proofs.",
+            applicationCategory: "ShoppingApplication",
+            operatingSystem: "All",
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "INR",
+            },
+          }),
+        }}
+      />
+
       {/* Clean, Minimalist Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 sm:px-0">
         <div>
@@ -609,6 +646,7 @@ export default function ReviewFinderPage() {
             const demoUrl =
               "https://www.flipkart.com/apple-iphone-15-black-128-gb/p/itm6ac6485515ae4?pid=MOBGTAGPTB3VS24W";
             setInputUrl(demoUrl);
+            trackEvent("sample_link_click", { event_category: "ReviewFinder" });
             startScan(demoUrl);
           }}
           className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-[#111827] hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0"
@@ -645,6 +683,12 @@ export default function ReviewFinderPage() {
                 href="https://bit.ly/GroupLink-Toufik"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() =>
+                  trackEvent("join_whatsapp_click", {
+                    event_category: "Conversion",
+                    location: "vip_banner",
+                  })
+                }
                 className="h-8 sm:h-11 px-3 sm:px-5 rounded-xl bg-white text-emerald-700 font-black text-[11px] sm:text-xs uppercase tracking-wider hover:bg-emerald-50 active:scale-95 transition-all flex items-center gap-1.5 shadow-md shadow-black/10 shrink-0"
               >
                 <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-[#25D366] shrink-0" viewBox="0 0 24 24">
@@ -777,6 +821,12 @@ export default function ReviewFinderPage() {
               href="https://bit.ly/GroupLink-Toufik"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() =>
+                trackEvent("join_whatsapp_click", {
+                  event_category: "Conversion",
+                  location: "search_banner",
+                })
+              }
               className="h-8 sm:h-10 px-3 sm:px-4 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white text-[10px] sm:text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md shadow-emerald-500/20 active:scale-95"
             >
               <span>WhatsApp Deals</span>
@@ -1508,6 +1558,12 @@ export default function ReviewFinderPage() {
         href="https://bit.ly/GroupLink-Toufik"
         target="_blank"
         rel="noopener noreferrer"
+        onClick={() =>
+          trackEvent("join_whatsapp_click", {
+            event_category: "Conversion",
+            location: "floating_button",
+          })
+        }
         className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-[#25D366] hover:bg-[#20bd5a] text-white shadow-2xl shadow-emerald-500/40 hover:scale-105 active:scale-95 transition-all group cursor-pointer border-2 border-white dark:border-slate-900"
         title="Join AspireMint VIP WhatsApp Community"
       >

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import AuthProvider from "@/components/common/AuthProvider";
 import { NotificationToaster } from "@/components/ui/NotificationToaster";
@@ -14,8 +15,26 @@ import { ThemeProvider } from "@/context/ThemeContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AspireMint",
-  description: "Role-based Deal Management System",
+  metadataBase: new URL("https://deals.aspiremint.in"),
+  title: {
+    default: "AspireMint | Flipkart Review Finder & 100% Cashback Deals",
+    template: "%s | AspireMint",
+  },
+  description:
+    "Extract customer reviews, copy permalinks, generate screenshot proofs, and discover 100% cashback deals on Flipkart & Amazon.",
+  keywords: [
+    "Flipkart review finder",
+    "Flipkart review screenshot",
+    "Flipkart review download",
+    "Flipkart cashback deals",
+    "Amazon cashback deals",
+    "AspireMint",
+    "100% cashback",
+    "UPI refund deals",
+  ],
+  authors: [{ name: "AspireMint" }],
+  creator: "AspireMint",
+  publisher: "AspireMint",
   icons: {
     icon: "/favicon.svg",
     apple: "/favicon.svg",
@@ -24,6 +43,35 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "AspireMint",
+  },
+  openGraph: {
+    title: "AspireMint | Flipkart Review Finder & 100% Cashback Deals",
+    description:
+      "Extract customer reviews, copy permalinks, generate screenshot proofs, and discover 100% cashback deals on Flipkart & Amazon.",
+    url: "https://deals.aspiremint.in",
+    siteName: "AspireMint",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AspireMint | Flipkart Review Finder & 100% Cashback Deals",
+    description:
+      "Extract customer reviews, copy permalinks, generate screenshot proofs, and discover 100% cashback deals on Flipkart & Amazon.",
+  },
+  verification: {
+    google: "rC345VkSlShZ1NHNI1MzugRWGvo818qWiM5liXVuXx8",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
@@ -52,6 +100,25 @@ export default function RootLayout({
                   }
                 } catch (e) {}
               })();
+            `,
+          }}
+        />
+        {/* Google Analytics 4 (GA4) */}
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-VN0DHF5VPL"
+        />
+        <Script
+          id="google-analytics-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-VN0DHF5VPL', {
+                page_path: window.location.pathname,
+              });
             `,
           }}
         />

@@ -9,13 +9,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${baseUrl}`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
-      priority: 1,
+      priority: 1.0,
+    },
+    {
+      url: `${baseUrl}/app/review-finder`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
     },
     {
       url: `${baseUrl}/login`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
-      priority: 0.8,
+      priority: 0.7,
     },
     {
       url: `${baseUrl}/signup`,
@@ -23,6 +29,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
-    // Add other public marketing pages here later if you create them (e.g. /about, /contact)
   ];
 }
