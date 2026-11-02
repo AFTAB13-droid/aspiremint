@@ -102,6 +102,7 @@ export async function initWhatsApp(forceReconnect = false): Promise<WhatsAppClie
       useMultiFileAuthState,
       fetchLatestBaileysVersion,
       makeCacheableSignalKeyStore,
+      Browsers,
     } = await import('@whiskeysockets/baileys');
     const pino = (await import('pino')).default;
 
@@ -114,9 +115,11 @@ export async function initWhatsApp(forceReconnect = false): Promise<WhatsAppClie
 
     const { state: authState, saveCreds } = await useMultiFileAuthState(state.authDir);
 
-    let version: [number, number, number] = [2, 3000, 1015901307];
+    let version: [number, number, number] = [2, 3000, 1043857760];
     try {
-      const fetched = await fetchLatestBaileysVersion();
+      const versionPromise = fetchLatestBaileysVersion();
+      const timeoutPromise = new Promise<null>((r) => setTimeout(() => r(null), 2000));
+      const fetched: any = await Promise.race([versionPromise, timeoutPromise]);
       if (fetched?.version) version = fetched.version;
     } catch {}
 
@@ -129,7 +132,7 @@ export async function initWhatsApp(forceReconnect = false): Promise<WhatsAppClie
         keys: makeCacheableSignalKeyStore(authState.keys, pino({ level: 'silent' })),
       },
       generateHighQualityLinkPreview: true,
-      browser: ['AspireMint Gateway', 'Chrome', '124.0.0.0'],
+      browser: Browsers.ubuntu('Chrome'),
       connectTimeoutMs: 60000,
       defaultQueryTimeoutMs: 60000,
       keepAliveIntervalMs: 25000,
@@ -145,12 +148,16 @@ export async function initWhatsApp(forceReconnect = false): Promise<WhatsAppClie
 
       if (qr) {
         state.status = 'WAITING_FOR_QR';
+        state.isStarting = false;
         try {
           state.qrCodeDataUrl = await QRCode.toDataURL(qr, {
             margin: 2,
             scale: 7,
             color: { dark: '#0b141a', light: '#ffffff' },
           });
+          if ((state as any)._onQrGenerated) {
+            (state as any)._onQrGenerated(state.qrCodeDataUrl);
+          }
         } catch (qrErr) {
           console.error('Failed to generate QR data URL:', qrErr);
         }
@@ -173,14 +180,13 @@ export async function initWhatsApp(forceReconnect = false): Promise<WhatsAppClie
 
       if (connection === 'close') {
         state.isStarting = false;
-        state.status = 'DISCONNECTED';
-        state.qrCodeDataUrl = null;
-        state.pairingCode = null;
-
         const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
         const isLoggedOut = statusCode === DisconnectReason.loggedOut;
 
         if (isLoggedOut) {
+          state.status = 'DISCONNECTED';
+          state.qrCodeDataUrl = null;
+          state.pairingCode = null;
           state.lastError = 'Account logged out from phone. Please reconnect.';
           state.connectedNumber = null;
           state.connectedName = null;
@@ -189,8 +195,12 @@ export async function initWhatsApp(forceReconnect = false): Promise<WhatsAppClie
           } catch {}
           console.warn('[WhatsApp Service] Session logged out by client.');
         } else {
-          state.lastError = (lastDisconnect?.error as Error)?.message || 'Connection closed temporarily.';
-          console.log('[WhatsApp Service] Connection closed, will auto-reconnect if needed.');
+          // If we are currently waiting for QR, do not clear qrCodeDataUrl on routine socket rotation
+          if (state.status !== 'WAITING_FOR_QR' && state.status !== 'WAITING_FOR_PAIRING') {
+            state.status = 'DISCONNECTED';
+          }
+          state.lastError = (lastDisconnect?.error as Error)?.message || 'Reconnecting socket...';
+          console.log('[WhatsApp Service] Socket closed, auto-reconnecting if needed.');
         }
       }
     });
@@ -297,6 +307,27 @@ export function getWhatsAppStatus() {
     lastConnectedAt: state.lastConnectedAt,
     lastError: state.lastError,
   };
+}
+
+/**
+ * Wait for QR code to be generated (resolves as soon as QR is ready)
+ */
+export async function waitForQRCode(timeoutMs = 8000): Promise<string | null> {
+  const state = getWhatsAppState();
+  if (state.qrCodeDataUrl) return state.qrCodeDataUrl;
+  if (state.status === 'CONNECTED') return null;
+
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      resolve(state.qrCodeDataUrl);
+    }, timeoutMs);
+
+    (state as any)._onQrGenerated = (qrUrl: string) => {
+      clearTimeout(timer);
+      (state as any)._onQrGenerated = null;
+      resolve(qrUrl);
+    };
+  });
 }
 
 /**

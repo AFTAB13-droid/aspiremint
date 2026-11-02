@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import {
   initWhatsApp,
   getWhatsAppStatus,
+  waitForQRCode,
   requestWhatsAppPairingCode,
   disconnectWhatsApp,
   sendWhatsAppMessage,
@@ -19,11 +20,14 @@ export async function GET() {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
     }
 
-    const currentStatus = getWhatsAppStatus();
+    let currentStatus = getWhatsAppStatus();
 
-    // If completely disconnected and not initializing, trigger background init so QR is ready if needed
+    // If completely disconnected and not initializing, trigger background init
     if (currentStatus.status === 'DISCONNECTED') {
       initWhatsApp().catch((err) => console.error('Background WhatsApp init error:', err));
+      await waitForQRCode(3000);
+    } else if (currentStatus.status === 'INITIALIZING' && !currentStatus.qrCodeDataUrl) {
+      await waitForQRCode(3000);
     }
 
     return NextResponse.json({
@@ -52,8 +56,7 @@ export async function POST(req: Request) {
 
     if (action === 'init' || action === 'refresh_qr') {
       await initWhatsApp(true);
-      // Give socket 1 second to request QR
-      await new Promise((r) => setTimeout(r, 1200));
+      await waitForQRCode(7000);
       return NextResponse.json({
         success: true,
         data: getWhatsAppStatus(),

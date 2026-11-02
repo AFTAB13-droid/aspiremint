@@ -80,12 +80,12 @@ export default function AdminWhatsAppPage() {
 
   useEffect(() => {
     fetchStatus();
-    // Poll every 5s while waiting for pairing or QR scan
+    // Poll every 3s while waiting for pairing or QR scan, 10s when connected
     const interval = setInterval(() => {
       fetchStatus();
-    }, 5000);
+    }, data.status === "CONNECTED" ? 10000 : 3000);
     return () => clearInterval(interval);
-  }, [fetchStatus]);
+  }, [fetchStatus, data.status]);
 
   const handleRefreshQR = async () => {
     setActionLoading(true);
