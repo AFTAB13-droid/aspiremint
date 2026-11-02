@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import QRCode from 'qrcode';
 
 // Dynamic import types
@@ -23,13 +24,24 @@ const globalWithWhatsApp = global as unknown as {
   __aspire_whatsapp_state?: WhatsAppClientState;
 };
 
-const AUTH_DIR = path.join(process.cwd(), 'whatsapp_auth');
+function getAuthDirectory(): string {
+  // On Vercel / AWS Lambda (/var/task), the filesystem is read-only except /tmp
+  if (
+    process.env.VERCEL ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    (typeof process.cwd === 'function' && process.cwd().startsWith('/var/task'))
+  ) {
+    return path.join(os.tmpdir(), 'whatsapp_auth');
+  }
+  return path.join(process.cwd(), 'whatsapp_auth');
+}
 
 function getWhatsAppState(): WhatsAppClientState {
   if (!globalWithWhatsApp.__aspire_whatsapp_state) {
-    if (!fs.existsSync(AUTH_DIR)) {
+    const authDir = getAuthDirectory();
+    if (!fs.existsSync(authDir)) {
       try {
-        fs.mkdirSync(AUTH_DIR, { recursive: true });
+        fs.mkdirSync(authDir, { recursive: true });
       } catch (e) {
         console.error('Failed to create whatsapp_auth dir:', e);
       }
@@ -45,7 +57,7 @@ function getWhatsAppState(): WhatsAppClientState {
       lastConnectedAt: null,
       lastError: null,
       isStarting: false,
-      authDir: AUTH_DIR,
+      authDir: authDir,
     };
   }
   return globalWithWhatsApp.__aspire_whatsapp_state;
