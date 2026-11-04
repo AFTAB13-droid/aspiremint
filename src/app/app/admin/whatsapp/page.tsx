@@ -102,13 +102,17 @@ export default function AdminWhatsAppPage() {
       });
       const json = await res.json();
       if (json.success) {
-        toast.success("Message dispatched via Meta Cloud API!");
+        toast.success(
+          data.provider === "AISENSY"
+            ? "Message dispatched via AiSensy WhatsApp!"
+            : "Message dispatched via Meta Cloud API!"
+        );
         setLastSentResult({
           success: true,
-          text: `Delivered! Meta WAMID: ${json.messageId || "OK"}`,
+          text: `Delivered! ${data.provider === "AISENSY" ? "AiSensy ID" : "Meta WAMID"}: ${json.messageId || "SENT"}`,
         });
       } else {
-        toast.error(json.error || "Failed to send message via Meta");
+        toast.error(json.error || "Failed to send WhatsApp notification");
         setLastSentResult({
           success: false,
           text: json.error || "Failed to send message",

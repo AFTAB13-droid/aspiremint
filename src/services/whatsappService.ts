@@ -202,7 +202,7 @@ export async function sendWhatsAppMessage(
         return { success: false, error: errMsg };
       }
 
-      const messageId = data.data?.messageId || data.data?.id || 'SENT';
+      const messageId = data.submitted_message_id || data.data?.messageId || data.data?.id || 'SENT';
       return { success: true, messageId };
     }
 
