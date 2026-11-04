@@ -55,6 +55,24 @@ function getMetaConfig(): { phoneNumberId: string; accessToken: string; business
 }
 
 /**
+ * Meta WhatsApp Template Parameter Validator & Sanitizer:
+ * Meta Cloud API strictly forbids newlines (\r, \n), tabs (\t), or 4+ consecutive spaces in variable parameters.
+ * This helper converts line breaks into clean, elegant bullet separators so Meta delivery never fails.
+ */
+function sanitizeAiSensyParam(text: string): string {
+  if (!text || typeof text !== 'string') return '';
+  return text
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\t/g, ' ')
+    .replace(/\n{2,}/g, '  |  ')
+    .replace(/\n/g, ' • ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+    .slice(0, 1000);
+}
+
+/**
  * Format any phone number into a clean E.164-like WhatsApp format without '+'
  * e.g. "09876543210" -> "919876543210", "+91 98765-43210" -> "919876543210"
  */
@@ -180,6 +198,9 @@ export async function sendWhatsAppMessage(
 
     // Provider 1: AiSensy Official Campaign API
     if (config.provider === 'AISENSY') {
+      const cleanUserName = (userName || 'Customer').replace(/[\r\n\t]/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, 60);
+      const cleanParam = sanitizeAiSensyParam(message);
+
       const res = await fetch('https://backend.aisensy.com/campaign/t1/api/v2', {
         method: 'POST',
         headers: {
@@ -189,8 +210,8 @@ export async function sendWhatsAppMessage(
           apiKey: config.aisensyApiKey,
           campaignName: config.aisensyCampaignName,
           destination: cleanTo,
-          userName: userName || 'Customer',
-          templateParams: [userName || 'Customer', message],
+          userName: cleanUserName,
+          templateParams: [cleanUserName, cleanParam],
         }),
       });
 

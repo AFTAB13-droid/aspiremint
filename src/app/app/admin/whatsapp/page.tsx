@@ -44,7 +44,7 @@ export default function AdminWhatsAppPage() {
   // Test message form
   const [testPhone, setTestPhone] = useState("");
   const [testMessage, setTestMessage] = useState(
-    "🎉 *AspireMint Test Notification*\n\nHi! This is a test message dispatched directly via official Meta WhatsApp Cloud API. Your automated order & refund alerts are active and lightning-fast!"
+    "🎉 AspireMint Alert: Your test notification is active and working successfully! Automated order and refund alerts are live."
   );
   const [sendingTest, setSendingTest] = useState(false);
   const [lastSentResult, setLastSentResult] = useState<{ success: boolean; text: string } | null>(null);
@@ -57,9 +57,13 @@ export default function AdminWhatsAppPage() {
         setData(json.data);
         if (showToast) {
           if (json.data.configured) {
-            toast.success("Meta Cloud API is connected and verified!");
+            toast.success(
+              json.data.provider === "AISENSY"
+                ? "AiSensy WhatsApp Gateway connected!"
+                : "Meta Cloud API is connected and verified!"
+            );
           } else {
-            toast.error(json.data.error || "Meta credentials need configuration");
+            toast.error(json.data.error || "WhatsApp credentials need configuration");
           }
         }
       }
