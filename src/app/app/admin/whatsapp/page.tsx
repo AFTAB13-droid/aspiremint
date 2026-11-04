@@ -23,6 +23,7 @@ import toast from "react-hot-toast";
 interface MetaWhatsAppStatus {
   configured: boolean;
   status: "CONNECTED" | "NOT_CONFIGURED" | "AUTH_ERROR";
+  provider?: "AISENSY" | "META_CLOUD";
   phoneNumberId?: string;
   displayPhoneNumber?: string;
   verifiedName?: string;
@@ -230,7 +231,11 @@ Once you receive the product and complete your review, fill out the refund form 
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-lg">
-                    {isConnected ? "Meta Cloud API Connected & Verified" : "Configuration Required"}
+                    {isConnected
+                      ? data.provider === "AISENSY"
+                        ? "AiSensy Official Partner Connected"
+                        : "Meta Cloud API Connected & Verified"
+                      : "Configuration Required"}
                   </span>
                   <span
                     className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
@@ -245,8 +250,8 @@ Once you receive the product and complete your review, fill out the refund form 
 
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                   {isConnected
-                    ? `Verified Sender: ${data.verifiedName} • Phone: ${data.displayPhoneNumber} • Phone ID: ${data.phoneNumberId}`
-                    : "Set your Meta WhatsApp credentials in Vercel Environment Variables to activate automated alerts."}
+                    ? `Verified Sender: ${data.verifiedName || "AspireMint"} • Display: ${data.displayPhoneNumber || "+91 92399 48621"} • Provider: ${data.provider || "Official"}`
+                    : "Set your WhatsApp credentials (AISENSY_API_KEY or Meta Cloud) in Vercel to activate automated alerts."}
                 </p>
               </div>
             </div>

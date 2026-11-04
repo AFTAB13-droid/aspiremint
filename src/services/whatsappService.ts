@@ -1,15 +1,48 @@
 /**
- * Official Meta WhatsApp Cloud API Service
+ * Official Meta WhatsApp Cloud API & AiSensy Partner Service
  * 100% Serverless & Vercel Native (0 dependencies, 0 WebSockets, 0 disk operations)
  */
 
-interface MetaWhatsAppConfig {
-  phoneNumberId: string;
-  accessToken: string;
+interface WhatsAppServiceConfig {
+  provider: 'AISENSY' | 'META_CLOUD' | 'NONE';
+  // AiSensy credentials
+  aisensyApiKey?: string;
+  aisensyCampaignName?: string;
+  // Meta Cloud API credentials
+  phoneNumberId?: string;
+  accessToken?: string;
   businessAccountId?: string;
 }
 
-function getMetaConfig(): MetaWhatsAppConfig | null {
+function getServiceConfig(): WhatsAppServiceConfig {
+  const aisensyApiKey = process.env.AISENSY_API_KEY?.trim();
+  const aisensyCampaignName = process.env.AISENSY_CAMPAIGN_NAME?.trim() || 'aspiremint_alerts';
+
+  if (aisensyApiKey) {
+    return {
+      provider: 'AISENSY',
+      aisensyApiKey,
+      aisensyCampaignName,
+    };
+  }
+
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim();
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN?.trim();
+  const businessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID?.trim();
+
+  if (phoneNumberId && accessToken) {
+    return {
+      provider: 'META_CLOUD',
+      phoneNumberId,
+      accessToken,
+      businessAccountId,
+    };
+  }
+
+  return { provider: 'NONE' };
+}
+
+function getMetaConfig(): { phoneNumberId: string; accessToken: string; businessAccountId?: string } | null {
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim();
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN?.trim();
   const businessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID?.trim();
@@ -46,27 +79,40 @@ export function formatWhatsAppNumber(phone: string): string | null {
 }
 
 /**
- * Live health check of Meta WhatsApp Cloud API credentials
+ * Live health check of WhatsApp service credentials (AiSensy or Meta Cloud API)
  */
 export async function getWhatsAppConfigStatus(): Promise<{
   configured: boolean;
   status: 'CONNECTED' | 'NOT_CONFIGURED' | 'AUTH_ERROR';
+  provider?: 'AISENSY' | 'META_CLOUD';
   phoneNumberId?: string;
   displayPhoneNumber?: string;
   verifiedName?: string;
   qualityRating?: string;
   error?: string;
 }> {
-  const config = getMetaConfig();
+  const config = getServiceConfig();
 
-  if (!config) {
+  if (config.provider === 'NONE') {
     return {
       configured: false,
       status: 'NOT_CONFIGURED',
-      error: 'Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN in environment variables.',
+      error: 'Missing WhatsApp credentials (AISENSY_API_KEY or Meta WHATSAPP_ACCESS_TOKEN) in environment variables.',
     };
   }
 
+  if (config.provider === 'AISENSY') {
+    return {
+      configured: true,
+      status: 'CONNECTED',
+      provider: 'AISENSY',
+      displayPhoneNumber: '+91 92399 48621',
+      verifiedName: 'Aspire Mint (AiSensy Official API)',
+      qualityRating: 'High',
+    };
+  }
+
+  // Meta Cloud API path
   try {
     const res = await fetch(
       `https://graph.facebook.com/v20.0/${config.phoneNumberId}?fields=verified_name,display_phone_number,quality_rating,code_verification_status`,
@@ -84,6 +130,7 @@ export async function getWhatsAppConfigStatus(): Promise<{
       return {
         configured: false,
         status: 'AUTH_ERROR',
+        provider: 'META_CLOUD',
         phoneNumberId: config.phoneNumberId,
         error: data.error?.message || `Meta API returned HTTP ${res.status}`,
       };
@@ -92,6 +139,7 @@ export async function getWhatsAppConfigStatus(): Promise<{
     return {
       configured: true,
       status: 'CONNECTED',
+      provider: 'META_CLOUD',
       phoneNumberId: config.phoneNumberId,
       displayPhoneNumber: data.display_phone_number || config.phoneNumberId,
       verifiedName: data.verified_name || 'AspireMint',
@@ -101,6 +149,7 @@ export async function getWhatsAppConfigStatus(): Promise<{
     return {
       configured: false,
       status: 'AUTH_ERROR',
+      provider: 'META_CLOUD',
       phoneNumberId: config.phoneNumberId,
       error: err.message || 'Failed to connect to Meta Graph API',
     };
@@ -108,18 +157,19 @@ export async function getWhatsAppConfigStatus(): Promise<{
 }
 
 /**
- * Send standard text message via Meta Cloud API
+ * Send WhatsApp notification via AiSensy Campaign API or Meta Cloud API
  */
 export async function sendWhatsAppMessage(
   toPhone: string,
-  message: string
+  message: string,
+  userName = 'Customer'
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
-    const config = getMetaConfig();
-    if (!config) {
+    const config = getServiceConfig();
+    if (config.provider === 'NONE') {
       return {
         success: false,
-        error: 'WhatsApp Meta API is not configured. Please add WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN in Vercel.',
+        error: 'WhatsApp is not configured. Please add AISENSY_API_KEY or Meta credentials in Vercel.',
       };
     }
 
@@ -128,6 +178,35 @@ export async function sendWhatsAppMessage(
       return { success: false, error: `Invalid recipient phone number: "${toPhone}".` };
     }
 
+    // Provider 1: AiSensy Official Campaign API
+    if (config.provider === 'AISENSY') {
+      const res = await fetch('https://backend.aisensy.com/campaign/t1/api/v2', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          apiKey: config.aisensyApiKey,
+          campaignName: config.aisensyCampaignName,
+          destination: cleanTo,
+          userName: userName || 'Customer',
+          templateParams: [userName || 'Customer', message],
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.name === 'ERR400' || data.name === 'ERR500') {
+        const errMsg = data.message || data.errorMessage || `AiSensy Error (${res.status})`;
+        console.error('[AiSensy API Error]:', data);
+        return { success: false, error: errMsg };
+      }
+
+      const messageId = data.data?.messageId || data.data?.id || 'SENT';
+      return { success: true, messageId };
+    }
+
+    // Provider 2: Meta Cloud API
     const res = await fetch(`https://graph.facebook.com/v20.0/${config.phoneNumberId}/messages`, {
       method: 'POST',
       headers: {
@@ -157,7 +236,7 @@ export async function sendWhatsAppMessage(
     const messageId = data.messages?.[0]?.id || 'SENT';
     return { success: true, messageId };
   } catch (err: any) {
-    console.error('[Meta WhatsApp Network Error]:', err);
+    console.error('[WhatsApp Network Error]:', err);
     return { success: false, error: err.message || 'Network error dispatching WhatsApp message' };
   }
 }
@@ -272,7 +351,7 @@ The amount has been transferred to your registered payment method.
 
 _Thank you for choosing AspireMint!_`;
 
-  return sendWhatsAppMessage(phone, message);
+  return sendWhatsAppMessage(phone, message, buyerName);
 }
 
 export async function sendWhatsAppRefundApproved(params: {
@@ -298,7 +377,7 @@ Your refund claim for Order *#${orderId}*${brand} has been *approved* for *${for
 Your payout is now queued for payment. You will receive another message with the transaction reference once payment is disbursed.
 👉 *Check Status:* ${url}`;
 
-  return sendWhatsAppMessage(phone, message);
+  return sendWhatsAppMessage(phone, message, buyerName);
 }
 
 export async function sendWhatsAppRefundRejected(params: {
@@ -325,7 +404,7 @@ Your refund submission for Order *#${orderId}*${brand} could not be approved.
 Please review your submission details on the portal and re-submit if required.
 👉 *View Order Details:* ${url}`;
 
-  return sendWhatsAppMessage(phone, message);
+  return sendWhatsAppMessage(phone, message, buyerName);
 }
 
 export async function sendWhatsAppOrderCreated(params: {
@@ -354,7 +433,7 @@ Your order *#${orderId}* for *${brand}*${code} has been successfully registered 
 Once you receive the product and complete your review, fill out the refund form to claim your cashback refund.
 👉 *Track Order:* ${url}`;
 
-  return sendWhatsAppMessage(phone, message);
+  return sendWhatsAppMessage(phone, message, buyerName);
 }
 
 export async function sendWhatsAppReminder(params: {
@@ -392,5 +471,5 @@ ${text}
 Your cashback refund of *${formattedAmount}* is waiting! Submit your refund form now to receive your payout.
 👉 *Submit Refund Form:* ${url}`;
 
-  return sendWhatsAppMessage(phone, message);
+  return sendWhatsAppMessage(phone, message, buyerName);
 }
