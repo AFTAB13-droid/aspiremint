@@ -119,6 +119,16 @@ export function formatWhatsAppNumber(phone: string): string | null {
 }
 
 /**
+ * Safety gate for automated WhatsApp notifications to real buyers.
+ * When set to 'false' (or when unset in developer/test mode), automated buyer alerts are paused
+ * to avoid exceeding limits or messaging real customers from a test number.
+ * The Admin UI test sender remains 100% active.
+ */
+export function isAutomatedAlertsEnabled(): boolean {
+  return process.env.WHATSAPP_AUTOMATED_NOTIFICATIONS === 'true';
+}
+
+/**
  * Live health check of WhatsApp service credentials (Green-API, AiSensy, or Meta Cloud API)
  */
 export async function getWhatsAppConfigStatus(): Promise<{
@@ -130,6 +140,7 @@ export async function getWhatsAppConfigStatus(): Promise<{
   verifiedName?: string;
   qualityRating?: string;
   qrCode?: string;
+  automatedAlertsEnabled?: boolean;
   error?: string;
 }> {
   const config = getServiceConfig();
@@ -138,6 +149,7 @@ export async function getWhatsAppConfigStatus(): Promise<{
     return {
       configured: false,
       status: 'NOT_CONFIGURED',
+      automatedAlertsEnabled: isAutomatedAlertsEnabled(),
       error: 'Missing WhatsApp credentials (GREEN_API_ID_INSTANCE, AISENSY_API_KEY, or Meta WHATSAPP_ACCESS_TOKEN) in environment variables.',
     };
   }
@@ -175,6 +187,7 @@ export async function getWhatsAppConfigStatus(): Promise<{
           displayPhoneNumber: displayPhone,
           verifiedName: 'AspireMint (Green-API Gateway)',
           qualityRating: 'Zero Meta Restrictions',
+          automatedAlertsEnabled: isAutomatedAlertsEnabled(),
         };
       }
 
@@ -202,6 +215,7 @@ export async function getWhatsAppConfigStatus(): Promise<{
         verifiedName: 'AspireMint (Green-API Gateway)',
         qualityRating: 'Action Required',
         qrCode,
+        automatedAlertsEnabled: isAutomatedAlertsEnabled(),
         error: 'WhatsApp is not linked yet. Scan the QR code below using WhatsApp -> Linked Devices on your phone.',
       };
     } catch (err: any) {
@@ -210,6 +224,7 @@ export async function getWhatsAppConfigStatus(): Promise<{
         status: 'AUTH_ERROR',
         provider: 'GREEN_API',
         phoneNumberId: config.greenApiIdInstance,
+        automatedAlertsEnabled: isAutomatedAlertsEnabled(),
         error: err.message || 'Failed to connect to Green-API server',
       };
     }
@@ -224,6 +239,7 @@ export async function getWhatsAppConfigStatus(): Promise<{
       displayPhoneNumber: '+91 92399 48621',
       verifiedName: 'Aspire Mint (AiSensy Official API)',
       qualityRating: 'High',
+      automatedAlertsEnabled: isAutomatedAlertsEnabled(),
     };
   }
 
@@ -247,6 +263,7 @@ export async function getWhatsAppConfigStatus(): Promise<{
         status: 'AUTH_ERROR',
         provider: 'META_CLOUD',
         phoneNumberId: config.phoneNumberId,
+        automatedAlertsEnabled: isAutomatedAlertsEnabled(),
         error: data.error?.message || `Meta API returned HTTP ${res.status}`,
       };
     }
@@ -259,6 +276,7 @@ export async function getWhatsAppConfigStatus(): Promise<{
       displayPhoneNumber: data.display_phone_number || config.phoneNumberId,
       verifiedName: data.verified_name || 'AspireMint',
       qualityRating: data.quality_rating || 'GREEN',
+      automatedAlertsEnabled: isAutomatedAlertsEnabled(),
     };
   } catch (err: any) {
     return {
@@ -266,6 +284,7 @@ export async function getWhatsAppConfigStatus(): Promise<{
       status: 'AUTH_ERROR',
       provider: 'META_CLOUD',
       phoneNumberId: config.phoneNumberId,
+      automatedAlertsEnabled: isAutomatedAlertsEnabled(),
       error: err.message || 'Failed to connect to Meta Graph API',
     };
   }
@@ -477,6 +496,11 @@ export async function sendWhatsAppRefundPaid(params: {
   const { phone, buyerName, orderId, brandName, amount, paidByName, transactionId, orderUrl } = params;
   if (!phone) return null;
 
+  if (!isAutomatedAlertsEnabled()) {
+    console.log(`[WhatsApp Alert PAUSED - Test Mode]: sendWhatsAppRefundPaid skipped for ${phone}`);
+    return { success: true, messageId: 'PAUSED_TEST_MODE', paused: true };
+  }
+
   const formattedAmount = typeof amount === 'number' ? `₹${amount.toLocaleString('en-IN')}` : `₹${amount}`;
   const brand = brandName ? ` (${brandName})` : '';
   const tx = transactionId || 'System Auto-gen';
@@ -512,6 +536,11 @@ export async function sendWhatsAppRefundApproved(params: {
   const { phone, buyerName, orderId, brandName, amount, orderUrl } = params;
   if (!phone) return null;
 
+  if (!isAutomatedAlertsEnabled()) {
+    console.log(`[WhatsApp Alert PAUSED - Test Mode]: sendWhatsAppRefundApproved skipped for ${phone}`);
+    return { success: true, messageId: 'PAUSED_TEST_MODE', paused: true };
+  }
+
   const formattedAmount = typeof amount === 'number' ? `₹${amount.toLocaleString('en-IN')}` : `₹${amount}`;
   const brand = brandName ? ` (${brandName})` : '';
   const url = orderUrl || `https://deals.aspiremint.in/app/orders/${orderId}`;
@@ -537,6 +566,11 @@ export async function sendWhatsAppRefundRejected(params: {
 }) {
   const { phone, buyerName, orderId, brandName, reason, orderUrl } = params;
   if (!phone) return null;
+
+  if (!isAutomatedAlertsEnabled()) {
+    console.log(`[WhatsApp Alert PAUSED - Test Mode]: sendWhatsAppRefundRejected skipped for ${phone}`);
+    return { success: true, messageId: 'PAUSED_TEST_MODE', paused: true };
+  }
 
   const brand = brandName ? ` (${brandName})` : '';
   const rejReason = reason || 'Evidence screenshot mismatch';
@@ -566,6 +600,11 @@ export async function sendWhatsAppOrderCreated(params: {
   const { phone, buyerName, orderId, brandName, productCode, amount, orderUrl } = params;
   if (!phone) return null;
 
+  if (!isAutomatedAlertsEnabled()) {
+    console.log(`[WhatsApp Alert PAUSED - Test Mode]: sendWhatsAppOrderCreated skipped for ${phone}`);
+    return { success: true, messageId: 'PAUSED_TEST_MODE', paused: true };
+  }
+
   const formattedAmount = typeof amount === 'number' ? `₹${amount.toLocaleString('en-IN')}` : `₹${amount}`;
   const brand = brandName || 'Campaign';
   const code = productCode ? ` [${productCode}]` : '';
@@ -594,6 +633,11 @@ export async function sendWhatsAppReminder(params: {
 }) {
   const { phone, buyerName, orderId, brandName, amount, milestoneDay, refundUrl } = params;
   if (!phone) return null;
+
+  if (!isAutomatedAlertsEnabled()) {
+    console.log(`[WhatsApp Alert PAUSED - Test Mode]: sendWhatsAppReminder skipped for ${phone}`);
+    return { success: true, messageId: 'PAUSED_TEST_MODE', paused: true };
+  }
 
   const formattedAmount = typeof amount === 'number' ? `₹${amount.toLocaleString('en-IN')}` : `₹${amount}`;
   const brand = brandName ? ` (${brandName})` : '';

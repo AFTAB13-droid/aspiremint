@@ -31,6 +31,7 @@ interface WhatsAppStatus {
   verifiedName?: string;
   qualityRating?: string;
   qrCode?: string;
+  automatedAlertsEnabled?: boolean;
   error?: string;
 }
 
@@ -410,6 +411,32 @@ Zero Meta restrictions • 100% Vercel Serverless • Automated alerts are opera
             </div>
           </div>
         )}
+
+        {/* Safeguard Notice for Developer Test Account */}
+        <div className={`p-4 rounded-xl border flex items-start gap-3 text-sm leading-relaxed ${
+          data.automatedAlertsEnabled
+            ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200"
+            : "bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200"
+        }`}>
+          <Info className={`w-5 h-5 shrink-0 mt-0.5 ${data.automatedAlertsEnabled ? "text-emerald-600" : "text-amber-600"}`} />
+          <div>
+            <div className="flex items-center gap-2 font-semibold mb-0.5">
+              <span>{data.automatedAlertsEnabled ? "Automated Buyer Alerts: ACTIVE" : "🧪 Test Mode Active: Automated Buyer Alerts are PAUSED"}</span>
+              <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
+                data.automatedAlertsEnabled
+                  ? "bg-emerald-200 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-200"
+                  : "bg-amber-200 text-amber-900 dark:bg-amber-900 dark:text-amber-200"
+              }`}>
+                {data.automatedAlertsEnabled ? "LIVE" : "TESTING ONLY"}
+              </span>
+            </div>
+            <p className="text-xs opacity-90">
+              {data.automatedAlertsEnabled
+                ? "All order creations, refund approvals, and payout alerts are automatically sent to real buyer WhatsApp numbers."
+                : "Automated order and refund messages to real buyers are currently suppressed to protect your Green-API Developer test limit. You can freely use the Live Tester below to test sending to your own number."}
+            </p>
+          </div>
+        </div>
 
         {/* Live Test Message Card */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-5">
