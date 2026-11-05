@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import {
   getWhatsAppConfigStatus,
   sendWhatsAppMessage,
+  getServiceConfig,
 } from '@/services/whatsappService';
 
 export const dynamic = 'force-dynamic';
@@ -48,6 +49,18 @@ export async function POST(req: Request) {
         success: true,
         data: status,
       });
+    }
+
+    if (action === 'logout') {
+      const config = getServiceConfig();
+      if (config.provider === 'GREEN_API' && config.greenApiIdInstance && config.greenApiTokenInstance) {
+        const res = await fetch(
+          `${config.greenApiUrl}/waInstance${config.greenApiIdInstance}/logout/${config.greenApiTokenInstance}`
+        );
+        const data = await res.json();
+        return NextResponse.json({ success: true, data });
+      }
+      return NextResponse.json({ success: false, message: 'Logout is only applicable for Green-API instances.' });
     }
 
     if (action === 'send-test') {

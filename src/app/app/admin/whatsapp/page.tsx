@@ -16,29 +16,33 @@ import {
   Info,
   ExternalLink,
   KeyRound,
-  FileCode2,
+  QrCode,
+  LogOut,
+  Sparkles,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-interface MetaWhatsAppStatus {
+interface WhatsAppStatus {
   configured: boolean;
-  status: "CONNECTED" | "NOT_CONFIGURED" | "AUTH_ERROR";
-  provider?: "AISENSY" | "META_CLOUD";
+  status: "CONNECTED" | "NOT_CONFIGURED" | "AUTH_ERROR" | "NOT_AUTHORIZED";
+  provider?: "GREEN_API" | "AISENSY" | "META_CLOUD";
   phoneNumberId?: string;
   displayPhoneNumber?: string;
   verifiedName?: string;
   qualityRating?: string;
+  qrCode?: string;
   error?: string;
 }
 
 export default function AdminWhatsAppPage() {
-  const [data, setData] = useState<MetaWhatsAppStatus>({
+  const [data, setData] = useState<WhatsAppStatus>({
     configured: false,
     status: "NOT_CONFIGURED",
-    error: "Checking configuration...",
+    error: "Checking WhatsApp configuration...",
   });
 
   const [loading, setLoading] = useState(true);
+  const [unlinking, setUnlinking] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   // Test message form
@@ -51,19 +55,24 @@ export default function AdminWhatsAppPage() {
 
   const fetchStatus = useCallback(async (showToast = false) => {
     try {
+      setLoading(true);
       const res = await fetch("/api/admin/whatsapp");
       const json = await res.json();
       if (json.success && json.data) {
         setData(json.data);
         if (showToast) {
-          if (json.data.configured) {
+          if (json.data.status === "CONNECTED") {
             toast.success(
-              json.data.provider === "AISENSY"
+              json.data.provider === "GREEN_API"
+                ? "Green-API WhatsApp Gateway connected & authorized!"
+                : json.data.provider === "AISENSY"
                 ? "AiSensy WhatsApp Gateway connected!"
-                : "Meta Cloud API is connected and verified!"
+                : "Meta Cloud API connected & verified!"
             );
+          } else if (json.data.status === "NOT_AUTHORIZED") {
+            toast("Scan the QR code to link your WhatsApp number", { icon: "📱" });
           } else {
-            toast.error(json.data.error || "WhatsApp credentials need configuration");
+            toast.error(json.data.error || "WhatsApp requires configuration");
           }
         }
       }
@@ -83,6 +92,31 @@ export default function AdminWhatsAppPage() {
     setCopiedKey(keyName);
     toast.success(`Copied "${keyName}" to clipboard!`);
     setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const handleUnlink = async () => {
+    if (!confirm("Are you sure you want to unlink this WhatsApp number? You can link a new number immediately by scanning a new QR code.")) {
+      return;
+    }
+    setUnlinking(true);
+    try {
+      const res = await fetch("/api/admin/whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "logout" }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success("Device unlinked! You can now scan with a new number.");
+        fetchStatus(false);
+      } else {
+        toast.error(json.message || "Failed to unlink device");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Network error unlinking device");
+    } finally {
+      setUnlinking(false);
+    }
   };
 
   const handleSendTestMessage = async (e: React.FormEvent) => {
@@ -107,16 +141,18 @@ export default function AdminWhatsAppPage() {
       const json = await res.json();
       if (json.success) {
         toast.success(
-          data.provider === "AISENSY"
-            ? "Message dispatched via AiSensy WhatsApp!"
-            : "Message dispatched via Meta Cloud API!"
+          data.provider === "GREEN_API"
+            ? "Dispatched via Green-API Cloud Gateway!"
+            : data.provider === "AISENSY"
+            ? "Dispatched via AiSensy WhatsApp!"
+            : "Dispatched via Meta Cloud API!"
         );
         setLastSentResult({
           success: true,
-          text: `Delivered! ${data.provider === "AISENSY" ? "AiSensy ID" : "Meta WAMID"}: ${json.messageId || "SENT"}`,
+          text: `Delivered! Message ID: ${json.messageId || "SENT"}`,
         });
       } else {
-        toast.error(json.error || "Failed to send WhatsApp notification");
+        toast.error(json.error || "Failed to send WhatsApp message");
         setLastSentResult({
           success: false,
           text: json.error || "Failed to send message",
@@ -133,13 +169,13 @@ export default function AdminWhatsAppPage() {
     }
   };
 
-  const loadSampleTemplate = (type: "REFUND_PAID" | "REFUND_APPROVED" | "ORDER_CREATED") => {
+  const loadSampleTemplate = (type: "REFUND_PAID" | "REFUND_APPROVED" | "REFUND_REJECTED" | "ORDER_CREATED" | "QUICK_PING") => {
     if (type === "REFUND_PAID") {
       setTestMessage(
         `🎉 *AspireMint - Refund Paid Successfully!*
 
-Hi *Rahul Sharma*,
-Great news! Your refund of *₹499.00* for Order *#OD8392019482* (boAt Rockerz) has been successfully paid by *Amit Kumar (Mediator)*.
+Hello *Rahul Sharma*,
+Great news! Your refund of *₹499.00* for Order *#OD8392019482* (boAt Rockerz) has been paid by *Amit Kumar (Mediator)*.
 
 📋 *Payment Details:*
 • *Refund Amount:* ₹499.00
@@ -150,33 +186,55 @@ Great news! Your refund of *₹499.00* for Order *#OD8392019482* (boAt Rockerz) 
 The amount has been transferred to your registered payment method.
 👉 *View Order & Details:* https://deals.aspiremint.in/app/orders/sample-id
 
-_Thank you for choosing AspireMint!_`
+_Thank you for choosing AspireMint! Reply to this message if you have any questions._`
       );
     } else if (type === "REFUND_APPROVED") {
       setTestMessage(
         `✅ *AspireMint - Refund Approved!*
 
-Hi *Rahul Sharma*,
+Hello *Rahul Sharma*,
 Your refund claim for Order *#OD8392019482* (boAt Rockerz) has been *approved* for *₹499.00*.
 
-Your payout is now queued for payment. You will receive another message with the transaction reference once payment is disbursed.
-👉 *Check Status:* https://deals.aspiremint.in/app/orders/sample-id`
+Your payout is now queued for payment. You will receive another message with the UTR reference once payment is disbursed.
+👉 *Check Status:* https://deals.aspiremint.in/app/orders/sample-id
+
+_Thank you for choosing AspireMint!_`
       );
-    } else {
+    } else if (type === "REFUND_REJECTED") {
+      setTestMessage(
+        `⚠️ *AspireMint - Refund Update*
+
+Hello *Rahul Sharma*,
+Regarding your refund claim for Order *#OD8392019482*:
+The review could not be approved due to: *Review screenshot is missing order ID details*.
+
+👉 *Resubmit Details:* https://deals.aspiremint.in/app/orders/sample-id
+If you have any questions, reply to this message directly.`
+      );
+    } else if (type === "ORDER_CREATED") {
       setTestMessage(
         `📦 *AspireMint - Order Logged Successfully!*
 
-Hi *Rahul Sharma*,
-Your order *#OD8392019482* for *boAt* has been successfully registered in our campaign system.
+Hello *Rahul Sharma*,
+Your order *#OD8392019482* for *boAt* has been successfully registered in our system.
 • *Order Amount:* ₹499.00
 
-Once you receive the product and complete your review, fill out the refund form to claim your cashback refund.
+Once you receive the product and complete your review, fill out the refund form to claim your cashback.
 👉 *Track Order:* https://deals.aspiremint.in/app/orders/sample-id`
+      );
+    } else {
+      setTestMessage(
+        `⚡ *AspireMint WhatsApp Integration Test*
+
+Hello! This is a real-time test notification sent directly from the AspireMint Admin panel via Green-API Cloud Gateway.
+
+Zero Meta restrictions • 100% Vercel Serverless • Automated alerts are operational!`
       );
     }
   };
 
   const isConnected = data.configured && data.status === "CONNECTED";
+  const isNotAuthorized = data.status === "NOT_AUTHORIZED";
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8 text-slate-900 dark:text-slate-100 transition-colors">
@@ -190,14 +248,15 @@ Once you receive the product and complete your review, fill out the refund form 
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                  Meta WhatsApp Cloud API
+                  WhatsApp Notification Gateway
                 </h1>
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-300 dark:border-blue-800">
-                  Official Meta SLA
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" />
+                  Non-Meta Cloud Gateway
                 </span>
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                100% Vercel-native, ban-free, zero-downtime automated order & refund notifications
+                100% Vercel Serverless • Automated Order & Refund Alerts • Zero Meta Verification Hurdles
               </p>
             </div>
           </div>
@@ -209,19 +268,19 @@ Once you receive the product and complete your review, fill out the refund form 
               className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition shadow-sm disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-              Verify Credentials
+              Check Status
             </button>
           </div>
         </div>
 
-        {/* Vercel & Zero-Ban Guarantee Card */}
+        {/* Zero-Meta Serverless Guarantee Card */}
         <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 flex items-start gap-3 text-sm text-emerald-900 dark:text-emerald-200">
           <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
           <div className="leading-relaxed">
             <strong className="font-semibold text-emerald-800 dark:text-emerald-300">
-              100% Serverless & 0% Ban Risk:
+              100% Serverless & Zero Meta Account Dependencies:
             </strong>{" "}
-            Unlike fragile WhatsApp Web bots that get disconnected or banned on Vercel, the <strong>Meta WhatsApp Cloud API</strong> is directly connected to Meta’s enterprise servers. Messages are dispatched in <strong>&lt;0.2 seconds</strong> over HTTP, with zero server overhead and 99.99% uptime.
+            AspireMint routes transactional messages through a dedicated 24/7 cloud instance. Vercel performs standard sub-second REST API calls without running heavy local sockets or losing session tokens. No template rejections, no Facebook portfolio bans, and zero downtime.
           </div>
         </div>
 
@@ -233,17 +292,19 @@ Once you receive the product and complete your review, fill out the refund form 
                 className={`w-4 h-4 rounded-full ${
                   isConnected
                     ? "bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50"
-                    : "bg-amber-500"
+                    : isNotAuthorized
+                    ? "bg-amber-500 animate-ping"
+                    : "bg-red-500"
                 }`}
               />
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-lg">
                     {isConnected
-                      ? data.provider === "AISENSY"
-                        ? "AiSensy Official Partner Connected"
-                        : "Meta Cloud API Connected & Verified"
-                      : "Configuration Required"}
+                      ? "Green-API Gateway Connected & Active"
+                      : isNotAuthorized
+                      ? "Action Required: Link WhatsApp Number"
+                      : "Configuration Error"}
                   </span>
                   <span
                     className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
@@ -258,104 +319,97 @@ Once you receive the product and complete your review, fill out the refund form 
 
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                   {isConnected
-                    ? `Verified Sender: ${data.verifiedName || "AspireMint"} • Display: ${data.displayPhoneNumber || "+91 92399 48621"} • Provider: ${data.provider || "Official"}`
-                    : "Set your WhatsApp credentials (AISENSY_API_KEY or Meta Cloud) in Vercel to activate automated alerts."}
+                    ? `Linked Number: ${data.displayPhoneNumber || "Active"} • Instance: 710722791790 • Mode: Non-Meta REST API`
+                    : isNotAuthorized
+                    ? "Instance is registered. Scan the QR code below using your phone to authorize message dispatching."
+                    : data.error || "Verify environment variables in Vercel."}
                 </p>
               </div>
             </div>
 
-            {isConnected && (
-              <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 px-3 py-1.5 rounded-xl text-xs text-emerald-700 dark:text-emerald-300">
-                <Zap className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Meta Quality: <strong>{data.qualityRating || "GREEN"}</strong></span>
+            {isConnected ? (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 px-3 py-1.5 rounded-xl text-xs text-emerald-700 dark:text-emerald-300">
+                  <Zap className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Meta Restrictions: <strong>BYPASSED</strong></span>
+                </div>
+                <button
+                  onClick={handleUnlink}
+                  disabled={unlinking}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg transition"
+                  title="Unlink this number if you want to switch to a different SIM"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  {unlinking ? "Unlinking..." : "Unlink / Change Number"}
+                </button>
               </div>
-            )}
+            ) : null}
           </div>
 
           {data.error && !isConnected && (
             <div className="mt-4 p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-xl flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <div>
-                <strong>Status Message:</strong> {data.error}
+                <strong>Status Note:</strong> {data.error}
               </div>
             </div>
           )}
         </div>
 
-        {/* Step-by-Step Meta Setup Guide (When not connected or for reference) */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-base flex items-center gap-2">
-              <KeyRound className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              How to Get Your Meta WhatsApp Credentials (4 Steps)
-            </h2>
-            <a
-              href="https://developers.facebook.com/apps/"
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-medium"
-            >
-              Meta Developer Portal
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          </div>
+        {/* QR Code Scanner Card (Displayed when Instance is Not Authorized) */}
+        {isNotAuthorized && (
+          <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-900/60 border-2 border-emerald-500/40 rounded-2xl p-6 sm:p-8 shadow-md">
+            <div className="max-w-xl mx-auto text-center space-y-5">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
+                <QrCode className="w-4 h-4" />
+                Step 1: Link Your WhatsApp Number
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-600 dark:text-slate-300">
-            <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-              <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px]">1</span>
-                Create Free Meta App
-              </div>
-              <p>
-                Visit <a href="https://developers.facebook.com" target="_blank" rel="noreferrer" className="text-blue-600 underline">developers.facebook.com</a> &gt; <strong>Create App</strong> &gt; Select <strong>"Other"</strong> &gt; Type <strong>"Business"</strong> &gt; Add <strong>WhatsApp</strong> product.
-              </p>
-            </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+                Scan QR Code with WhatsApp
+              </h2>
 
-            <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-              <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px]">2</span>
-                Copy Phone Number ID & Token
-              </div>
-              <p>
-                Under <strong>WhatsApp &gt; API Setup</strong>, you will see a <strong>Phone Number ID</strong> (e.g. <code className="bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded">1048192847291</code>) and an <strong>Access Token</strong>.
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Open WhatsApp on your phone &gt; tap <strong>Settings (or ⋮ menu)</strong> &gt; <strong>Linked Devices</strong> &gt; <strong>Link a Device</strong> and point your camera at this QR code.
               </p>
-            </div>
 
-            <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-              <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px]">3</span>
-                Add Credentials to Vercel
+              <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-inner inline-block mx-auto">
+                {data.qrCode ? (
+                  <img
+                    src={`data:image/png;base64,${data.qrCode}`}
+                    alt="Scan WhatsApp QR Code"
+                    className="w-64 h-64 mx-auto object-contain"
+                  />
+                ) : (
+                  <div className="w-64 h-64 flex flex-col items-center justify-center text-slate-400 text-xs">
+                    <RefreshCw className="w-8 h-8 animate-spin mb-2" />
+                    Generating QR code...
+                  </div>
+                )}
               </div>
-              <p>
-                In your <strong>Vercel Dashboard &gt; Project &gt; Settings &gt; Environment Variables</strong>, add:
-              </p>
-              <div className="space-y-1 font-mono text-[11px]">
-                <div className="flex items-center justify-between bg-white dark:bg-slate-900 px-2 py-1 rounded border">
-                  <span>WHATSAPP_PHONE_NUMBER_ID</span>
-                  <button onClick={() => handleCopy("WHATSAPP_PHONE_NUMBER_ID", "WHATSAPP_PHONE_NUMBER_ID")} className="text-blue-500 hover:text-blue-700">
-                    {copiedKey === "WHATSAPP_PHONE_NUMBER_ID" ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-                <div className="flex items-center justify-between bg-white dark:bg-slate-900 px-2 py-1 rounded border">
-                  <span>WHATSAPP_ACCESS_TOKEN</span>
-                  <button onClick={() => handleCopy("WHATSAPP_ACCESS_TOKEN", "WHATSAPP_ACCESS_TOKEN")} className="text-blue-500 hover:text-blue-700">
-                    {copiedKey === "WHATSAPP_ACCESS_TOKEN" ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-              </div>
-            </div>
 
-            <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-              <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px]">4</span>
-                Permanent System User Token (Optional)
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => fetchStatus(true)}
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-sm transition shadow-sm flex items-center gap-2"
+                >
+                  <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+                  I Have Scanned It (Refresh Status)
+                </button>
+                <a
+                  href="https://console.green-api.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-slate-500 hover:text-emerald-600 flex items-center gap-1 font-medium underline"
+                >
+                  Open Green-API Console
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
               </div>
-              <p>
-                To avoid 24-hr token expiry: in <strong>Business Settings &gt; System Users</strong>, create a system user with <strong>whatsapp_business_messaging</strong> permission to generate a permanent token.
-              </p>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Live Test Message Card */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-5">
@@ -363,16 +417,16 @@ Once you receive the product and complete your review, fill out the refund form 
             <div>
               <h2 className="font-semibold text-lg flex items-center gap-2">
                 <Send className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                Live Meta WhatsApp Message Tester
+                Live WhatsApp Message Tester
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Send a live test notification to any phone number to verify instant Meta Cloud API delivery
+                Send a live test notification to ANY phone number to verify real-time WhatsApp delivery
               </p>
             </div>
 
             {/* Quick Sample Selector */}
             <div className="flex flex-wrap gap-1.5">
-              <span className="text-xs text-slate-400 self-center mr-1">Sample Templates:</span>
+              <span className="text-xs text-slate-400 self-center mr-1">Templates:</span>
               <button
                 type="button"
                 onClick={() => loadSampleTemplate("REFUND_PAID")}
@@ -389,10 +443,24 @@ Once you receive the product and complete your review, fill out the refund form 
               </button>
               <button
                 type="button"
+                onClick={() => loadSampleTemplate("REFUND_REJECTED")}
+                className="text-xs px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg transition"
+              >
+                Refund Rejected
+              </button>
+              <button
+                type="button"
                 onClick={() => loadSampleTemplate("ORDER_CREATED")}
                 className="text-xs px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg transition"
               >
                 Order Logged
+              </button>
+              <button
+                type="button"
+                onClick={() => loadSampleTemplate("QUICK_PING")}
+                className="text-xs px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg transition"
+              >
+                Quick Ping
               </button>
             </div>
           </div>
@@ -400,13 +468,13 @@ Once you receive the product and complete your review, fill out the refund form 
           <form onSubmit={handleSendTestMessage} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                Recipient Phone Number (e.g. 9876543210 or 919876543210)
+                Recipient Phone Number (e.g. 7990175749 or 917990175749)
               </label>
               <div className="relative">
                 <Smartphone className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="e.g. 9876543210 (10-digit Indian numbers auto-prefix with 91)"
+                  placeholder="e.g. 7990175749 (10-digit Indian numbers auto-prefix with 91)"
                   value={testPhone}
                   onChange={(e) => setTestPhone(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -416,10 +484,10 @@ Once you receive the product and complete your review, fill out the refund form 
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                Message Content
+                Message Content (Supports full Markdown, *bold*, bullet points, emojis, links)
               </label>
               <textarea
-                rows={7}
+                rows={8}
                 value={testMessage}
                 onChange={(e) => setTestMessage(e.target.value)}
                 className="w-full p-3.5 font-mono text-xs sm:text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none resize-y"
@@ -428,14 +496,18 @@ Once you receive the product and complete your review, fill out the refund form 
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
               <div className="text-xs text-slate-500">
-                {!isConnected ? (
+                {isNotAuthorized ? (
                   <span className="text-amber-600 dark:text-amber-400 font-medium">
-                    ⚠️ Configure WHATSAPP_PHONE_NUMBER_ID & WHATSAPP_ACCESS_TOKEN in Vercel first.
+                    ⚠️ Link your WhatsApp number above before sending.
                   </span>
-                ) : (
+                ) : isConnected ? (
                   <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    Meta Cloud API is connected and ready to dispatch.
+                    Green-API Gateway is connected and ready to dispatch.
+                  </span>
+                ) : (
+                  <span className="text-red-500 font-medium">
+                    ⚠️ Check your instance configuration in .env.local
                   </span>
                 )}
               </div>
@@ -446,7 +518,7 @@ Once you receive the product and complete your review, fill out the refund form 
                 className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-sm transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Send className="w-4 h-4" />
-                {sendingTest ? "Dispatching via Meta API..." : "Send Test Message"}
+                {sendingTest ? "Dispatching via Green-API..." : "Send Test Message"}
               </button>
             </div>
           </form>

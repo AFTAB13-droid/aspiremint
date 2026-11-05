@@ -4,7 +4,11 @@
  */
 
 interface WhatsAppServiceConfig {
-  provider: 'AISENSY' | 'META_CLOUD' | 'NONE';
+  provider: 'GREEN_API' | 'AISENSY' | 'META_CLOUD' | 'NONE';
+  // Green-API credentials
+  greenApiIdInstance?: string;
+  greenApiTokenInstance?: string;
+  greenApiUrl?: string;
   // AiSensy credentials
   aisensyApiKey?: string;
   aisensyCampaignName?: string;
@@ -14,7 +18,24 @@ interface WhatsAppServiceConfig {
   businessAccountId?: string;
 }
 
-function getServiceConfig(): WhatsAppServiceConfig {
+export function getServiceConfig(): WhatsAppServiceConfig {
+  // Priority 1: Green-API Cloud Gateway (Non-Meta, 100% Serverless, Zero verification roadblocks)
+  const greenApiId = process.env.GREEN_API_ID_INSTANCE?.trim();
+  const greenApiToken = process.env.GREEN_API_TOKEN_INSTANCE?.trim();
+  const greenApiUrl =
+    process.env.GREEN_API_URL?.trim() ||
+    (greenApiId ? `https://${greenApiId.slice(0, 4)}.api.greenapi.com` : 'https://api.green-api.com');
+
+  if (greenApiId && greenApiToken) {
+    return {
+      provider: 'GREEN_API',
+      greenApiIdInstance: greenApiId,
+      greenApiTokenInstance: greenApiToken,
+      greenApiUrl,
+    };
+  }
+
+  // Priority 2: AiSensy Official WhatsApp Partner
   const aisensyApiKey = process.env.AISENSY_API_KEY?.trim();
   const aisensyCampaignName = process.env.AISENSY_CAMPAIGN_NAME?.trim() || 'aspiremint_alerts';
 
@@ -26,6 +47,7 @@ function getServiceConfig(): WhatsAppServiceConfig {
     };
   }
 
+  // Priority 3: Direct Meta Cloud API
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim();
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN?.trim();
   const businessAccountId = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID?.trim();
@@ -97,16 +119,17 @@ export function formatWhatsAppNumber(phone: string): string | null {
 }
 
 /**
- * Live health check of WhatsApp service credentials (AiSensy or Meta Cloud API)
+ * Live health check of WhatsApp service credentials (Green-API, AiSensy, or Meta Cloud API)
  */
 export async function getWhatsAppConfigStatus(): Promise<{
   configured: boolean;
-  status: 'CONNECTED' | 'NOT_CONFIGURED' | 'AUTH_ERROR';
-  provider?: 'AISENSY' | 'META_CLOUD';
+  status: 'CONNECTED' | 'NOT_CONFIGURED' | 'AUTH_ERROR' | 'NOT_AUTHORIZED';
+  provider?: 'GREEN_API' | 'AISENSY' | 'META_CLOUD';
   phoneNumberId?: string;
   displayPhoneNumber?: string;
   verifiedName?: string;
   qualityRating?: string;
+  qrCode?: string;
   error?: string;
 }> {
   const config = getServiceConfig();
@@ -115,10 +138,84 @@ export async function getWhatsAppConfigStatus(): Promise<{
     return {
       configured: false,
       status: 'NOT_CONFIGURED',
-      error: 'Missing WhatsApp credentials (AISENSY_API_KEY or Meta WHATSAPP_ACCESS_TOKEN) in environment variables.',
+      error: 'Missing WhatsApp credentials (GREEN_API_ID_INSTANCE, AISENSY_API_KEY, or Meta WHATSAPP_ACCESS_TOKEN) in environment variables.',
     };
   }
 
+  // Provider 1: Green-API Cloud Gateway (Non-Meta, 100% Serverless)
+  if (config.provider === 'GREEN_API') {
+    try {
+      const stateRes = await fetch(
+        `${config.greenApiUrl}/waInstance${config.greenApiIdInstance}/getStateInstance/${config.greenApiTokenInstance}`,
+        { cache: 'no-store' }
+      );
+      const stateData = await stateRes.json();
+      const state = stateData.stateInstance;
+
+      if (state === 'authorized') {
+        let displayPhone = `Instance ${config.greenApiIdInstance}`;
+        try {
+          const settingsRes = await fetch(
+            `${config.greenApiUrl}/waInstance${config.greenApiIdInstance}/getWaSettings/${config.greenApiTokenInstance}`,
+            { cache: 'no-store' }
+          );
+          const settingsData = await settingsRes.json();
+          if (settingsData.phone) {
+            displayPhone = `+${settingsData.phone}`;
+          }
+        } catch (settingsErr) {
+          console.warn('[Green-API Settings Fetch Warn]:', settingsErr);
+        }
+
+        return {
+          configured: true,
+          status: 'CONNECTED',
+          provider: 'GREEN_API',
+          phoneNumberId: config.greenApiIdInstance,
+          displayPhoneNumber: displayPhone,
+          verifiedName: 'AspireMint (Green-API Gateway)',
+          qualityRating: 'Zero Meta Restrictions',
+        };
+      }
+
+      // Not authorized yet: fetch QR code to render directly on Admin UI
+      let qrCode: string | undefined;
+      try {
+        const qrRes = await fetch(
+          `${config.greenApiUrl}/waInstance${config.greenApiIdInstance}/qr/${config.greenApiTokenInstance}`,
+          { cache: 'no-store' }
+        );
+        const qrData = await qrRes.json();
+        if (qrData.type === 'qrCode' && qrData.message) {
+          qrCode = qrData.message;
+        }
+      } catch (qrErr) {
+        console.warn('[Green-API QR Fetch Warn]:', qrErr);
+      }
+
+      return {
+        configured: true,
+        status: 'NOT_AUTHORIZED',
+        provider: 'GREEN_API',
+        phoneNumberId: config.greenApiIdInstance,
+        displayPhoneNumber: 'Not Linked Yet',
+        verifiedName: 'AspireMint (Green-API Gateway)',
+        qualityRating: 'Action Required',
+        qrCode,
+        error: 'WhatsApp is not linked yet. Scan the QR code below using WhatsApp -> Linked Devices on your phone.',
+      };
+    } catch (err: any) {
+      return {
+        configured: false,
+        status: 'AUTH_ERROR',
+        provider: 'GREEN_API',
+        phoneNumberId: config.greenApiIdInstance,
+        error: err.message || 'Failed to connect to Green-API server',
+      };
+    }
+  }
+
+  // Provider 2: AiSensy Official Campaign API
   if (config.provider === 'AISENSY') {
     return {
       configured: true,
@@ -130,7 +227,7 @@ export async function getWhatsAppConfigStatus(): Promise<{
     };
   }
 
-  // Meta Cloud API path
+  // Provider 3: Meta Cloud API path
   try {
     const res = await fetch(
       `https://graph.facebook.com/v20.0/${config.phoneNumberId}?fields=verified_name,display_phone_number,quality_rating,code_verification_status`,
@@ -175,7 +272,7 @@ export async function getWhatsAppConfigStatus(): Promise<{
 }
 
 /**
- * Send WhatsApp notification via AiSensy Campaign API or Meta Cloud API
+ * Send WhatsApp notification via Green-API, AiSensy, or Meta Cloud API
  */
 export async function sendWhatsAppMessage(
   toPhone: string,
@@ -187,7 +284,7 @@ export async function sendWhatsAppMessage(
     if (config.provider === 'NONE') {
       return {
         success: false,
-        error: 'WhatsApp is not configured. Please add AISENSY_API_KEY or Meta credentials in Vercel.',
+        error: 'WhatsApp is not configured. Please add GREEN_API_ID_INSTANCE or AISENSY_API_KEY in environment variables.',
       };
     }
 
@@ -196,7 +293,36 @@ export async function sendWhatsAppMessage(
       return { success: false, error: `Invalid recipient phone number: "${toPhone}".` };
     }
 
-    // Provider 1: AiSensy Official Campaign API
+    // Provider 1: Green-API Cloud Gateway (Zero Meta Restrictions, Native Multi-line formatting)
+    if (config.provider === 'GREEN_API') {
+      const chatId = `${cleanTo}@c.us`;
+
+      const res = await fetch(
+        `${config.greenApiUrl}/waInstance${config.greenApiIdInstance}/sendMessage/${config.greenApiTokenInstance}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chatId,
+            message,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok || !data.idMessage) {
+        const errMsg = data.message || `Green-API Error (${res.status})`;
+        console.error('[Green-API Dispatch Error]:', data);
+        return { success: false, error: errMsg };
+      }
+
+      return { success: true, messageId: data.idMessage };
+    }
+
+    // Provider 2: AiSensy Official Campaign API
     if (config.provider === 'AISENSY') {
       const cleanUserName = (userName || 'Customer').replace(/[\r\n\t]/g, ' ').replace(/\s{2,}/g, ' ').trim().slice(0, 60);
       const cleanParam = sanitizeAiSensyParam(message);
