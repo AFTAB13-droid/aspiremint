@@ -60,7 +60,8 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
     if (pathname.includes("/app/refunds")) return "My Refunds";
     if (pathname.includes("/app/settings")) return "Settings";
     if (pathname.includes("/app/support")) return "Support Hub";
-    if (pathname.includes("/app/wallet")) return "Passbook";
+    if (pathname.includes("/app/wallet")) return user?.role === "USER" ? "My Wallet" : "Passbook";
+    if (pathname.includes("/app/referral")) return "Refer & Earn";
     if (pathname.includes("/app/users")) return "User Directory";
     if (pathname.includes("/app/mediators")) return "Mediators Hub";
     if (pathname.includes("/app/reports")) return "Analytics";

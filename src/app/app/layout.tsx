@@ -153,7 +153,9 @@ export default function DashboardLayout({
             (role === "USER" && (
                pathname.includes("/orders/new") || 
                pathname.includes("/refunds/fill/") ||
-               pathname.includes("/app/samples")
+               pathname.includes("/app/samples") ||
+               pathname.includes("/app/wallet") ||
+               pathname.includes("/app/referral")
             )) || 
             (pathname.includes("/orders/") && pathname.split("/").length > 3)
           ) ? "p-0 md:p-6 lg:p-10" : "p-4 sm:p-6 lg:p-10"
