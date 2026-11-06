@@ -8,7 +8,7 @@ import {
   Users, Gift, ShieldAlert, CheckCircle2, XCircle, Search, 
   ArrowUpRight, Clock, AlertTriangle, RefreshCw, Send, Check, 
   ChevronDown, ChevronUp, DollarSign, ExternalLink, Sparkles,
-  ShieldCheck, CreditCard, ShoppingBag, ArrowRight
+  ShieldCheck, CreditCard, ShoppingBag, ArrowRight, Trash2, FlaskConical
 } from "lucide-react";
 import formatDate from "@/utils/formatDate";
 import { SoundFX } from "@/utils/soundEffects";
@@ -72,6 +72,8 @@ export default function AdminReferralsPage() {
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [actionLoading, setActionLoading] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [hasTestData, setHasTestData] = useState(false);
+  const [testSeeding, setTestSeeding] = useState(false);
 
   // Approval modal
   const [selectedTx, setSelectedTx] = useState<PendingWithdrawal | null>(null);
@@ -88,6 +90,7 @@ export default function AdminReferralsPage() {
         setStats(json.data.stats || {});
         setReferrals(json.data.referrals || []);
         setPendingWithdrawals(json.data.pendingWithdrawals || []);
+        setHasTestData(Boolean(json.data.hasTestData));
       } else {
         toast.error(json.message || "Failed to load referrals");
       }
@@ -105,6 +108,52 @@ export default function AdminReferralsPage() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchAdminData();
+  };
+
+  const handleSeedTestData = async () => {
+    try {
+      setTestSeeding(true);
+      const res = await fetch("/api/admin/referrals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "SEED_TEST_REFERRAL" }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        SoundFX.playCashRegister();
+        toast.success(json.message);
+        fetchAdminData();
+      } else {
+        toast.error(json.message || "Failed to create test data");
+      }
+    } catch (err) {
+      toast.error("Network error creating test data");
+    } finally {
+      setTestSeeding(false);
+    }
+  };
+
+  const handleCleanTestData = async () => {
+    try {
+      setTestSeeding(true);
+      const res = await fetch("/api/admin/referrals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "CLEAN_TEST_REFERRAL" }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        SoundFX.playCoinChime();
+        toast.success(json.message);
+        fetchAdminData();
+      } else {
+        toast.error(json.message || "Failed to clean test data");
+      }
+    } catch (err) {
+      toast.error("Network error cleaning test data");
+    } finally {
+      setTestSeeding(false);
+    }
   };
 
   const handleAction = async () => {
@@ -193,16 +242,41 @@ export default function AdminReferralsPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            SoundFX.playCoinChime();
-            fetchAdminData();
-          }}
-          className="self-start md:self-auto h-12 px-5 rounded-2xl bg-white dark:bg-[#0E1526] border border-slate-200 dark:border-slate-800 text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2.5 shadow-sm transition active:scale-95"
-        >
-          <RefreshCw className={`w-4 h-4 text-indigo-600 dark:text-indigo-400 ${loading ? "animate-spin" : ""}`} />
-          <span>Refresh Desk</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
+          {/* Test Simulation Controls (Only for Admins) */}
+          <button
+            onClick={handleSeedTestData}
+            disabled={testSeeding}
+            title="Create a test referral with a ₹90 pending withdrawal request to test admin payout approval"
+            className="h-12 px-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 text-xs font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300 flex items-center gap-2 shadow-sm transition active:scale-95"
+          >
+            <FlaskConical className={`w-4 h-4 text-indigo-600 dark:text-indigo-400 ${testSeeding ? "animate-bounce" : ""}`} />
+            <span>{hasTestData ? "Re-Seed Test (₹90)" : "Simulate Test Payout (₹90)"}</span>
+          </button>
+
+          {hasTestData && (
+            <button
+              onClick={handleCleanTestData}
+              disabled={testSeeding}
+              title="Clean all test data from the database with 0 code changes"
+              className="h-12 px-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800 text-xs font-black uppercase tracking-wider text-rose-600 dark:text-rose-400 flex items-center gap-2 shadow-sm transition active:scale-95"
+            >
+              <Trash2 className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+              <span>Clean Test Data</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => {
+              SoundFX.playCoinChime();
+              fetchAdminData();
+            }}
+            className="h-12 px-5 rounded-2xl bg-white dark:bg-[#0E1526] border border-slate-200 dark:border-slate-800 text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2.5 shadow-sm transition active:scale-95"
+          >
+            <RefreshCw className={`w-4 h-4 text-indigo-600 dark:text-indigo-400 ${loading ? "animate-spin" : ""}`} />
+            <span>Refresh Desk</span>
+          </button>
+        </div>
       </div>
 
       {/* KPI METRICS (Edge-to-Edge Grid) */}
@@ -327,9 +401,16 @@ export default function AdminReferralsPage() {
                         />
                       </div>
                       <div>
-                        <span className="font-black text-sm text-slate-900 dark:text-white leading-tight block">
-                          {pw.sender?.name}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-black text-sm text-slate-900 dark:text-white leading-tight block">
+                            {pw.sender?.name}
+                          </span>
+                          {(pw.sender?.aspireMintId?.startsWith("TEST") || pw.note?.includes("TEST")) && (
+                            <span className="px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 text-[9px] font-black uppercase tracking-wider">
+                              Simulation Test
+                            </span>
+                          )}
+                        </div>
                         <span className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 font-bold">
                           {pw.sender?.aspireMintId} • {pw.sender?.mobile}
                         </span>
