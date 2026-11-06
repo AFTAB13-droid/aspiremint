@@ -157,6 +157,7 @@ export default function DashboardLayout({
                pathname.includes("/app/wallet") ||
                pathname.includes("/app/referral")
             )) || 
+            pathname.includes("/app/admin/referrals") ||
             (pathname.includes("/orders/") && pathname.split("/").length > 3)
           ) ? "p-0 md:p-6 lg:p-10" : "p-4 sm:p-6 lg:p-10"
         }`}>

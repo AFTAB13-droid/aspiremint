@@ -91,12 +91,12 @@ const navLinks: NavLink[] = [
     )
   },
   {
-    name: "Passbook",
+    name: "Wallet",
     href: "/app/wallet",
     roles: ["MEDIATOR", "ADMIN"],
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
       </svg>
     )
   },
@@ -106,7 +106,7 @@ const navLinks: NavLink[] = [
     roles: ["USER"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
       </svg>
     )
   },
@@ -206,7 +206,7 @@ const navLinks: NavLink[] = [
     roles: ["ADMIN", "SUBADMIN"],
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
       </svg>
     )
   },
@@ -346,15 +346,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }
   const isAdm = userRole === "ADMIN";
 
-  // Group links for mobile "App-like" sections
+  // Group links for mobile "App-like" and desktop expanded sections
+  const knownSection1 = ["Dashboard", "Orders", "My Orders", "Active Deals", "My Refunds", "Review Finder", "My Activity", "Refunds", "Wallet", "My Wallet", "Passbook", "Refer and Earn", "Support", "Support Hub", "Reference Center"];
+  const knownSection2 = ["User Directory", "Mediators Hub", "Live Analytics", "Leaderboard", "Referrals & Rewards", "WhatsApp Gateway", "Resolution Hub", "SOP Guidelines"];
+
+  const section1Links = filteredLinks.filter(l => knownSection1.includes(l.name));
+  const section2Links = filteredLinks.filter(l => knownSection2.includes(l.name));
+  const remainingLinks = filteredLinks.filter(l => !knownSection1.includes(l.name) && !knownSection2.includes(l.name));
+
   const mobileSections = [
     { 
       title: "Operations", 
-      links: filteredLinks.filter(l => ["Dashboard", "Orders", "My Orders", "Active Deals", "My Refunds", "Review Finder", "My Activity", "Refunds", "Passbook", "Refer and Earn", "Support", "Support Hub", "Reference Center"].includes(l.name)) 
+      links: section1Links 
     },
     { 
-      title: "Management", 
-      links: filteredLinks.filter(l => ["User Directory", "Mediators Hub", "Live Analytics", "Resolution Hub", "SOP Guidelines", "Leaderboard"].includes(l.name)) 
+      title: "Management & Growth", 
+      links: [...section2Links, ...remainingLinks] 
     }
   ].filter(s => s.links.length > 0);
 
