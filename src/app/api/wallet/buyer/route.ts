@@ -37,7 +37,10 @@ export async function GET() {
           lifetimeSpent: wallet.lifetimeSpent || 0,
           lifetimeWithdrawn: wallet.lifetimeWithdrawn || 0,
           minWithdrawalThreshold: REFERRAL_CONSTANTS.MINIMUM_WITHDRAWAL_THRESHOLD,
+          maxWalletCap: REFERRAL_CONSTANTS.MAX_WALLET_BALANCE_CAP,
           isWithdrawalEligible,
+          diwaliLaunchDate: REFERRAL_CONSTANTS.DIWALI_LAUNCH_DATE,
+          isDiwaliLive: new Date() >= new Date(REFERRAL_CONSTANTS.DIWALI_LAUNCH_DATE),
           progressPercentage: Math.min(
             100,
             Math.round(((wallet.availableBalance || 0) / REFERRAL_CONSTANTS.MINIMUM_WITHDRAWAL_THRESHOLD) * 100)

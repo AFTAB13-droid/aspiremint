@@ -10,6 +10,7 @@ import { usePusher } from "@/hooks/usePusher";
 import { getUserAvatar } from "@/data/avatars";
 import toast from "react-hot-toast";
 import { SoundFX } from "@/utils/soundEffects";
+import { getDiwaliTimeRemaining } from "@/utils/diwaliLaunch";
 import { 
   TrendingUp, Package, RefreshCw, Clock, CheckCircle2, ChevronRight, X,
   ShieldCheck, AlertCircle, Sparkles, Megaphone, User as UserIcon, Wallet, Activity, Zap, Gift,
@@ -80,6 +81,14 @@ export default function MobileBuyerDashboard({
   const [isFetchingRefund, setIsFetchingRefund] = useState(false);
   const [localPreviousRefundFetched, setLocalPreviousRefundFetched] = useState(user.previousRefundFetched || false);
   const [avatarOverride, setAvatarOverride] = useState<string | null>(null);
+  const [diwaliCountdown, setDiwaliCountdown] = useState(getDiwaliTimeRemaining());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setDiwaliCountdown(getDiwaliTimeRemaining());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const handleAvatarUpdate = (e: any) => {
@@ -402,30 +411,57 @@ export default function MobileBuyerDashboard({
       </div>
 
       {/* REFER & EARN VIRAL PROMOTION BANNER */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        onClick={() => {
-          SoundFX.playCoinChime();
-          router.push("/app/referral");
-        }}
-        className="relative overflow-hidden rounded-[28px] bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-5 text-white shadow-xl shadow-indigo-600/20 active:scale-[0.98] transition cursor-pointer"
-      >
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
-        <div className="relative z-10 flex items-center justify-between">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-[9px] font-black uppercase tracking-wider">
-              <Sparkles className="w-3 h-3 text-amber-300" />
-              Earn Real Cash
+      {!diwaliCountdown.isLive ? (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={() => {
+            SoundFX.playCoinChime();
+            router.push("/app/referral");
+          }}
+          className="relative overflow-hidden rounded-[28px] bg-gradient-to-r from-amber-600 via-orange-600 to-rose-700 p-5 text-white shadow-xl shadow-amber-600/25 active:scale-[0.98] transition cursor-pointer border border-amber-400/30"
+        >
+          <div className="absolute top-0 right-0 w-36 h-36 bg-amber-400/20 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+          <div className="relative z-10 flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[9px] font-black uppercase tracking-wider text-amber-200">
+                <span className="text-xs">🪔</span>
+                <span>Diwali Special • Sunday 10 AM Launch</span>
+              </div>
+              <h3 className="text-sm sm:text-base font-black tracking-tight">Refer & Earn • Live in {diwaliCountdown.formatted}</h3>
+              <p className="text-[11px] text-amber-100 font-medium">Earn ₹90 per friend (Up to ₹900). Happy Dhanteras! ✨</p>
             </div>
-            <h3 className="text-sm sm:text-base font-black tracking-tight">Refer Friends & Get Up to ₹90</h3>
-            <p className="text-[11px] text-white/80 font-medium">₹50 on Amazon order + ₹10 each for next 4 orders. Withdraw to UPI!</p>
+            <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 ml-2 shadow-inner border border-white/20">
+              <Gift className="w-6 h-6 text-amber-200" />
+            </div>
           </div>
-          <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 ml-2 shadow-inner">
-            <Gift className="w-6 h-6 text-white" />
+        </motion.div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={() => {
+            SoundFX.playCoinChime();
+            router.push("/app/referral");
+          }}
+          className="relative overflow-hidden rounded-[28px] bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-5 text-white shadow-xl shadow-indigo-600/20 active:scale-[0.98] transition cursor-pointer"
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+          <div className="relative z-10 flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-[9px] font-black uppercase tracking-wider">
+                <Sparkles className="w-3 h-3 text-amber-300" />
+                Earn Real Cash
+              </div>
+              <h3 className="text-sm sm:text-base font-black tracking-tight">Refer Friends & Get Up to ₹90</h3>
+              <p className="text-[11px] text-white/80 font-medium">₹50 on Amazon order + ₹10 each for next 4 orders. Withdraw to UPI!</p>
+            </div>
+            <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 ml-2 shadow-inner">
+              <Gift className="w-6 h-6 text-white" />
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
 
       {/* WALLET / STATS CARD (App Style) */}
       <motion.div 

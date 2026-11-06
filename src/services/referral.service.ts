@@ -11,10 +11,12 @@ export const REFERRAL_CONSTANTS = {
   FOLLOWON_REWARD: 10,
   MAX_FOLLOWON_ORDERS: 4,
   MAX_REWARD_PER_REFEREE: 90,
-  MINIMUM_WITHDRAWAL_THRESHOLD: 90, // ₹90 minimum withdrawal (matches max reward per referred buyer)
+  MINIMUM_WITHDRAWAL_THRESHOLD: 100, // ₹100 minimum withdrawal
+  MAX_WALLET_BALANCE_CAP: 900, // ₹900 maximum wallet balance cap
   RETURN_WINDOW_DAYS: 7, // 7 days return shield
   MILESTONE_BUYERS_COUNT: 10,
   MILESTONE_BONUS_AMOUNT: 100,
+  DIWALI_LAUNCH_DATE: "2026-11-08T10:00:00+05:30", // Sunday 10:00 AM IST
 };
 
 export class ReferralService {
@@ -454,7 +456,10 @@ export class ReferralService {
         lifetimeSpent: wallet.lifetimeSpent || 0,
         lifetimeWithdrawn: wallet.lifetimeWithdrawn || 0,
         minWithdrawalThreshold: REFERRAL_CONSTANTS.MINIMUM_WITHDRAWAL_THRESHOLD,
+        maxWalletCap: REFERRAL_CONSTANTS.MAX_WALLET_BALANCE_CAP,
         isWithdrawalEligible,
+        diwaliLaunchDate: REFERRAL_CONSTANTS.DIWALI_LAUNCH_DATE,
+        isDiwaliLive: new Date() >= new Date(REFERRAL_CONSTANTS.DIWALI_LAUNCH_DATE),
       },
       stats: {
         totalReferred: referrals.length,

@@ -33,8 +33,11 @@ interface BuyerWalletData {
   lifetimeSpent: number;
   lifetimeWithdrawn: number;
   minWithdrawalThreshold: number;
+  maxWalletCap?: number;
   isWithdrawalEligible: boolean;
   progressPercentage: number;
+  diwaliLaunchDate?: string;
+  isDiwaliLive?: boolean;
 }
 
 export default function BuyerWalletView() {
@@ -81,7 +84,7 @@ export default function BuyerWalletView() {
   const handleWithdrawSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const amount = Number(withdrawAmount);
-    const threshold = data?.wallet?.minWithdrawalThreshold || 90;
+    const threshold = data?.wallet?.minWithdrawalThreshold || 100;
 
     if (!amount || amount < threshold) {
       toast.error(`Minimum withdrawal amount is ₹${threshold}`);
@@ -217,9 +220,9 @@ export default function BuyerWalletView() {
         {/* INLINE THRESHOLD PROGRESS */}
         <div className="relative z-10 pt-2 border-t border-white/10 space-y-1.5">
           <div className="flex items-center justify-between text-[11px] font-bold">
-            <span className="text-slate-300">Min. Payout: ₹{wallet?.minWithdrawalThreshold}</span>
+            <span className="text-slate-300">Min. Payout: ₹{wallet?.minWithdrawalThreshold || 100} • Cap: ₹{wallet?.maxWalletCap || 900}</span>
             <span className={wallet?.isWithdrawalEligible ? "text-emerald-400 font-black" : "text-amber-400 font-semibold"}>
-              {wallet?.isWithdrawalEligible ? "✅ Ready to Withdraw" : `Earn ₹${(wallet?.minWithdrawalThreshold || 90) - (wallet?.availableBalance || 0)} more`}
+              {wallet?.isWithdrawalEligible ? "✅ Ready to Withdraw" : `Earn ₹${(wallet?.minWithdrawalThreshold || 100) - (wallet?.availableBalance || 0)} more`}
             </span>
           </div>
           <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden border border-white/10">
@@ -268,6 +271,19 @@ export default function BuyerWalletView() {
           </Link>
         </div>
       </motion.div>
+
+      {/* DIWALI LAUNCH SPECIAL BANNER */}
+      {!wallet?.isDiwaliLive && (
+        <div className="mx-3.5 sm:mx-0 p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-rose-500/15 border border-amber-500/30 text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center gap-3">
+          <span className="text-2xl animate-bounce">🪔</span>
+          <div>
+            <p className="font-black text-amber-800 dark:text-amber-300">Happy Dhanteras & Diwali Special!</p>
+            <p className="text-[11px] text-amber-700/90 dark:text-amber-200/80 font-medium mt-0.5">
+              Refer & Earn feature unlocks this Sunday at 10:00 AM. Refer friends to earn ₹90 each (up to ₹900 wallet balance)!
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* COMPACT ACTIVITY LEDGER (FULL WIDTH CONTAINER) */}
       <div className="px-3.5 sm:px-0">

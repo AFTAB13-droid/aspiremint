@@ -77,6 +77,7 @@ export default function AdminReferralsPage() {
 
   // Approval modal
   const [selectedTx, setSelectedTx] = useState<PendingWithdrawal | null>(null);
+  const [payerName, setPayerName] = useState("");
   const [utrNumber, setUtrNumber] = useState("");
   const [rejectReason, setRejectReason] = useState("");
   const [modalMode, setModalMode] = useState<"APPROVE" | "REJECT" | null>(null);
@@ -159,11 +160,6 @@ export default function AdminReferralsPage() {
   const handleAction = async () => {
     if (!selectedTx || !modalMode) return;
 
-    if (modalMode === "APPROVE" && !utrNumber.trim()) {
-      toast.error("Please enter a valid Bank UTR / Transaction reference number");
-      return;
-    }
-
     if (modalMode === "REJECT" && !rejectReason.trim()) {
       toast.error("Please enter a reason for rejecting the withdrawal");
       return;
@@ -177,7 +173,8 @@ export default function AdminReferralsPage() {
         body: JSON.stringify({
           action: modalMode === "APPROVE" ? "APPROVE_WITHDRAWAL" : "REJECT_WITHDRAWAL",
           transactionId: selectedTx._id,
-          utr: utrNumber,
+          payerName: payerName.trim(),
+          utr: utrNumber.trim(),
           rejectionReason: rejectReason,
         }),
       });
@@ -188,6 +185,7 @@ export default function AdminReferralsPage() {
         toast.success(json.message);
         setModalMode(null);
         setSelectedTx(null);
+        setPayerName("");
         setUtrNumber("");
         setRejectReason("");
         fetchAdminData();
@@ -882,18 +880,40 @@ export default function AdminReferralsPage() {
               </div>
 
               {modalMode === "APPROVE" ? (
-                <div>
-                  <label className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 block mb-1.5">
-                    Bank UTR / Transaction Reference ID
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. UTR1982736410 or UPI-Ref-982173"
-                    value={utrNumber}
-                    onChange={(e) => setUtrNumber(e.target.value)}
-                    className="w-full h-12 px-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#131B2E] text-xs font-mono font-bold outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-slate-900 dark:text-white"
-                  />
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 block mb-1">
+                      Payer Name <span className="text-slate-400 font-normal lowercase">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={`e.g. ${(session?.user as any)?.name || "Admin"} (Admin)`}
+                      value={payerName}
+                      onChange={(e) => setPayerName(e.target.value)}
+                      className="w-full h-12 px-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#131B2E] text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-slate-900 dark:text-white"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      If left empty, defaults to: <strong>{(session?.user as any)?.name || "Admin"} (Admin)</strong>
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 block mb-1">
+                      Transaction Reference / Note <span className="text-slate-400 font-normal lowercase">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. UPI-Ref-982173 or Bank UTR"
+                      value={utrNumber}
+                      onChange={(e) => setUtrNumber(e.target.value)}
+                      className="w-full h-12 px-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#131B2E] text-xs font-mono font-bold outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-slate-900 dark:text-white"
+                    />
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-[11px] text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                    <span>In-app alert, FCM push & email will be sent to buyer automatically.</span>
+                  </div>
                 </div>
               ) : (
                 <div>

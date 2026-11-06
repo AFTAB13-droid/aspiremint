@@ -470,3 +470,34 @@ export const sendWelcomeEmail = async (email: string, name: string) => {
     html: renderSimpleEmail("Welcome", "#6f42c1", "#ffffff", body),
   });
 };
+
+export const sendWalletPayoutEmail = async (options: {
+  email: string;
+  name: string;
+  amount: number;
+  payerName: string;
+  utr?: string;
+  aspireMintId?: string;
+}) => {
+  const details = [
+    { label: "Amount Paid", value: `₹${options.amount}.00` },
+    { label: "Disbursed By", value: options.payerName },
+    { label: "Payment Reference", value: options.utr || "Direct Wallet Payout" },
+    { label: "AspireMint ID", value: options.aspireMintId || "N/A" },
+    { label: "Status", value: "SUCCESSFUL / DISBURSED" },
+  ];
+
+  const body = `
+    Hi <b>${options.name}</b>,<br><br>
+    Great news! Your wallet withdrawal request of <b>₹${options.amount}</b> has been approved and disbursed by <b>${options.payerName}</b>.<br><br>
+    ${renderTable(details)}
+    The funds have been credited to your designated payment account. Keep sharing your invite link to earn more rewards!
+  `;
+
+  return transporter.sendMail({
+    from: process.env.EMAIL_FROM || `"AspireMint Rewards" <info@aspiremint.in>`,
+    to: options.email,
+    subject: `🎉 Payout Disbursed: ₹${options.amount} Transferred to Your Account!`,
+    html: renderSimpleEmail("Payout Disbursed 🎉", "#10b981", "#ffffff", body),
+  });
+};

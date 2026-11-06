@@ -7,6 +7,9 @@ import { Referral } from "@/modules/referral/referral.model";
 import { Wallet } from "@/modules/wallet/wallet.model";
 import { Transaction, TransactionType, TransactionCategory } from "@/modules/wallet/transaction.model";
 import { User } from "@/modules/user/user.model";
+import { NotificationService } from "@/services/notification.service";
+import { NotificationType } from "@/modules/notification/notification.model";
+import { sendWalletPayoutEmail } from "@/services/emailService";
 
 export const dynamic = "force-dynamic";
 
@@ -128,7 +131,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { action, transactionId, utr, rejectionReason, referralId } = body;
+    const { action, transactionId, utr, payerName, rejectionReason, referralId } = body;
 
     await connectToDatabase();
 
@@ -139,12 +142,61 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, message: "Transaction not pending or not found" }, { status: 404 });
       }
 
+      // Default to admin name with (Admin) if payerName is empty
+      const defaultAdmin = `${(session.user as any)?.name || "System"} (Admin)`;
+      const finalPayerName = payerName && payerName.trim() ? payerName.trim() : defaultAdmin;
+
       tx.status = "COMPLETED";
-      tx.note = `${tx.note} | Approved by ${session.user.name}. UTR: ${utr || "N/A"}`;
-      tx.referenceId = utr || tx.referenceId;
+      tx.note = `${tx.note} | Paid by: ${finalPayerName}${utr ? ` | Ref: ${utr}` : ""}`;
+      if (utr) {
+        tx.referenceId = utr;
+      }
       await tx.save();
 
-      return NextResponse.json({ success: true, message: "Withdrawal marked as disbursed and completed" });
+      // Dispatch real-time in-app notification, FCM & Email to the buyer
+      if (tx.sender) {
+        const buyer = await User.findById(tx.sender).select("name email aspireMintId");
+        if (buyer) {
+          try {
+            await NotificationService.create({
+              recipient: buyer._id.toString(),
+              type: NotificationType.REFUND_COMPLETED,
+              title: `🎉 Wallet Payout Disbursed: ₹${tx.amount}`,
+              message: `Your wallet withdrawal of ₹${tx.amount} has been paid out by ${finalPayerName}. The funds are on their way to your account!`,
+              actionUrl: "/app/wallet",
+              metadata: {
+                transactionId: tx._id,
+                amount: tx.amount,
+                payerName: finalPayerName,
+                referenceId: tx.referenceId,
+              },
+            });
+          } catch (notifErr) {
+            console.warn("Buyer in-app/FCM notification dispatch bypassed:", notifErr);
+          }
+
+          // Dispatch confirmation email
+          if (buyer.email) {
+            try {
+              await sendWalletPayoutEmail({
+                email: buyer.email,
+                name: buyer.name || "Member",
+                amount: tx.amount,
+                payerName: finalPayerName,
+                utr: utr || tx.referenceId,
+                aspireMintId: buyer.aspireMintId,
+              });
+            } catch (mailErr) {
+              console.warn("Buyer payout email dispatch bypassed:", mailErr);
+            }
+          }
+        }
+      }
+
+      return NextResponse.json({ 
+        success: true, 
+        message: `Payout of ₹${tx.amount} disbursed successfully by ${finalPayerName}! In-app, FCM & Email sent.` 
+      });
     }
 
     // ACTION B: REJECT WITHDRAWAL (REFUND BACK TO WALLET)

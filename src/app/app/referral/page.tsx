@@ -8,9 +8,10 @@ import toast from "react-hot-toast";
 import { 
   Gift, Share2, Copy, Check, Users, Sparkles, ShieldCheck, 
   Wallet, ArrowRight, ChevronRight, AlertCircle, ShoppingBag, 
-  ExternalLink, QrCode, RefreshCw, Trophy, CheckCircle2
+  ExternalLink, QrCode, RefreshCw, Trophy, CheckCircle2, Lock, Flame
 } from "lucide-react";
 import { SoundFX } from "@/utils/soundEffects";
+import { getDiwaliTimeRemaining, DiwaliCountdownState } from "@/utils/diwaliLaunch";
 
 interface ReferralFriend {
   _id: string;
@@ -39,6 +40,14 @@ export default function ReferralPage() {
 
   const [copied, setCopied] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
+  const [countdown, setCountdown] = useState<DiwaliCountdownState>(getDiwaliTimeRemaining());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown(getDiwaliTimeRemaining());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const fetchReferralHub = async () => {
     try {
@@ -101,6 +110,162 @@ export default function ReferralPage() {
     );
   }
 
+  // -------------------------------------------------------------
+  // DIWALI COUNTDOWN & FEATURE LOCK (BEFORE SUNDAY 10:00 AM IST)
+  // -------------------------------------------------------------
+  if (!countdown.isLive) {
+    return (
+      <div className="w-full max-w-4xl mx-auto pb-24 space-y-4 px-3.5 sm:px-0">
+        {/* GRAND DIWALI FESTIVE HERO CARD */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full rounded-[32px] p-6 sm:p-9 text-white shadow-2xl relative overflow-hidden border border-amber-500/40 bg-gradient-to-br from-[#1E110A] via-[#2A1612] to-[#140A1C]"
+        >
+          {/* Ambient Glows & Sparkles */}
+          <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-orange-600/20 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none" />
+
+          {/* Festive Dhanteras & Diwali Badge */}
+          <div className="relative z-10 flex items-center justify-between pb-3 border-b border-amber-500/20">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-[11px] font-black uppercase tracking-[0.2em] text-amber-300 shadow-sm">
+              <span className="text-sm">🪔</span>
+              <span>Happy Dhanteras & Diwali Special</span>
+            </div>
+
+            <span className="text-xs font-mono font-bold text-amber-200/80">
+              Launch: Sunday 10:00 AM
+            </span>
+          </div>
+
+          {/* Grand Header & Teaser */}
+          <div className="relative z-10 my-5 text-center sm:text-left space-y-2">
+            <div className="flex items-center justify-center sm:justify-start gap-2 text-amber-400">
+              <Sparkles className="w-5 h-5 text-amber-300 animate-spin" style={{ animationDuration: "6s" }} />
+              <span className="text-xs font-black uppercase tracking-widest text-amber-300">Grand Launch Coming Soon</span>
+            </div>
+
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-300 bg-clip-text text-transparent">
+              Refer & Earn Cash Hub
+            </h1>
+
+            <p className="text-xs sm:text-sm text-amber-100/90 font-medium leading-relaxed max-w-2xl">
+              We are unveiling our biggest rewards program this <strong>Sunday, Nov 8 at 10:00 AM IST</strong>! 
+              Invite your friends to claim 100% cashback deals and earn <strong>₹90 cash</strong> per friend directly into your UPI account.
+            </p>
+          </div>
+
+          {/* LIVE TICKING COUNTDOWN CLOCK */}
+          <div className="relative z-10 my-6">
+            <div className="grid grid-cols-4 gap-2.5 sm:gap-4">
+              <div className="p-3.5 sm:p-5 rounded-2xl sm:rounded-[24px] bg-black/40 border border-amber-500/30 backdrop-blur-md text-center shadow-inner">
+                <span className="text-3xl sm:text-5xl font-black text-amber-300 font-mono tracking-tight block">
+                  {countdown.days}
+                </span>
+                <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-amber-200/70 block mt-1">
+                  Days
+                </span>
+              </div>
+
+              <div className="p-3.5 sm:p-5 rounded-2xl sm:rounded-[24px] bg-black/40 border border-amber-500/30 backdrop-blur-md text-center shadow-inner">
+                <span className="text-3xl sm:text-5xl font-black text-amber-300 font-mono tracking-tight block">
+                  {String(countdown.hours).padStart(2, "0")}
+                </span>
+                <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-amber-200/70 block mt-1">
+                  Hours
+                </span>
+              </div>
+
+              <div className="p-3.5 sm:p-5 rounded-2xl sm:rounded-[24px] bg-black/40 border border-amber-500/30 backdrop-blur-md text-center shadow-inner">
+                <span className="text-3xl sm:text-5xl font-black text-amber-300 font-mono tracking-tight block">
+                  {String(countdown.minutes).padStart(2, "0")}
+                </span>
+                <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-amber-200/70 block mt-1">
+                  Mins
+                </span>
+              </div>
+
+              <div className="p-3.5 sm:p-5 rounded-2xl sm:rounded-[24px] bg-black/40 border border-amber-500/30 backdrop-blur-md text-center shadow-inner">
+                <span className="text-3xl sm:text-5xl font-black text-amber-300 font-mono tracking-tight block">
+                  {String(countdown.seconds).padStart(2, "0")}
+                </span>
+                <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-amber-200/70 block mt-1">
+                  Secs
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* REWARDS FORMULA PREVIEW (LOCKED STATE) */}
+          <div className="relative z-10 pt-4 border-t border-amber-500/20 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-3 rounded-2xl bg-white/5 border border-amber-500/20 text-center">
+              <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 block mb-0.5">Amazon Anchor</span>
+              <p className="text-lg font-black text-white">₹50 Reward</p>
+              <span className="text-[10px] text-amber-100/70">On Friend's 1st Order</span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-white/5 border border-amber-500/20 text-center">
+              <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 block mb-0.5">Next 4 Orders</span>
+              <p className="text-lg font-black text-white">4 x ₹10 = ₹40</p>
+              <span className="text-[10px] text-amber-100/70">Total ₹90 per friend</span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-white/5 border border-amber-500/20 text-center">
+              <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 block mb-0.5">Wallet Payout</span>
+              <p className="text-lg font-black text-white">Min ₹100 • Max ₹900</p>
+              <span className="text-[10px] text-amber-100/70">Direct UPI Withdrawal</span>
+            </div>
+          </div>
+
+          {/* DIWALI ACTION BUTTON (MUTED / LOCKED WITH CELEBRATION CHIME) */}
+          <div className="relative z-10 mt-5 pt-3 border-t border-amber-500/20">
+            <button
+              onClick={() => {
+                SoundFX.playCoinChime();
+                toast("🪔 Shubh Dhanteras! Feature unlocks this Sunday at 10:00 AM sharp ✨", { icon: "🪔" });
+              }}
+              className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-amber-500/30 transition active:scale-98 cursor-pointer"
+            >
+              <Lock className="w-4 h-4 text-slate-950" />
+              <span>Unlocks This Sunday at 10:00 AM • Shubh Dhanteras! 🪔</span>
+            </button>
+          </div>
+        </motion.div>
+
+        {/* HOW IT WILL WORK (LOCKED PREVIEW) */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3">
+          <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+            <Flame className="w-4 h-4 text-amber-500" />
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">How You Will Earn on Sunday</h3>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 space-y-1">
+              <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 block">STEP 1</span>
+              <p className="text-xs font-bold text-slate-900 dark:text-white">Share Your Invite Link</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">1-tap WhatsApp share opens Sunday 10:00 AM.</p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 space-y-1">
+              <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 block">STEP 2</span>
+              <p className="text-xs font-bold text-slate-900 dark:text-white">Friends Complete Deals</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Get ₹50 on Amazon order + ₹10 each for next 4 deals.</p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 space-y-1">
+              <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 block">STEP 3</span>
+              <p className="text-xs font-bold text-slate-900 dark:text-white">Instant UPI Withdrawal</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Withdraw earnings directly to your GPay, PhonePe, or Paytm.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // ACTIVE REFERRAL DASHBOARD (AUTOMATICALLY LIVE ON SUNDAY 10 AM)
+  // -------------------------------------------------------------
   return (
     <div className="w-full max-w-4xl mx-auto pb-20 space-y-3 sm:space-y-5">
       {/* FULL-WIDTH NATIVE APP HERO HEADER */}
@@ -136,7 +301,7 @@ export default function ReferralPage() {
             Invite Friends • Earn Up to ₹90
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
-            Get <strong className="text-white font-bold">₹50</strong> on their first Amazon deal + <strong className="text-white font-bold">₹10</strong> each for their next 4 orders!
+            Get <strong className="text-white font-bold">₹50</strong> on their first Amazon deal + <strong className="text-white font-bold">₹10</strong> each for their next 4 orders! (Max wallet: ₹900)
           </p>
         </div>
 
@@ -170,7 +335,7 @@ export default function ReferralPage() {
         </div>
       </motion.div>
 
-      {/* COMPACT 3-STEP HORIZONTAL STRIP (LESS SCROLLABLE) */}
+      {/* COMPACT 3-STEP HORIZONTAL STRIP */}
       <div className="px-3.5 sm:px-0">
         <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-xs">
           <div className="grid grid-cols-3 divide-x divide-slate-100 dark:divide-slate-800 text-center">
