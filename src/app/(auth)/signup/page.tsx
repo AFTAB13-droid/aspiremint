@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion, Variants, AnimatePresence } from "framer-motion";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Logo } from "@/components/common/Logo";
 import { User, Mail, Phone, Lock, Shield, ArrowRight, Eye, EyeOff, Gift } from "lucide-react";
@@ -40,15 +40,17 @@ function getPasswordStrength(pwd: string) {
 
 export default function SignupPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [referralCode, setReferralCode] = useState("");
 
   useEffect(() => {
-    const ref = searchParams?.get("ref");
-    if (ref) {
-      setReferralCode(ref.toUpperCase());
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get("ref");
+      if (ref) {
+        setReferralCode(ref.toUpperCase());
+      }
     }
-  }, [searchParams]);
+  }, []);
   const [isLoading, setIsLoading] = useState(false);
   const role = "USER";
   const [showPassword, setShowPassword] = useState(false);
