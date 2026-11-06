@@ -3,6 +3,7 @@ import connectToDatabase from "@/lib/db";
 import { User, UserRole } from "@/modules/user/user.model";
 import { getOtp, deleteOtp } from "@/services/otpService";
 import { sendWelcomeEmail } from "@/services/emailService";
+import { ReferralService } from "@/services/referral.service";
 
 // Define the shape of our expected request body
 interface SignupRequestBody {
@@ -12,12 +13,13 @@ interface SignupRequestBody {
   password: string;
   role: string;
   otp: string;
+  referralCode?: string;
 }
 
 export async function POST(req: Request) {
   try {
     const body: SignupRequestBody = await req.json();
-    const { name, email, mobile, password, role, otp } = body;
+    const { name, email, mobile, password, role, otp, referralCode } = body;
 
     // 1. Validate required fields
     if (!name || !email || !mobile || !password || !role || !otp) {
@@ -90,6 +92,14 @@ export async function POST(req: Request) {
     });
 
     await newUser.save();
+
+    // Attribute referral & initialize wallet
+    if (referralCode) {
+      await ReferralService.attributeReferral(newUser._id, referralCode).catch((err) => {
+        console.error("Failed to link referral:", err);
+      });
+    }
+    await ReferralService.ensureWallet(newUser._id).catch(() => {});
 
     // 7. Send Welcome Email asynchronously without awaiting (prevents Vercel timeout on burst traffic)
     sendWelcomeEmail(newUser.email, newUser.name).catch((emailError) => {

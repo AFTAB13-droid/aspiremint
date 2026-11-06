@@ -7,6 +7,7 @@ import { User } from '@/modules/user/user.model';
 import { sendOrderPaymentEmail } from '@/services/emailService';
 import { NotificationService } from '@/services/notification.service';
 import { NotificationType } from '@/modules/notification/notification.model';
+import { ReferralService } from '@/services/referral.service';
 
 export async function POST(req: Request) {
   try {
@@ -132,6 +133,9 @@ export async function POST(req: Request) {
       }
 
       successCount++;
+      ReferralService.processOrderCompletion(order._id).catch((err) => {
+        console.error('CSV Bulk pay referral error:', err);
+      });
     }
 
     // Update buyers completed orders stats

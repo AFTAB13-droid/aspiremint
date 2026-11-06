@@ -12,6 +12,7 @@ import { ActiveDeal } from '@/modules/brand/deal.model';
 import connectToDatabase from '@/lib/db';
 import { invalidateDealsCache } from '@/lib/redis';
 import { sendOrderStatusEmail, sendOrderPaymentEmail, sendRefundSubmittedEmail } from '@/services/emailService';
+import { ReferralService } from '@/services/referral.service';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -641,6 +642,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       const recipientName = buyer?.name || order.reviewName || updatedOrder.reviewName || "Customer";
 
       if (status === OrderStatus.COMPLETED) {
+          ReferralService.processOrderCompletion(updatedOrder._id).catch((err: any) => {
+            console.error("Order [id] referral process error:", err);
+          });
           const payerName = role === "MEDIATOR" 
              ? (mediator?.systemDisplayName || mediator?.name || session.user.name)
              : (role === "SUBADMIN" ? `SubAdmin ${session.user.name}` : (session.user.name || "Admin"));

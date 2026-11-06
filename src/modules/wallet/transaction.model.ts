@@ -6,10 +6,17 @@ export enum TransactionType {
 }
 
 export enum TransactionCategory {
-  REFILL = "REFILL",           // Admin to Mediator
-  ORDER_PAYOUT = "ORDER_PAYOUT", // Mediator to User
-  ADJUSTMENT = "ADJUSTMENT",     // Manual Admin Correction
-  REVERSAL = "REVERSAL",         // Order Cancelled
+  REFILL = "REFILL",                     // Admin to Mediator
+  ORDER_PAYOUT = "ORDER_PAYOUT",         // Mediator to User
+  ADJUSTMENT = "ADJUSTMENT",             // Manual Admin Correction
+  REVERSAL = "REVERSAL",                 // Order Cancelled
+  REFERRAL_BASE_REWARD = "REFERRAL_BASE_REWARD",         // +₹50 on Amazon qualification
+  REFERRAL_FOLLOWON_REWARD = "REFERRAL_FOLLOWON_REWARD", // +₹10 on next 4 eligible orders
+  REFERRAL_MILESTONE_BONUS = "REFERRAL_MILESTONE_BONUS", // +₹100 on 10 qualified referrals
+  DEAL_CHECKOUT_DEBIT = "DEAL_CHECKOUT_DEBIT",           // -₹X applied on deal checkout
+  WITHDRAWAL_REQUEST = "WITHDRAWAL_REQUEST",             // -₹X payout requested to UPI/Bank
+  WITHDRAWAL_PAYOUT = "WITHDRAWAL_PAYOUT",               // Disbursed successfully
+  WITHDRAWAL_REVERSAL = "WITHDRAWAL_REVERSAL",           // Returned to balance if failed
 }
 
 export interface ITransaction extends Document {

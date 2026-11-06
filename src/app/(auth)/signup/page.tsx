@@ -2,10 +2,10 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion, Variants, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { Logo } from "@/components/common/Logo";
-import { User, Mail, Phone, Lock, Shield, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { User, Mail, Phone, Lock, Shield, ArrowRight, Eye, EyeOff, Gift } from "lucide-react";
 import Link from "next/link";
 
 function getPasswordStrength(pwd: string) {
@@ -40,6 +40,15 @@ function getPasswordStrength(pwd: string) {
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [referralCode, setReferralCode] = useState("");
+
+  useEffect(() => {
+    const ref = searchParams?.get("ref");
+    if (ref) {
+      setReferralCode(ref.toUpperCase());
+    }
+  }, [searchParams]);
   const [isLoading, setIsLoading] = useState(false);
   const role = "USER";
   const [showPassword, setShowPassword] = useState(false);
@@ -158,7 +167,7 @@ export default function SignupPage() {
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, role, otp }),
+        body: JSON.stringify({ ...formData, role, otp, referralCode: referralCode.trim() || undefined }),
       });
 
       const result = await response.json();
@@ -448,6 +457,26 @@ export default function SignupPage() {
                         className="w-full h-12 lg:h-16 pl-12 lg:pl-14 pr-12 lg:pr-14 bg-slate-50/70 lg:bg-slate-50/50 border border-slate-100 lg:border-none focus:bg-white rounded-[16px] lg:rounded-[24px] shadow-none lg:shadow-inner font-bold text-xs lg:text-sm transition-all focus:border-blue-200 focus:ring-4 focus:ring-blue-500/5 outline-none"
                       />
                     </div>
+                  </div>
+                </div>
+
+                {/* REFERRAL CODE INPUT */}
+                <div className="space-y-1.5 lg:space-y-2 relative z-10 shrink-0">
+                  <label className="text-[8px] lg:text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                    Referral Code (Optional)
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-5 flex items-center text-slate-400">
+                      <Gift className="w-4 h-4 lg:w-5 lg:h-5 text-indigo-500" />
+                    </div>
+                    <input
+                      type="text"
+                      name="referralCode"
+                      placeholder="e.g. ASPIRE-9824"
+                      value={referralCode}
+                      onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                      className="w-full h-12 lg:h-16 pl-12 lg:pl-14 pr-6 bg-slate-50/70 lg:bg-slate-50/50 border border-slate-100 lg:border-none focus:bg-white rounded-[16px] lg:rounded-[24px] shadow-none lg:shadow-inner font-black text-xs lg:text-sm uppercase tracking-wider text-indigo-900 transition-all focus:border-indigo-300 focus:ring-4 focus:ring-indigo-500/5 outline-none"
+                    />
                   </div>
                 </div>
 

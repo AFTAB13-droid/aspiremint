@@ -9,6 +9,7 @@ import { BannerConfig } from "@/components/admin/BannerManager";
 import { usePusher } from "@/hooks/usePusher";
 import { getUserAvatar } from "@/data/avatars";
 import toast from "react-hot-toast";
+import { SoundFX } from "@/utils/soundEffects";
 import { 
   TrendingUp, Package, RefreshCw, Clock, CheckCircle2, ChevronRight, X,
   ShieldCheck, AlertCircle, Sparkles, Megaphone, User as UserIcon, Wallet, Activity, Zap, Gift,
@@ -381,16 +382,17 @@ export default function MobileBuyerDashboard({
       )}
 
       {/* QUICK ACTIONS (Fixed App Grid) */}
-      <div className="grid grid-cols-4 gap-2 bg-white px-4 py-6 rounded-[32px] shadow-sm border border-slate-100">
+      <div className="grid grid-cols-5 gap-1 bg-white px-2.5 py-5 rounded-[28px] shadow-sm border border-slate-100">
          {[
             { title: "New Order", icon: <Package className="w-6 h-6" />, href: "/app/orders/new", color: "from-blue-500 to-indigo-600", bg: "bg-blue-500/10", text: "text-blue-600" },
             { title: "Refund", icon: <RefreshCw className="w-6 h-6" />, href: "/app/refunds/verify", color: "from-emerald-400 to-teal-500", bg: "bg-emerald-500/10", text: "text-emerald-600" },
             { title: "Track", icon: <TrendingUp className="w-6 h-6" />, href: "/app/orders/track", color: "from-violet-500 to-purple-600", bg: "bg-violet-500/10", text: "text-violet-600" },
-            { title: "Support", icon: <Clock className="w-6 h-6" />, href: "/app/support", color: "from-amber-400 to-orange-500", bg: "bg-amber-500/10", text: "text-orange-600" }
+            { title: "Support", icon: <Clock className="w-5 h-5 sm:w-6 sm:h-6" />, href: "/app/support", color: "from-amber-400 to-orange-500", bg: "bg-amber-500/10", text: "text-orange-600" },
+            { title: "Refer", icon: <Gift className="w-5 h-5 sm:w-6 sm:h-6" />, href: "/app/referral", color: "from-pink-500 to-rose-600", bg: "bg-pink-500/10", text: "text-rose-600" }
          ].map((act, i) => (
             <Link key={i} href={act.href} className="block active:scale-95 transition-transform">
                <div className="flex flex-col items-center gap-2">
-                  <div className={`w-14 h-14 rounded-[20px] flex items-center justify-center bg-gradient-to-br ${act.color} text-white shadow-md shadow-${act.color.split("-")[1]}/20`}>
+                  <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-[18px] sm:rounded-[20px] flex items-center justify-center bg-gradient-to-br ${act.color} text-white shadow-md shadow-${act.color.split("-")[1]}/20`}>
                      {act.icon}
                   </div>
                   <span className="text-[10px] font-black text-slate-700 tracking-tight text-center leading-none">{act.title}</span>
@@ -398,6 +400,32 @@ export default function MobileBuyerDashboard({
             </Link>
          ))}
       </div>
+
+      {/* REFER & EARN VIRAL PROMOTION BANNER */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        onClick={() => {
+          SoundFX.playCoinChime();
+          router.push("/app/referral");
+        }}
+        className="relative overflow-hidden rounded-[28px] bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-5 text-white shadow-xl shadow-indigo-600/20 active:scale-[0.98] transition cursor-pointer"
+      >
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+        <div className="relative z-10 flex items-center justify-between">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-[9px] font-black uppercase tracking-wider">
+              <Sparkles className="w-3 h-3 text-amber-300" />
+              Earn Real Cash
+            </div>
+            <h3 className="text-sm sm:text-base font-black tracking-tight">Refer Friends & Get Up to ₹90</h3>
+            <p className="text-[11px] text-white/80 font-medium">₹50 on Amazon order + ₹10 each for next 4 orders. Withdraw to UPI!</p>
+          </div>
+          <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 ml-2 shadow-inner">
+            <Gift className="w-6 h-6 text-white" />
+          </div>
+        </div>
+      </motion.div>
 
       {/* WALLET / STATS CARD (App Style) */}
       <motion.div 

@@ -66,6 +66,17 @@ export interface IUser extends Document {
     month: string;
     active: boolean;
   };
+  referredBy?: {
+    referrerId: mongoose.Types.ObjectId;
+    referralCode: string;
+    referredAt: Date;
+  };
+  referralStats?: {
+    totalReferredUsers: number;
+    qualifiedBuyersCount: number;
+    totalEarned: number;
+    milestonesClaimed: number;
+  };
   webauthnCredentials?: {
     credentialID: string;
     publicKey: string;
@@ -143,6 +154,17 @@ const UserSchema = new Schema<IUser>(
       rank: { type: Number },
       month: { type: String },
       active: { type: Boolean, default: false }
+    },
+    referredBy: {
+      referrerId: { type: Schema.Types.ObjectId, ref: 'User' },
+      referralCode: { type: String },
+      referredAt: { type: Date }
+    },
+    referralStats: {
+      totalReferredUsers: { type: Number, default: 0 },
+      qualifiedBuyersCount: { type: Number, default: 0 },
+      totalEarned: { type: Number, default: 0 },
+      milestonesClaimed: { type: Number, default: 0 }
     },
     webauthnCredentials: [
       {

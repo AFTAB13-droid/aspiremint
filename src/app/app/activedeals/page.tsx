@@ -9,6 +9,8 @@ import { BrandManager } from "@/components/admin/BrandManager";
 import { DealCreationForm } from "@/components/admin/DealCreationForm";
 import { ActiveDealsTable } from "@/components/admin/ActiveDealsTable";
 import { BulkDealsUpload } from "@/components/admin/BulkDealsUpload";
+import Link from "next/link";
+import { Gift, ArrowRight } from "lucide-react";
 
 export default function ActiveDealsPage() {
   const { data: session } = useSession();
@@ -113,6 +115,32 @@ export default function ActiveDealsPage() {
 
   return (
     <div className="flex flex-col gap-6 md:gap-8 pb-20 overflow-x-hidden">
+      
+      {/* BUYER PROMOTIONAL BANNER FOR REFER & EARN */}
+      {!isAdm && (
+        <Link
+          href="/app/referral"
+          className="flex items-center justify-between p-3.5 px-5 rounded-2xl bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200 text-indigo-950 shadow-sm hover:shadow-md transition active:scale-[0.99]"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <Gift className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="font-black text-xs uppercase tracking-wide text-indigo-900 flex items-center gap-2">
+                🎁 Refer & Earn: Up to ₹90 Real Cash Per Friend
+              </span>
+              <p className="text-[11px] text-slate-500 font-medium">
+                Unlock ₹50 on their 1st Amazon order + ₹10 for the next 4 deals. Withdraw directly to UPI or Bank!
+              </p>
+            </div>
+          </div>
+          <div className="hidden sm:flex items-center gap-1 text-xs font-black text-indigo-600">
+            <span>Invite Now</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </div>
+        </Link>
+      )}
       
       {/* Dynamic Header - Only shown for ADMIN to manage brands/creation */}
       {isAdm && (

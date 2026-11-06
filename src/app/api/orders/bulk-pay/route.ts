@@ -8,6 +8,7 @@ import { sendOrderPaymentEmail, dispatchInBatches } from '@/services/emailServic
 import { sendWhatsAppRefundPaid, safeDispatchWhatsApp } from '@/services/whatsappService';
 import { NotificationService } from '@/services/notification.service';
 import { NotificationType } from '@/modules/notification/notification.model';
+import { ReferralService } from '@/services/referral.service';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -79,6 +80,13 @@ export async function POST(req: Request) {
         $push: { activities: activity }
       }
     );
+
+    // Trigger Referral Evaluation for each completed order
+    ordersToComplete.forEach((ord) => {
+      ReferralService.processOrderCompletion(ord._id).catch((err) => {
+        console.error('Referral processing error:', err);
+      });
+    });
 
     // Update Badge Counts efficiently
     try {

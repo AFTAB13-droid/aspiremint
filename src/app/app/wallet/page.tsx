@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { Skeleton } from "@/components/ui/Skeleton";
 import formatDate from "@/utils/formatDate";
 import MobileMediatorPassbook from "./MobileMediatorPassbook";
+import BuyerWalletView from "@/components/wallet/BuyerWalletView";
 
 interface Transaction {
   _id: string;
@@ -332,6 +333,10 @@ export default function PassbookPage() {
         </button>
       </div>
     );
+  }
+
+  if (userRole === "USER") {
+    return <BuyerWalletView />;
   }
 
   if (loading && !walletDetails && summaryList.length === 0) {
