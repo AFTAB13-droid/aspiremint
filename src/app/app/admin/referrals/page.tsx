@@ -301,7 +301,7 @@ export default function AdminReferralsPage() {
                   Action Required: Buyer Withdrawal Requests ({pendingWithdrawals.length})
                 </h2>
                 <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
-                  Buyers have crossed the ₹100 threshold and requested payouts to their accounts.
+                  Buyers have reached the ₹90 threshold and requested payouts to their accounts.
                 </p>
               </div>
             </div>

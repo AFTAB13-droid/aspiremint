@@ -81,7 +81,7 @@ export default function BuyerWalletView() {
   const handleWithdrawSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const amount = Number(withdrawAmount);
-    const threshold = data?.wallet?.minWithdrawalThreshold || 100;
+    const threshold = data?.wallet?.minWithdrawalThreshold || 90;
 
     if (!amount || amount < threshold) {
       toast.error(`Minimum withdrawal amount is ₹${threshold}`);
@@ -219,7 +219,7 @@ export default function BuyerWalletView() {
           <div className="flex items-center justify-between text-[11px] font-bold">
             <span className="text-slate-300">Min. Payout: ₹{wallet?.minWithdrawalThreshold}</span>
             <span className={wallet?.isWithdrawalEligible ? "text-emerald-400 font-black" : "text-amber-400 font-semibold"}>
-              {wallet?.isWithdrawalEligible ? "✅ Ready to Withdraw" : `Earn ₹${(wallet?.minWithdrawalThreshold || 100) - (wallet?.availableBalance || 0)} more`}
+              {wallet?.isWithdrawalEligible ? "✅ Ready to Withdraw" : `Earn ₹${(wallet?.minWithdrawalThreshold || 90) - (wallet?.availableBalance || 0)} more`}
             </span>
           </div>
           <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden border border-white/10">

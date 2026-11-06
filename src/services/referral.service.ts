@@ -11,7 +11,7 @@ export const REFERRAL_CONSTANTS = {
   FOLLOWON_REWARD: 10,
   MAX_FOLLOWON_ORDERS: 4,
   MAX_REWARD_PER_REFEREE: 90,
-  MINIMUM_WITHDRAWAL_THRESHOLD: 100, // ₹100 minimum withdrawal
+  MINIMUM_WITHDRAWAL_THRESHOLD: 90, // ₹90 minimum withdrawal (matches max reward per referred buyer)
   RETURN_WINDOW_DAYS: 7, // 7 days return shield
   MILESTONE_BUYERS_COUNT: 10,
   MILESTONE_BONUS_AMOUNT: 100,
