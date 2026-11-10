@@ -540,34 +540,49 @@ export default function ReviewFinderPage() {
       });
 
       const review = reviews.find((r) => r.id === id);
-      const params = new URLSearchParams({
-        url: permalink,
-        download: "true",
-        name: review?.name || "Verified Customer",
-        rating: String(review?.rating || "5"),
-        title: review?.title || "Great product",
-        text: review?.text || "Quality meets expectations. Recommended purchase.",
-        date: review?.date || "Recent Order",
-        location: review?.location || "",
-        attributes: review?.attributes || "",
-        verified: review?.verified ? "true" : "false",
-        helpful: String(review?.helpful || "113"),
-      });
 
-      if (productMeta?.title) params.set("productTitle", productMeta.title);
-      if (productMeta?.imageUrl) params.set("productImage", productMeta.imageUrl);
-      if (productMeta?.price) params.set("price", String(productMeta.price));
-      if (productMeta?.mrp) params.set("mrp", String(productMeta.mrp));
-      if (productMeta?.discount) params.set("discount", productMeta.discount);
-
-      if (review?.images && review.images.length > 0) {
-        params.set("images", JSON.stringify(review.images.slice(0, 4)));
+      // Pre-buffer product image in browser to Base64 (0 CORS latency, Flipkart CDN supports Access-Control-Allow-Origin: *)
+      let resolvedBase64Image = "";
+      if (productMeta?.imageUrl && typeof window !== "undefined") {
+        try {
+          const imgFetch = await fetch(productMeta.imageUrl, { mode: "cors" });
+          if (imgFetch.ok) {
+            const blob = await imgFetch.blob();
+            resolvedBase64Image = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve((reader.result as string) || "");
+              reader.onerror = () => resolve("");
+              reader.readAsDataURL(blob);
+            });
+          }
+        } catch {
+          // If browser direct fetch is blocked, server fallback handles buffering
+        }
       }
 
-      const downloadEndpoint = `/api/tools/review-screenshot?${params.toString()}`;
+      const postPayload = {
+        download: true,
+        url: permalink,
+        name: review?.name || "Verified Customer",
+        rating: String(review?.rating || "5"),
+        title: review?.title || "Super!",
+        text: review?.text || "Quality meets expectations. Recommended purchase.",
+        date: review?.date || "Recent Order",
+        helpful: String(review?.helpful || "0"),
+        productTitle: productMeta?.title || "",
+        productImage: resolvedBase64Image || productMeta?.imageUrl || "",
+        price: productMeta?.price ? String(productMeta.price) : "",
+        mrp: productMeta?.mrp ? String(productMeta.mrp) : "",
+        discount: productMeta?.discount || "",
+        images: review?.images && review.images.length > 0 ? review.images.slice(0, 4) : [],
+      };
 
       try {
-        const res = await fetch(downloadEndpoint);
+        const res = await fetch("/api/tools/review-screenshot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(postPayload),
+        });
         if (res.ok) {
           const blob = await res.blob();
           const blobUrl = window.URL.createObjectURL(blob);
@@ -585,10 +600,28 @@ export default function ReviewFinderPage() {
           return;
         }
       } catch (fetchErr) {
-        console.warn("Direct blob download failed, falling back to window download:", fetchErr);
+        console.warn("POST screenshot download failed, falling back to GET:", fetchErr);
       }
 
       // Fallback: Direct browser attachment download
+      const params = new URLSearchParams({
+        url: permalink,
+        download: "true",
+        name: review?.name || "Verified Customer",
+        rating: String(review?.rating || "5"),
+        title: review?.title || "Super!",
+        text: review?.text || "Quality meets expectations. Recommended purchase.",
+        date: review?.date || "Recent Order",
+        helpful: String(review?.helpful || "0"),
+      });
+
+      if (productMeta?.title) params.set("productTitle", productMeta.title);
+      if (productMeta?.imageUrl) params.set("productImage", productMeta.imageUrl);
+      if (productMeta?.price) params.set("price", String(productMeta.price));
+      if (productMeta?.mrp) params.set("mrp", String(productMeta.mrp));
+      if (productMeta?.discount) params.set("discount", productMeta.discount);
+
+      const downloadEndpoint = `/api/tools/review-screenshot?${params.toString()}`;
       const a = document.createElement("a");
       a.style.display = "none";
       a.href = downloadEndpoint;
@@ -600,7 +633,7 @@ export default function ReviewFinderPage() {
         if (document.body.contains(a)) document.body.removeChild(a);
       }, 5000);
 
-      toast.success("Screenshot download started!", { id: toastId });
+      toast.success("Screenshot downloaded!", { id: toastId });
     } catch (err: any) {
       toast.error(err?.message || "Failed to download screenshot", { id: toastId });
     } finally {

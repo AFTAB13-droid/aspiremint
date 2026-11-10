@@ -5,31 +5,55 @@ import { FlipkartReviewService } from "@/services/flipkartReview.service";
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const targetUrl = searchParams.get("url")?.trim() || "";
-  const shouldDownload = searchParams.get("download") === "true";
+// In-memory LRU cache to store verified base64 product images across requests
+const imageBase64Cache = new Map<string, string>();
+
+async function handleScreenshotRequest(req: NextRequest) {
+  let searchParams: URLSearchParams;
+  let bodyData: Record<string, any> = {};
+
+  if (req.method === "POST") {
+    try {
+      bodyData = await req.json();
+    } catch {}
+    searchParams = new URL(req.url).searchParams;
+  } else {
+    searchParams = new URL(req.url).searchParams;
+  }
+
+  const getParam = (key: string): string => {
+    if (bodyData[key] !== undefined && bodyData[key] !== null) {
+      return String(bodyData[key]).trim();
+    }
+    return searchParams.get(key)?.trim() || "";
+  };
+
+  const targetUrl = getParam("url");
+  const shouldDownload = getParam("download") === "true";
 
   // Review & Product metadata
-  let name = searchParams.get("name") || "";
-  let rating = searchParams.get("rating") || "5";
-  let title = searchParams.get("title") || "";
-  let text = searchParams.get("text") || "";
-  let date = searchParams.get("date") || "";
-  let location = searchParams.get("location") || "";
-  let helpful = searchParams.get("helpful") || "113";
-  let productTitle = searchParams.get("productTitle") || "";
-  let productImage = searchParams.get("productImage") || "";
-  let price = searchParams.get("price") || "";
-  let mrp = searchParams.get("mrp") || "";
-  let discount = searchParams.get("discount") || "";
-  const verified = searchParams.get("verified") !== "false";
+  let name = getParam("name");
+  let rating = getParam("rating") || "5";
+  let title = getParam("title");
+  let text = getParam("text");
+  let date = getParam("date");
+  let helpful = getParam("helpful") || "0";
+  let productTitle = getParam("productTitle");
+  let productImage = getParam("productImage");
+  let price = getParam("price");
+  let mrp = getParam("mrp");
+  let discount = getParam("discount");
+  const verified = getParam("verified") !== "false";
 
   let photos: string[] = [];
   try {
-    const imagesParam = searchParams.get("images");
-    if (imagesParam) {
-      photos = JSON.parse(imagesParam);
+    if (Array.isArray(bodyData.images)) {
+      photos = bodyData.images;
+    } else {
+      const imagesParam = searchParams.get("images");
+      if (imagesParam) {
+        photos = JSON.parse(imagesParam);
+      }
     }
   } catch {}
 
@@ -38,7 +62,6 @@ export async function GET(req: NextRequest) {
     try {
       const urlInfo = await FlipkartReviewService.resolveUrl(targetUrl);
       if (urlInfo?.pid) {
-        // Fetch real product metadata from catalog if title, photo or price is missing
         if (!productTitle || !productImage || !price) {
           const productMeta = await FlipkartReviewService.fetchProductMeta(
             urlInfo.pid,
@@ -61,7 +84,7 @@ export async function GET(req: NextRequest) {
             .join(" ");
         }
 
-        if (!name || !location) {
+        if (!name) {
           const page1 = await FlipkartReviewService.fetchPage(
             urlInfo.pid,
             urlInfo.slug,
@@ -81,7 +104,6 @@ export async function GET(req: NextRequest) {
             title = matched.title || title;
             text = matched.text || text;
             date = matched.date || date;
-            if (!location && matched.location) location = matched.location;
             helpful = String(matched.helpful || helpful);
             if (matched.images && matched.images.length > 0 && photos.length === 0) {
               photos = matched.images.slice(0, 4);
@@ -94,10 +116,10 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Realistic defaults if still empty (NO hardcoded iPhone!)
+  // Realistic defaults if still empty
   if (!name) name = "Verified Customer";
   if (!text) text = "Great product! Quality matches expectations.";
-  if (!title) title = "Worth every penny";
+  if (!title) title = "Super!";
   if (!date) date = "Recent Order";
   if (!productTitle) productTitle = "Marketplace Verified Item";
 
@@ -114,50 +136,54 @@ export async function GET(req: NextRequest) {
     return btoa(binary);
   };
 
-  // Pre-buffer product image to verified JPEG/PNG base64 Data URL so Satori renders in 5ms with zero crashes
+  // Pre-buffer product image to verified JPEG/PNG base64 Data URL so Satori renders crisply without failing
   let base64ProductImage = "";
-  if (productImage && productImage.startsWith("http")) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 2500);
-      const imgRes = await fetch(productImage, {
-        signal: controller.signal,
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-          Accept: "image/jpeg,image/png,*/*;q=0.8",
-        },
-      });
-      clearTimeout(timeout);
-      if (imgRes.ok) {
-        const ab = await imgRes.arrayBuffer();
-        const bytes = new Uint8Array(ab.slice(0, 4));
-        const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-        const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
-        if (isJpeg || isPng) {
-          const mime = isJpeg ? "image/jpeg" : "image/png";
-          base64ProductImage = `data:${mime};base64,${toBase64(ab)}`;
-        } else {
-          base64ProductImage = productImage;
-        }
-      } else {
-        base64ProductImage = productImage;
-      }
-    } catch {
-      base64ProductImage = productImage;
-    }
-  } else if (productImage && productImage.startsWith("data:")) {
+  if (productImage && productImage.startsWith("data:")) {
     base64ProductImage = productImage;
+  } else if (productImage && productImage.startsWith("http")) {
+    if (imageBase64Cache.has(productImage)) {
+      base64ProductImage = imageBase64Cache.get(productImage)!;
+    } else {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 12000);
+        const imgRes = await fetch(productImage, {
+          signal: controller.signal,
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            Accept: "image/jpeg,image/png,*/*;q=0.8",
+          },
+        });
+        clearTimeout(timeout);
+        if (imgRes.ok) {
+          const ab = await imgRes.arrayBuffer();
+          const bytes = new Uint8Array(ab.slice(0, 4));
+          const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+          const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
+          const mime = isPng ? "image/png" : "image/jpeg";
+          if (isJpeg || isPng || ab.byteLength > 500) {
+            base64ProductImage = `data:${mime};base64,${toBase64(ab)}`;
+            if (imageBase64Cache.size > 100) imageBase64Cache.clear();
+            imageBase64Cache.set(productImage, base64ProductImage);
+          }
+        }
+      } catch (err) {
+        console.warn("Product image fetch fallback error:", err);
+      }
+    }
   }
 
-  // Pre-buffer customer photos with verified JPEG/PNG magic bytes
+  // Pre-buffer customer review photos with verified JPEG/PNG magic bytes
   const base64Photos: string[] = [];
   if (photos && photos.length > 0) {
     for (const p of photos.slice(0, 3)) {
-      if (p && p.startsWith("http")) {
+      if (p && p.startsWith("data:")) {
+        base64Photos.push(p);
+      } else if (p && p.startsWith("http")) {
         try {
           const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 1200);
+          const timeout = setTimeout(() => controller.abort(), 3000);
           const pRes = await fetch(p, {
             signal: controller.signal,
             headers: {
@@ -171,14 +197,12 @@ export async function GET(req: NextRequest) {
             const bytes = new Uint8Array(ab.slice(0, 4));
             const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
             const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
-            if (isJpeg || isPng) {
-              const mime = isJpeg ? "image/jpeg" : "image/png";
+            const mime = isPng ? "image/png" : "image/jpeg";
+            if (isJpeg || isPng || ab.byteLength > 500) {
               base64Photos.push(`data:${mime};base64,${toBase64(ab)}`);
             }
           }
         } catch {}
-      } else if (p && p.startsWith("data:")) {
-        base64Photos.push(p);
       }
     }
   }
@@ -258,14 +282,28 @@ export async function GET(req: NextRequest) {
               }}
             >
               <span>Explore</span>
-              <span style={{ color: "#ffe500", fontWeight: 700 }}>Plus</span>
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="#ffe500">
+              <span
+                style={{
+                  color: "#ffe500",
+                  fontWeight: 700,
+                  marginLeft: "2px",
+                }}
+              >
+                Plus
+              </span>
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="#ffe500"
+                style={{ marginLeft: "2px" }}
+              >
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
             </div>
           </div>
 
-          {/* Desktop Search Box */}
+          {/* Search Bar matching desktop */}
           <div
             style={{
               display: "flex",
@@ -273,8 +311,8 @@ export async function GET(req: NextRequest) {
               justifyContent: "space-between",
               backgroundColor: "#ffffff",
               borderRadius: "2px",
-              width: "480px",
               height: "36px",
+              width: "510px",
               padding: "0 14px",
               boxShadow: "0 1px 2px 0 rgba(0,0,0,0.1)",
             }}
@@ -283,31 +321,32 @@ export async function GET(req: NextRequest) {
               style={{
                 color: "#878787",
                 fontSize: "14px",
+                letterSpacing: "-0.1px",
               }}
             >
               Search for products, brands and more
             </span>
             <svg
-              width="18"
-              height="18"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="#2874f0"
-              strokeWidth="2.5"
+              strokeWidth="2.4"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
           </div>
 
-          {/* Nav Actions */}
+          {/* Nav Links: Login Button, Become a Seller, More, Cart */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "32px",
+              gap: "30px",
             }}
           >
             <div
@@ -318,7 +357,6 @@ export async function GET(req: NextRequest) {
                 fontWeight: 700,
                 padding: "5px 36px",
                 borderRadius: "2px",
-                display: "flex",
               }}
             >
               Login
@@ -345,7 +383,18 @@ export async function GET(req: NextRequest) {
               }}
             >
               <span>More</span>
-              <span style={{ fontSize: "10px" }}>▼</span>
+              <svg
+                width="9"
+                height="6"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#ffffff"
+                strokeWidth="3.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
             </div>
 
             <div
@@ -382,7 +431,7 @@ export async function GET(req: NextRequest) {
             padding: "0 60px",
             borderBottom: "1px solid #e0e0e0",
             fontSize: "13px",
-            fontWeight: 600,
+            fontWeight: 500,
             color: "#212121",
           }}
         >
@@ -402,7 +451,7 @@ export async function GET(req: NextRequest) {
           style={{
             display: "flex",
             flex: 1,
-            padding: "20px 40px",
+            padding: "24px 36px",
             backgroundColor: "#ffffff",
             margin: "12px 60px",
             borderRadius: "2px",
@@ -484,71 +533,37 @@ export async function GET(req: NextRequest) {
 
             <span
               style={{
-                fontSize: "15px",
-                fontWeight: 600,
+                fontSize: "14px",
+                fontWeight: 500,
                 color: "#212121",
-                marginBottom: "6px",
-                lineHeight: "1.3",
+                marginBottom: "8px",
+                lineHeight: "1.35",
               }}
             >
               {productTitle}
             </span>
 
-            {/* Flipkart Assured Badge */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                marginBottom: "8px",
-              }}
-            >
-              <div
-                style={{
-                  backgroundColor: "#2874f0",
-                  color: "#ffe500",
-                  fontSize: "11px",
-                  fontWeight: 900,
-                  fontStyle: "italic",
-                  padding: "1px 5px",
-                  borderRadius: "2px",
-                }}
-              >
-                f
-              </div>
-              <span
-                style={{
-                  color: "#2874f0",
-                  fontSize: "12px",
-                  fontWeight: 800,
-                  fontStyle: "italic",
-                }}
-              >
-                Assured
-              </span>
-            </div>
-
-            {/* Price Tag with SVG Rupee, MRP strike-off and Discount */}
+            {/* Price Tag with SVG Rupee, MRP strike-off and Discount (NO f Assured) */}
             <div
               style={{
                 display: "flex",
                 alignItems: "baseline",
                 gap: "8px",
-                marginTop: "2px",
+                marginTop: "4px",
               }}
             >
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  fontSize: "19px",
+                  fontSize: "18px",
                   fontWeight: 800,
                   color: "#212121",
                 }}
               >
                 <svg
-                  width="14"
-                  height="18"
+                  width="13"
+                  height="17"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="#212121"
@@ -567,14 +582,14 @@ export async function GET(req: NextRequest) {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    fontSize: "14px",
+                    fontSize: "13px",
                     color: "#878787",
                     textDecoration: "line-through",
                   }}
                 >
                   <svg
-                    width="10"
-                    height="12"
+                    width="9"
+                    height="11"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="#878787"
@@ -603,7 +618,7 @@ export async function GET(req: NextRequest) {
             </div>
           </div>
 
-          {/* Right Column: Customer Review (Exact Flipkart Desktop UI) */}
+          {/* Right Column: Customer Review (Exact Official Flipkart Desktop UI) */}
           <div
             style={{
               flex: 1,
@@ -705,7 +720,7 @@ export async function GET(req: NextRequest) {
               </div>
             )}
 
-            {/* Reviewer Metadata Line */}
+            {/* Reviewer Metadata Line (EXACT OFFICIAL FORMAT: Name . Certified Buyer Date, NO LOCATION) */}
             <div
               style={{
                 display: "flex",
@@ -718,7 +733,7 @@ export async function GET(req: NextRequest) {
                 marginTop: "16px",
               }}
             >
-              {/* Name, Certified Buyer Badge, Location, Date/Time */}
+              {/* Name, Certified Buyer Badge, Date (NO ADDRESS / LOCATION) */}
               <div
                 style={{
                   display: "flex",
@@ -727,8 +742,8 @@ export async function GET(req: NextRequest) {
                   flexWrap: "wrap",
                 }}
               >
-                <span style={{ fontWeight: 600, color: "#878787" }}>
-                  {name}
+                <span style={{ fontWeight: 500, color: "#878787" }}>
+                  {name} .
                 </span>
 
                 {verified && (
@@ -755,17 +770,14 @@ export async function GET(req: NextRequest) {
                       </svg>
                     </div>
                     <span style={{ color: "#878787" }}>
-                      Certified Buyer{location ? `, ${location}` : ""}
+                      Certified Buyer
                     </span>
                   </div>
                 )}
 
-                {!verified && location && (
-                  <span style={{ color: "#878787" }}>, {location}</span>
-                )}
-
-                <span>•</span>
-                <span>{date}</span>
+                <span style={{ color: "#878787", marginLeft: "4px" }}>
+                  {date}
+                </span>
               </div>
 
               {/* Upvote & Downvote Counter with SVG thumbs */}
@@ -801,19 +813,20 @@ export async function GET(req: NextRequest) {
                     <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3" />
                   </svg>
                   <span style={{ fontSize: "11px", color: "#878787", fontWeight: 500 }}>
-                    17
+                    1
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Blue link below review */}
+            {/* Blue link pushed to bottom of review column */}
             <span
               style={{
                 color: "#2874f0",
                 fontSize: "14px",
                 fontWeight: 600,
-                marginTop: "18px",
+                marginTop: "auto",
+                paddingTop: "24px",
               }}
             >
               View all reviews of the product
@@ -910,6 +923,15 @@ export async function GET(req: NextRequest) {
             </span>
           </div>
         </div>
+
+        {/* 5. BOTTOM WHITE STRIP MATCHING OFFICIAL FLIPKART */}
+        <div
+          style={{
+            height: "35px",
+            backgroundColor: "#ffffff",
+            width: "100%",
+          }}
+        />
       </div>
     ),
     {
@@ -931,4 +953,12 @@ export async function GET(req: NextRequest) {
   }
 
   return response;
+}
+
+export async function GET(req: NextRequest) {
+  return handleScreenshotRequest(req);
+}
+
+export async function POST(req: NextRequest) {
+  return handleScreenshotRequest(req);
 }

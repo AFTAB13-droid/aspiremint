@@ -366,19 +366,51 @@ export class FlipkartReviewService {
           const priceMatch =
             text.match(/"finalPrice":\s*\{\s*"value":\s*([0-9]+)/i) ||
             text.match(/"price":\s*([0-9]+)/i);
-          if (priceMatch) price = parseInt(priceMatch[1], 10);
+          if (priceMatch && parseInt(priceMatch[1], 10) > 0) price = parseInt(priceMatch[1], 10);
         }
 
         if (!mrp) {
           const mrpMatch =
             text.match(/"mrp":\s*\{\s*"value":\s*([0-9]+)/i) ||
             text.match(/"mrp":\s*([0-9]+)/i);
-          if (mrpMatch) mrp = parseInt(mrpMatch[1], 10);
+          if (mrpMatch && parseInt(mrpMatch[1], 10) > 0) mrp = parseInt(mrpMatch[1], 10);
         }
+      }
 
-        if (price && mrp && mrp > price) {
-          discount = `${Math.round(((mrp - price) / mrp) * 100)}% off`;
-        }
+      // 3. Fallback: Query Flipkart direct PID endpoint if photo or price is still missing
+      if (!imageUrl || !price) {
+        try {
+          const directRes = await fetch(`https://www.flipkart.com/p/p/p?pid=${pid}`, {
+            headers: BROWSER_HEADERS,
+            signal: controller.signal,
+          });
+          if (directRes.ok) {
+            const directText = await directRes.text();
+            if (!imageUrl) {
+              const allRuk = [...directText.matchAll(/https:\/\/rukminim[0-9]*\.flixcart\.com\/image\/[0-9]+\/[0-9]+\/([^"'\s]+?\.(?:jpeg|jpg|png))/gi)];
+              if (allRuk.length > 0) {
+                imageUrl = `https://rukminim2.flixcart.com/image/600/600/${allRuk[0][1]}`;
+              }
+            }
+            if (!price) {
+              const mDirect = directText.match(/"finalPrice":\s*([0-9]+)/i) || directText.match(/"price":\s*([0-9]+)/i);
+              if (mDirect && parseInt(mDirect[1], 10) > 0) price = parseInt(mDirect[1], 10);
+            }
+            if (!mrp) {
+              const mrpDirect = directText.match(/"mrp":\s*([0-9]+)/i);
+              if (mrpDirect && parseInt(mrpDirect[1], 10) > 0) mrp = parseInt(mrpDirect[1], 10);
+            }
+          }
+        } catch {}
+      }
+
+      if (imageUrl) {
+        // Upgrade thumbnail dimensions to high-resolution 600x600 for crisp screenshot rendering
+        imageUrl = imageUrl.replace(/\/image\/[0-9]+\/[0-9]+\//, "/image/600/600/");
+      }
+
+      if (price && mrp && mrp > price) {
+        discount = `${Math.round(((mrp - price) / mrp) * 100)}% off`;
       }
     } catch {}
 

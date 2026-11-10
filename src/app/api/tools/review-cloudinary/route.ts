@@ -22,30 +22,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Fetch screenshot bytes from internal in-house generator
+    // 1. Fetch screenshot bytes from internal in-house generator via POST
     const internalScreenshotUrl = new URL(
       "/api/tools/review-screenshot",
       req.url
     );
-    internalScreenshotUrl.searchParams.set("url", targetUrl);
-    if (body.name) internalScreenshotUrl.searchParams.set("name", body.name);
-    if (body.rating) internalScreenshotUrl.searchParams.set("rating", String(body.rating));
-    if (body.title) internalScreenshotUrl.searchParams.set("title", body.title);
-    if (body.text) internalScreenshotUrl.searchParams.set("text", body.text);
-    if (body.date) internalScreenshotUrl.searchParams.set("date", body.date);
-    if (body.location) internalScreenshotUrl.searchParams.set("location", body.location);
-    if (body.attributes) internalScreenshotUrl.searchParams.set("attributes", body.attributes);
-    if (body.helpful) internalScreenshotUrl.searchParams.set("helpful", String(body.helpful));
-    if (body.productTitle) internalScreenshotUrl.searchParams.set("productTitle", body.productTitle);
-    if (body.productImage) internalScreenshotUrl.searchParams.set("productImage", body.productImage);
-    if (body.price) internalScreenshotUrl.searchParams.set("price", String(body.price));
-    if (body.mrp) internalScreenshotUrl.searchParams.set("mrp", String(body.mrp));
-    if (body.discount) internalScreenshotUrl.searchParams.set("discount", body.discount);
-    if (Array.isArray(body.images)) {
-      internalScreenshotUrl.searchParams.set("images", JSON.stringify(body.images));
-    }
 
-    const upstreamRes = await fetch(internalScreenshotUrl.toString());
+    const upstreamRes = await fetch(internalScreenshotUrl.toString(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url: targetUrl,
+        name: body.name,
+        rating: body.rating,
+        title: body.title,
+        text: body.text,
+        date: body.date,
+        helpful: body.helpful,
+        productTitle: body.productTitle,
+        productImage: body.productImage,
+        price: body.price,
+        mrp: body.mrp,
+        discount: body.discount,
+        images: body.images,
+      }),
+    });
 
     if (!upstreamRes.ok) {
       const errText = await upstreamRes.text().catch(() => "");
