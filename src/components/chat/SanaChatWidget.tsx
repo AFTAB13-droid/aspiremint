@@ -160,6 +160,7 @@ export default function SanaChatWidget() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const isOrdersPage = pathname?.includes("/orders") || false;
+  const isReviewFinderPage = pathname?.includes("/review-finder") || false;
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -377,10 +378,12 @@ export default function SanaChatWidget() {
 
   return (
     <>
-      {/* 🌸 FLOATING SANA TRIGGER BUTTON (SHIFTS VERTICALLY ON ORDERS PAGE TO AVOID COLLIDING WITH THE + BUTTON) */}
+      {/* 🌸 FLOATING SANA TRIGGER BUTTON (SHIFTS VERTICALLY ON ORDERS & REVIEW-FINDER PAGES TO AVOID FAB COLLISIONS) */}
       <div
         className={`fixed z-[9990] transition-all duration-300 ${
-          isOrdersPage
+          isReviewFinderPage
+            ? "bottom-24 right-5 sm:bottom-24 sm:right-6"
+            : isOrdersPage
             ? "bottom-24 right-5 sm:bottom-5 sm:right-5"
             : "bottom-5 right-5"
         }`}
