@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { FlipkartReviewService } from "@/services/flipkartReview.service";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  let targetUrl = searchParams.get("url")?.trim();
+  const targetUrl = searchParams.get("url")?.trim();
 
   if (!targetUrl) {
     return NextResponse.json(
@@ -14,63 +15,111 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Auto-correct common typos like M0B (digit 0) to MOB (letter O) in Flipkart PIDs
-  targetUrl = targetUrl.replace(/([?&]pid=)M0B/i, "$1MOB");
-
-  try {
-    let resolvedUrl = targetUrl;
-    if (targetUrl.includes("dl.flipkart.com") || targetUrl.includes("fkrt.it")) {
-      try {
-        const headRes = await fetch(targetUrl, {
-          method: "HEAD",
-          redirect: "follow",
-          headers: {
-            "User-Agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          },
-        });
-        if (headRes.url) {
-          resolvedUrl = headRes.url;
-        }
-      } catch (redirectErr) {
-        console.warn("Could not follow redirect, using original URL:", redirectErr);
-      }
-    }
-
-    const upstreamUrl = `https://rikome.com/api/review-finder?url=${encodeURIComponent(resolvedUrl)}`;
-    const upstreamRes = await fetch(upstreamUrl, {
-      headers: {
-        Accept: "text/event-stream",
-        Referer: "https://rikome.com/",
-        Origin: "https://rikome.com",
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      },
-    });
-
-    if (!upstreamRes.ok || !upstreamRes.body) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: `Failed to initiate review stream (HTTP ${upstreamRes.status})`,
-        },
-        { status: upstreamRes.status || 500 }
-      );
-    }
-
-    return new Response(upstreamRes.body, {
-      headers: {
-        "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-        "X-Accel-Buffering": "no",
-      },
-    });
-  } catch (error: any) {
-    console.error("Review stream error:", error);
+  const urlInfo = await FlipkartReviewService.resolveUrl(targetUrl);
+  if (!urlInfo || !urlInfo.pid) {
     return NextResponse.json(
-      { success: false, message: error?.message || "Failed to scan reviews." },
-      { status: 500 }
+      {
+        success: false,
+        message:
+          "Could not identify a valid Flipkart Product ID (PID). Please check your link.",
+      },
+      { status: 400 }
     );
   }
+
+  const { pid, slug, itm } = urlInfo;
+
+  // Stream reviews in SSE format for real-time frontend consumption
+  const stream = new ReadableStream({
+    async start(controller) {
+      const encoder = new TextEncoder();
+
+      const sendEvent = (data: any) => {
+        try {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
+          );
+        } catch {}
+      };
+
+      try {
+        // 1. Initial info
+        sendEvent({
+          type: "init",
+          pid,
+          slug,
+          itm,
+        });
+
+        sendEvent({
+          type: "log",
+          msg: "Scanning Flipkart product reviews in real-time...",
+        });
+
+        // 2. Fetch Page 1
+        const page1 = await FlipkartReviewService.fetchPage(pid, slug, itm, 1);
+
+        if (!page1.reviews || page1.reviews.length === 0) {
+          sendEvent({
+            type: "error",
+            msg: "No public reviews found for this product listing.",
+          });
+          controller.close();
+          return;
+        }
+
+        // Meta event
+        sendEvent({
+          type: "meta",
+          total_pages: 5,
+          total_reviews: Math.max(page1.reviews.length, 50),
+        });
+
+        // Send page 1 batch immediately
+        sendEvent({
+          type: "batch",
+          reviews: page1.reviews,
+        });
+
+        // 3. Concurrently fetch pages 2 to 4 for lightning-fast population
+        const remainingPages = [2, 3, 4];
+        const pageResults = await Promise.allSettled(
+          remainingPages.map((pageNum) =>
+            FlipkartReviewService.fetchPage(pid, slug, itm, pageNum)
+          )
+        );
+
+        for (const res of pageResults) {
+          if (res.status === "fulfilled" && res.value.reviews.length > 0) {
+            sendEvent({
+              type: "batch",
+              reviews: res.value.reviews,
+            });
+          }
+        }
+
+        // 4. Finished
+        sendEvent({ type: "done" });
+      } catch (err: any) {
+        console.error("In-House Review Stream Error:", err);
+        sendEvent({
+          type: "error",
+          msg: err?.message || "Failed to stream reviews.",
+        });
+      } finally {
+        try {
+          controller.close();
+        } catch {}
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    },
+  });
 }

@@ -368,6 +368,12 @@ export default function ReviewFinderPage() {
           body: JSON.stringify({
             url: permalink,
             orderId: order.userOrderId || order._id,
+            name: selectedReviewForAutofill.name,
+            rating: selectedReviewForAutofill.rating,
+            title: selectedReviewForAutofill.title,
+            text: selectedReviewForAutofill.text,
+            date: selectedReviewForAutofill.date,
+            attributes: selectedReviewForAutofill.attributes,
           }),
         });
         const cData = await cRes.json();
@@ -500,7 +506,20 @@ export default function ReviewFinderPage() {
         review_id: id,
       });
       
-      const res = await fetch(`/api/tools/review-screenshot?url=${encodeURIComponent(permalink)}&download=true`);
+      const review = reviews.find((r) => r.id === id);
+      const params = new URLSearchParams({
+        url: permalink,
+        download: "true",
+        name: review?.name || "",
+        rating: String(review?.rating || "5"),
+        title: review?.title || "",
+        text: review?.text || "",
+        date: review?.date || "",
+        attributes: review?.attributes || "",
+        verified: review?.verified ? "true" : "false",
+      });
+      
+      const res = await fetch(`/api/tools/review-screenshot?${params.toString()}`);
       if (!res.ok) {
         throw new Error("Could not generate proof screenshot");
       }

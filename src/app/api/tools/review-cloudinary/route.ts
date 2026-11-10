@@ -22,23 +22,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Fetch screenshot bytes from upstream rikome service
-    const upstreamUrl = `https://rikome.com/api/review-screenshot?url=${encodeURIComponent(targetUrl)}`;
-    const upstreamRes = await fetch(upstreamUrl, {
-      headers: {
-        Referer: "https://rikome.com/",
-        Origin: "https://rikome.com",
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      },
-    });
+    // 1. Fetch screenshot bytes from internal in-house generator
+    const internalScreenshotUrl = new URL(
+      "/api/tools/review-screenshot",
+      req.url
+    );
+    internalScreenshotUrl.searchParams.set("url", targetUrl);
+    if (body.name) internalScreenshotUrl.searchParams.set("name", body.name);
+    if (body.rating) internalScreenshotUrl.searchParams.set("rating", String(body.rating));
+    if (body.title) internalScreenshotUrl.searchParams.set("title", body.title);
+    if (body.text) internalScreenshotUrl.searchParams.set("text", body.text);
+    if (body.date) internalScreenshotUrl.searchParams.set("date", body.date);
+    if (body.attributes) internalScreenshotUrl.searchParams.set("attributes", body.attributes);
+
+    const upstreamRes = await fetch(internalScreenshotUrl.toString());
 
     if (!upstreamRes.ok) {
       const errText = await upstreamRes.text().catch(() => "");
       return NextResponse.json(
         {
           success: false,
-          message: errText || `Failed to retrieve screenshot from upstream (HTTP ${upstreamRes.status})`,
+          message: errText || `Failed to generate review proof screenshot (HTTP ${upstreamRes.status})`,
         },
         { status: upstreamRes.status || 500 }
       );
