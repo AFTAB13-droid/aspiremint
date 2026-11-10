@@ -19,6 +19,9 @@ export async function GET(req: NextRequest) {
   let helpful = searchParams.get("helpful") || "113";
   let productTitle = searchParams.get("productTitle") || "";
   let productImage = searchParams.get("productImage") || "";
+  let price = searchParams.get("price") || "";
+  let mrp = searchParams.get("mrp") || "";
+  let discount = searchParams.get("discount") || "";
   const verified = searchParams.get("verified") !== "false";
 
   let photos: string[] = [];
@@ -29,40 +32,57 @@ export async function GET(req: NextRequest) {
     }
   } catch {}
 
-  // Resolve product info from URL if missing
+  // Resolve product info and review details dynamically from URL if missing
   if (targetUrl) {
     try {
       const urlInfo = await FlipkartReviewService.resolveUrl(targetUrl);
-      if (urlInfo?.slug && !productTitle) {
-        productTitle = urlInfo.slug
-          .split("-")
-          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-          .join(" ");
-      }
+      if (urlInfo?.pid) {
+        // Fetch real product metadata from catalog if title, photo or price is missing
+        if (!productTitle || !productImage || !price) {
+          const productMeta = await FlipkartReviewService.fetchProductMeta(
+            urlInfo.pid,
+            urlInfo.slug
+          );
+          if (productMeta) {
+            if (!productTitle && productMeta.title) productTitle = productMeta.title;
+            if (!productImage && productMeta.imageUrl) productImage = productMeta.imageUrl;
+            if (!price && productMeta.price) price = String(productMeta.price);
+            if (!mrp && productMeta.mrp) mrp = String(productMeta.mrp);
+            if (!discount && productMeta.discount) discount = productMeta.discount;
+          }
+        }
 
-      if (!name && urlInfo?.pid) {
-        const page1 = await FlipkartReviewService.fetchPage(
-          urlInfo.pid,
-          urlInfo.slug,
-          urlInfo.itm,
-          1
-        );
-        const reviewIdMatch = targetUrl.match(/reviewId=([a-zA-Z0-9_-]+)/);
-        const reviewId = reviewIdMatch ? reviewIdMatch[1] : "";
-        const matched =
-          page1.reviews.find(
-            (r) => r.id === reviewId || r.permalink?.includes(reviewId)
-          ) || page1.reviews[0];
+        if (urlInfo?.slug && !productTitle) {
+          productTitle = urlInfo.slug
+            .split("-")
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(" ");
+        }
 
-        if (matched) {
-          name = matched.name || name;
-          rating = String(matched.rating || rating);
-          title = matched.title || title;
-          text = matched.text || text;
-          date = matched.date || date;
-          helpful = String(matched.helpful || helpful);
-          if (matched.images && matched.images.length > 0 && photos.length === 0) {
-            photos = matched.images.slice(0, 4);
+        if (!name) {
+          const page1 = await FlipkartReviewService.fetchPage(
+            urlInfo.pid,
+            urlInfo.slug,
+            urlInfo.itm,
+            1
+          );
+          const reviewIdMatch = targetUrl.match(/reviewId=([a-zA-Z0-9_-]+)/);
+          const reviewId = reviewIdMatch ? reviewIdMatch[1] : "";
+          const matched =
+            page1.reviews.find(
+              (r) => r.id === reviewId || r.permalink?.includes(reviewId)
+            ) || page1.reviews[0];
+
+          if (matched) {
+            name = matched.name || name;
+            rating = String(matched.rating || rating);
+            title = matched.title || title;
+            text = matched.text || text;
+            date = matched.date || date;
+            helpful = String(matched.helpful || helpful);
+            if (matched.images && matched.images.length > 0 && photos.length === 0) {
+              photos = matched.images.slice(0, 4);
+            }
           }
         }
       }
@@ -71,12 +91,29 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Realistic defaults if not supplied
-  if (!name) name = "Shraddha Singh";
-  if (!text) text = "Overall good.nice camera \nBetter than 12.";
-  if (!title) title = "Great product";
-  if (!date) date = "08 Oct, 2024";
-  if (!productTitle) productTitle = "Apple iPhone 15 (Black, 128 GB)";
+  // Realistic defaults if still empty (NO hardcoded iPhone!)
+  if (!name) name = "Verified Customer";
+  if (!text) text = "Great product! Quality matches expectations.";
+  if (!title) title = "Worth every penny";
+  if (!date) date = "Recent Order";
+  if (!productTitle) productTitle = "Marketplace Verified Item";
+
+  // Clean and format price
+  let cleanPrice = price.replace(/[^0-9]/g, "");
+  if (!cleanPrice) cleanPrice = "499";
+  const displayPrice = parseInt(cleanPrice, 10).toLocaleString("en-IN");
+
+  let cleanMrp = mrp.replace(/[^0-9]/g, "");
+  const displayMrp = cleanMrp ? parseInt(cleanMrp, 10).toLocaleString("en-IN") : "";
+
+  let displayDiscount = discount;
+  if (!displayDiscount && cleanMrp && cleanPrice) {
+    const p = parseInt(cleanPrice, 10);
+    const m = parseInt(cleanMrp, 10);
+    if (m > p) {
+      displayDiscount = `${Math.round(((m - p) / m) * 100)}% off`;
+    }
+  }
 
   const numRating = parseInt(String(rating), 10) || 5;
 
@@ -318,53 +355,42 @@ export async function GET(req: NextRequest) {
                   }}
                 />
               ) : (
-                /* Sleek Smartphone Graphic */
+                /* Flipkart Delivery Parcel Graphic */
                 <div
                   style={{
-                    width: "130px",
-                    height: "190px",
-                    borderRadius: "18px",
-                    border: "3px solid #1e293b",
+                    width: "150px",
+                    height: "170px",
+                    borderRadius: "14px",
+                    border: "2px dashed #93c5fd",
                     backgroundColor: "#f8fafc",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "10px",
+                    justifyContent: "center",
+                    padding: "12px",
+                    gap: "8px",
                   }}
                 >
                   <div
                     style={{
-                      width: "42px",
-                      height: "12px",
-                      backgroundColor: "#1e293b",
-                      borderRadius: "6px",
-                    }}
-                  />
-                  <div
-                    style={{
-                      width: "54px",
-                      height: "54px",
+                      width: "56px",
+                      height: "56px",
                       borderRadius: "9999px",
-                      backgroundColor: "#e2e8f0",
+                      backgroundColor: "#eff6ff",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                     }}
                   >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
-                      <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-                      <line x1="12" y1="18" x2="12.01" y2="18" />
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2874f0" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                      <line x1="12" y1="22.08" x2="12" y2="12" />
                     </svg>
                   </div>
-                  <div
-                    style={{
-                      width: "30px",
-                      height: "3px",
-                      backgroundColor: "#1e293b",
-                      borderRadius: "2px",
-                    }}
-                  />
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#2874f0" }}>
+                    Flipkart Product
+                  </span>
                 </div>
               )}
             </div>
@@ -415,30 +441,78 @@ export async function GET(req: NextRequest) {
               </span>
             </div>
 
-            {/* Price Tag with SVG Rupee */}
+            {/* Price Tag with SVG Rupee, MRP strike-off and Discount */}
             <div
               style={{
                 display: "flex",
-                alignItems: "center",
-                fontSize: "19px",
-                fontWeight: 800,
-                color: "#212121",
+                alignItems: "baseline",
+                gap: "8px",
+                marginTop: "2px",
               }}
             >
-              <svg
-                width="14"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#212121"
-                strokeWidth="2.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ marginRight: "2px" }}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  fontSize: "19px",
+                  fontWeight: 800,
+                  color: "#212121",
+                }}
               >
-                <path d="M6 3h12M6 8h12M6 13l8.5 8M6 13h3a4 4 0 0 0 0-8" />
-              </svg>
-              <span>59,900</span>
+                <svg
+                  width="14"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#212121"
+                  strokeWidth="2.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ marginRight: "2px" }}
+                >
+                  <path d="M6 3h12M6 8h12M6 13l8.5 8M6 13h3a4 4 0 0 0 0-8" />
+                </svg>
+                <span>{displayPrice}</span>
+              </div>
+
+              {displayMrp && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    fontSize: "14px",
+                    color: "#878787",
+                    textDecoration: "line-through",
+                  }}
+                >
+                  <svg
+                    width="10"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#878787"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ marginRight: "1px" }}
+                  >
+                    <path d="M6 3h12M6 8h12M6 13l8.5 8M6 13h3a4 4 0 0 0 0-8" />
+                  </svg>
+                  <span>{displayMrp}</span>
+                </div>
+              )}
+
+              {displayDiscount && (
+                <span
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    color: "#388e3c",
+                  }}
+                >
+                  {displayDiscount}
+                </span>
+              )}
             </div>
           </div>
 

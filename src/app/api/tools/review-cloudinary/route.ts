@@ -36,6 +36,10 @@ export async function POST(req: NextRequest) {
     if (body.attributes) internalScreenshotUrl.searchParams.set("attributes", body.attributes);
     if (body.helpful) internalScreenshotUrl.searchParams.set("helpful", String(body.helpful));
     if (body.productTitle) internalScreenshotUrl.searchParams.set("productTitle", body.productTitle);
+    if (body.productImage) internalScreenshotUrl.searchParams.set("productImage", body.productImage);
+    if (body.price) internalScreenshotUrl.searchParams.set("price", String(body.price));
+    if (body.mrp) internalScreenshotUrl.searchParams.set("mrp", String(body.mrp));
+    if (body.discount) internalScreenshotUrl.searchParams.set("discount", body.discount);
     if (Array.isArray(body.images)) {
       internalScreenshotUrl.searchParams.set("images", JSON.stringify(body.images));
     }

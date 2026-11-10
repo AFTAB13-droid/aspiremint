@@ -114,6 +114,17 @@ export default function ReviewFinderPage() {
   const [reviews, setReviews] = useState<FlipkartReview[]>([]);
   const [totalPagesFound, setTotalPagesFound] = useState(0);
   const [totalReviewsCount, setTotalReviewsCount] = useState(0);
+  const [productMeta, setProductMeta] = useState<{
+    title?: string;
+    imageUrl?: string;
+    price?: number;
+    mrp?: number;
+    discount?: string;
+    rating?: number;
+    totalReviews?: number;
+    totalRatings?: number;
+  } | null>(null);
+  const [scannedSlots, setScannedSlots] = useState(0);
 
   // Filters & Sorting
   const [searchQuery, setSearchQuery] = useState("");
@@ -204,6 +215,8 @@ export default function ReviewFinderPage() {
     reviewsMapRef.current = new Map();
     setTotalPagesFound(0);
     setTotalReviewsCount(0);
+    setProductMeta(null);
+    setScannedSlots(0);
     setSearchQuery("");
     setRatingFilter("ALL");
     setWithPhotosOnly(false);
@@ -245,8 +258,10 @@ export default function ReviewFinderPage() {
     reviewsMapRef.current = new Map();
     setTotalPagesFound(0);
     setTotalReviewsCount(0);
+    setProductMeta(null);
+    setScannedSlots(0);
     setIsScanning(true);
-    setStatusLog("Scanning product reviews...");
+    setStatusLog("Connecting to marketplace catalog...");
     setCurrentPage(1);
 
     // Auto-sanitize common PID typos (such as digit 0 in M0B instead of letter MOB)
@@ -272,6 +287,14 @@ export default function ReviewFinderPage() {
             case "meta":
               if (payload.total_pages) setTotalPagesFound(payload.total_pages);
               if (payload.total_reviews) setTotalReviewsCount(payload.total_reviews);
+              if (payload.product) setProductMeta(payload.product);
+              break;
+            case "progress":
+              if (payload.slotsScanned) setScannedSlots(payload.slotsScanned);
+              if (payload.total && payload.total > 0) setTotalReviewsCount(payload.total);
+              if (payload.loaded) {
+                setStatusLog(`Extracting live: ${payload.loaded} reviews scanned...`);
+              }
               break;
             case "batch":
               if (Array.isArray(payload.reviews)) {
@@ -297,8 +320,10 @@ export default function ReviewFinderPage() {
               break;
             case "done":
               setIsScanning(false);
+              if (payload.slotsScanned) setScannedSlots(payload.slotsScanned);
+              if (payload.totalReported) setTotalReviewsCount(payload.totalReported);
               setStatusLog(`Scan complete! ${reviewsMapRef.current.size} reviews loaded.`);
-              toast.success(`${reviewsMapRef.current.size} reviews found!`);
+              toast.success(`${reviewsMapRef.current.size} reviews loaded!`);
               es.close();
               break;
             case "error":
@@ -376,6 +401,11 @@ export default function ReviewFinderPage() {
             attributes: selectedReviewForAutofill.attributes,
             helpful: selectedReviewForAutofill.helpful,
             images: selectedReviewForAutofill.images?.slice(0, 4),
+            productTitle: productMeta?.title,
+            productImage: productMeta?.imageUrl,
+            price: productMeta?.price,
+            mrp: productMeta?.mrp,
+            discount: productMeta?.discount,
           }),
         });
         const cData = await cRes.json();
@@ -521,6 +551,12 @@ export default function ReviewFinderPage() {
         verified: review?.verified ? "true" : "false",
         helpful: String(review?.helpful || "113"),
       });
+
+      if (productMeta?.title) params.set("productTitle", productMeta.title);
+      if (productMeta?.imageUrl) params.set("productImage", productMeta.imageUrl);
+      if (productMeta?.price) params.set("price", String(productMeta.price));
+      if (productMeta?.mrp) params.set("mrp", String(productMeta.mrp));
+      if (productMeta?.discount) params.set("discount", productMeta.discount);
 
       if (review?.images && review.images.length > 0) {
         params.set("images", JSON.stringify(review.images.slice(0, 4)));
@@ -798,6 +834,164 @@ export default function ReviewFinderPage() {
           </div>
         )}
       </div>
+
+      {/* Product Snapshot Card */}
+      {productMeta && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full p-4 sm:p-5 rounded-3xl bg-white dark:bg-[#0E1526] border border-blue-100 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-center gap-4"
+        >
+          {productMeta.imageUrl && (
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2 shrink-0 flex items-center justify-center">
+              <img
+                src={productMeta.imageUrl}
+                alt={productMeta.title || "Product"}
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+          )}
+          <div className="flex-1 min-w-0 text-center sm:text-left">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1.5">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/40">
+                Flipkart Verified Listing
+              </span>
+              {productMeta.rating && (
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-600 text-white">
+                  <span>{productMeta.rating}</span>
+                  <Star className="w-2.5 h-2.5 fill-white" />
+                </span>
+              )}
+            </div>
+            <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-white truncate">
+              {productMeta.title}
+            </h3>
+            <div className="flex items-baseline justify-center sm:justify-start gap-2 mt-1.5">
+              {productMeta.price && (
+                <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                  ₹{productMeta.price.toLocaleString("en-IN")}
+                </span>
+              )}
+              {productMeta.mrp && productMeta.mrp > (productMeta.price || 0) && (
+                <span className="text-xs text-slate-400 line-through">
+                  ₹{productMeta.mrp.toLocaleString("en-IN")}
+                </span>
+              )}
+              {productMeta.discount && (
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                  {productMeta.discount}
+                </span>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Live Review Extraction Progress & Stats HUD */}
+      {(isScanning || reviews.length > 0) && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full p-4 sm:p-6 rounded-3xl bg-white dark:bg-[#0E1526] border border-slate-100 dark:border-slate-800 shadow-sm space-y-4"
+        >
+          {/* Progress Bar Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {isScanning ? (
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-600"></span>
+                  </span>
+                  <span>Extracting Verified Reviews Live...</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>Catalog Scan Complete</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300">
+              <span>
+                {reviews.length.toLocaleString()} / {(totalReviewsCount || reviews.length).toLocaleString()} reviews
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-black text-slate-700 dark:text-slate-200">
+                {Math.min(100, Math.round((reviews.length / (totalReviewsCount || reviews.length || 1)) * 100))}%
+              </span>
+              {scannedSlots > 0 && (
+                <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-[10px] font-black text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/40">
+                  {scannedSlots} Slots Scanned
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* AspireMint Shimmer Gradient Progress Bar */}
+          <div className="w-full h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden relative">
+            <div
+              className={`h-full rounded-full bg-gradient-to-r from-blue-600 via-teal-500 to-emerald-500 transition-all duration-300 ease-out ${
+                isScanning ? "animate-pulse" : ""
+              }`}
+              style={{
+                width: `${Math.max(
+                  isScanning && reviews.length === 0 ? 8 : 0,
+                  Math.min(
+                    100,
+                    Math.round(
+                      (reviews.length / (totalReviewsCount || reviews.length || 1)) * 100
+                    )
+                  )
+                )}%`,
+              }}
+            />
+          </div>
+
+          {/* 4 Distinct Stat Metric Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 pt-1">
+            <div className="p-3 sm:p-4 rounded-2xl bg-slate-50/70 dark:bg-[#111827]/70 border border-slate-100 dark:border-slate-800/80">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">
+                Catalog Total
+              </span>
+              <span className="text-lg sm:text-2xl font-black text-slate-900 dark:text-white block">
+                {(totalReviewsCount || reviews.length).toLocaleString()}
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium">Marketplace Reported</span>
+            </div>
+
+            <div className="p-3 sm:p-4 rounded-2xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-100/60 dark:border-blue-900/30">
+              <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">
+                Loaded Live
+              </span>
+              <span className="text-lg sm:text-2xl font-black text-blue-600 dark:text-blue-400 block">
+                {reviews.length.toLocaleString()}
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium">Ready for search</span>
+            </div>
+
+            <div className="p-3 sm:p-4 rounded-2xl bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-100/60 dark:border-emerald-900/30">
+              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block mb-1">
+                Verified Buyers
+              </span>
+              <span className="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 block">
+                {reviews.filter((r) => r.verified).length.toLocaleString()}
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium">Certified badges</span>
+            </div>
+
+            <div className="p-3 sm:p-4 rounded-2xl bg-purple-50/40 dark:bg-purple-950/20 border border-purple-100/60 dark:border-purple-900/30">
+              <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 dark:text-purple-400 block mb-1">
+                With Photos
+              </span>
+              <span className="text-lg sm:text-2xl font-black text-purple-600 dark:text-purple-400 block">
+                {reviews.filter((r) => r.images && r.images.length > 0).length.toLocaleString()}
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium">Customer photo proofs</span>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Guest Perks Banner on Search Results */}
       {isGuest && reviews.length > 0 && (

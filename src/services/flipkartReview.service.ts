@@ -19,6 +19,17 @@ export interface FlipkartReview {
   ref?: string;
 }
 
+export interface FlipkartProductMeta {
+  title: string;
+  imageUrl: string;
+  price?: number;
+  mrp?: number;
+  discount?: string;
+  rating?: number;
+  totalReviews?: number;
+  totalRatings?: number;
+}
+
 export interface FlipkartUrlInfo {
   rawUrl: string;
   resolvedUrl: string;
@@ -82,6 +93,14 @@ export class FlipkartReviewService {
     const pidMatch = resolvedUrl.match(/[?&]pid=([A-Z0-9]{16})/i);
     if (pidMatch) {
       pid = pidMatch[1].toUpperCase();
+    }
+
+    if (!pid) {
+      // Check for /reviews/PID:xxxx permalink format
+      const reviewPathMatch = resolvedUrl.match(/\/reviews\/([A-Z0-9]{16})/i);
+      if (reviewPathMatch) {
+        pid = reviewPathMatch[1].toUpperCase();
+      }
     }
 
     if (!pid) {
@@ -222,17 +241,127 @@ export class FlipkartReviewService {
   }
 
   /**
-   * Fetches reviews for a specific page from Flipkart or Shopsy fallback
+   * Fetches product metadata (Title, photo, price, mrp, discount, rating, totalReviews)
+   */
+  static async fetchProductMeta(
+    pid: string,
+    slug: string = "product"
+  ): Promise<FlipkartProductMeta | null> {
+    if (!pid) return null;
+
+    // 1. Shopsy product page (super fast, no Akamai blocks)
+    try {
+      const shopsyUrl = `https://www.shopsy.in/product/p/itme?pid=${pid}`;
+      const res = await fetch(shopsyUrl, {
+        headers: BROWSER_HEADERS,
+        next: { revalidate: 300 },
+      });
+      if (res.ok) {
+        const html = await res.text();
+        const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
+        if (match) {
+          const json = JSON.parse(match[1]);
+          const pc = json.props?.pageProps?.initialState?.pageData?.RESPONSE?.pageData?.pageContext;
+          if (pc) {
+            let title = pc.titles?.title || pc.seo?.title || pc.tracking?.title || "";
+            let rawImg = pc.imageUrl || "";
+            let formattedImg = "";
+            if (rawImg) {
+              formattedImg = rawImg
+                .replace(/{@width}/g, "600")
+                .replace(/{@height}/g, "600")
+                .replace(/{@quality}/g, "85")
+                .replace("http://", "https://");
+            }
+            const finalPrice = pc.pricing?.finalPrice?.value;
+            const mrp = pc.pricing?.mrp;
+            let discount = "";
+            if (finalPrice && mrp && mrp > finalPrice) {
+              discount = `${Math.round(((mrp - finalPrice) / mrp) * 100)}% off`;
+            }
+            const reviewCount = pc.rating?.reviewCount;
+            const ratingCount = pc.rating?.ratingCount;
+            const averageRating = pc.rating?.average;
+
+            if (title || formattedImg) {
+              return {
+                title,
+                imageUrl: formattedImg,
+                price: finalPrice,
+                mrp,
+                discount,
+                rating: averageRating,
+                totalReviews: reviewCount,
+                totalRatings: ratingCount,
+              };
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Product meta fetch error on Shopsy:", err);
+    }
+
+    // 2. Shopsy reviews page fallback
+    try {
+      const reviewUrl = `https://www.shopsy.in/product/product-reviews/itm?pid=${pid}&page=1`;
+      const res = await fetch(reviewUrl, {
+        headers: BROWSER_HEADERS,
+        next: { revalidate: 300 },
+      });
+      if (res.ok) {
+        const html = await res.text();
+        const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
+        if (match) {
+          const json = JSON.parse(match[1]);
+          const response = json.props?.pageProps?.initialState?.pageData?.RESPONSE;
+          const pc = response?.pageData?.pageContext;
+          const title = pc?.tracking?.title || pc?.titles?.title || "";
+          let reviewCount = 0;
+          let rating = 4.2;
+          let ratingCount = 0;
+          for (const slot of response?.slots || []) {
+            const rVal = slot?.widget?.data?.rating?.value;
+            if (rVal) {
+              reviewCount = rVal.reviewCount || reviewCount;
+              rating = rVal.average || rating;
+              ratingCount = rVal.ratingCount || ratingCount;
+            }
+          }
+          if (title || reviewCount > 0) {
+            return {
+              title,
+              imageUrl: "",
+              price: undefined,
+              mrp: undefined,
+              discount: "",
+              rating,
+              totalReviews: reviewCount,
+              totalRatings: ratingCount,
+            };
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Product meta fallback error on Shopsy reviews:", err);
+    }
+
+    return null;
+  }
+
+  /**
+   * Fetches reviews for a specific page and sortOrder from Flipkart or Shopsy fallback
    */
   static async fetchPage(
     pid: string,
     slug: string,
     itm: string,
-    page: number
+    page: number,
+    sortOrder: string = "MOST_HELPFUL"
   ): Promise<{ reviews: FlipkartReview[]; totalReviews?: number }> {
     // 1. Try Flipkart Web
     try {
-      const fkUrl = `https://www.flipkart.com/${slug}/product-reviews/${itm}?pid=${pid}&page=${page}`;
+      const fkUrl = `https://www.flipkart.com/${slug}/product-reviews/${itm}?pid=${pid}&sortOrder=${sortOrder}&page=${page}`;
       const res = await fetch(fkUrl, {
         headers: BROWSER_HEADERS,
         next: { revalidate: 300 },
@@ -257,7 +386,7 @@ export class FlipkartReviewService {
 
     // 2. High-speed Fallback: Shopsy (Official Flipkart Storefront - Zero Akamai blocks)
     try {
-      const shopsyUrl = `https://www.shopsy.in/product/product-reviews/itm?pid=${pid}&page=${page}`;
+      const shopsyUrl = `https://www.shopsy.in/product/product-reviews/itm?pid=${pid}&sortOrder=${sortOrder}&page=${page}`;
       const res = await fetch(shopsyUrl, {
         headers: BROWSER_HEADERS,
         next: { revalidate: 300 },
