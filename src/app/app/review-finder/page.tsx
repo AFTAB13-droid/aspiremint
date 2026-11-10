@@ -374,6 +374,8 @@ export default function ReviewFinderPage() {
             text: selectedReviewForAutofill.text,
             date: selectedReviewForAutofill.date,
             attributes: selectedReviewForAutofill.attributes,
+            helpful: selectedReviewForAutofill.helpful,
+            images: selectedReviewForAutofill.images?.slice(0, 4),
           }),
         });
         const cData = await cRes.json();
@@ -517,7 +519,12 @@ export default function ReviewFinderPage() {
         date: review?.date || "",
         attributes: review?.attributes || "",
         verified: review?.verified ? "true" : "false",
+        helpful: String(review?.helpful || "113"),
       });
+
+      if (review?.images && review.images.length > 0) {
+        params.set("images", JSON.stringify(review.images.slice(0, 4)));
+      }
       
       const res = await fetch(`/api/tools/review-screenshot?${params.toString()}`);
       if (!res.ok) {

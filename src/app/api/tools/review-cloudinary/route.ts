@@ -34,6 +34,11 @@ export async function POST(req: NextRequest) {
     if (body.text) internalScreenshotUrl.searchParams.set("text", body.text);
     if (body.date) internalScreenshotUrl.searchParams.set("date", body.date);
     if (body.attributes) internalScreenshotUrl.searchParams.set("attributes", body.attributes);
+    if (body.helpful) internalScreenshotUrl.searchParams.set("helpful", String(body.helpful));
+    if (body.productTitle) internalScreenshotUrl.searchParams.set("productTitle", body.productTitle);
+    if (Array.isArray(body.images)) {
+      internalScreenshotUrl.searchParams.set("images", JSON.stringify(body.images));
+    }
 
     const upstreamRes = await fetch(internalScreenshotUrl.toString());
 
