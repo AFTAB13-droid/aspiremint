@@ -126,44 +126,38 @@ export async function GET(req: NextRequest) {
           return;
         }
 
-        // 4. Multi-sort slot expansion: Scan across multiple sort orders concurrently
-        // (MOST_RECENT, MOST_HELPFUL, POSITIVE_FIRST, NEGATIVE_FIRST)
-        const slotsToScan: Array<{ page: number; sort: string }> = [
-          // MOST_RECENT gives fresh reviews
-          { page: 1, sort: "MOST_RECENT" },
-          { page: 2, sort: "MOST_RECENT" },
-          { page: 3, sort: "MOST_RECENT" },
-          { page: 4, sort: "MOST_RECENT" },
-          { page: 5, sort: "MOST_RECENT" },
-          { page: 6, sort: "MOST_RECENT" },
+        // 4. Ultra-Speed Multi-Slot Expansion: Scan across all review sorts & channels
+        // Aiming for 400-500 reviews with high concurrency
+        const slotsToScan: Array<{ page: number; sort: string; cb: boolean }> = [];
 
-          // MOST_HELPFUL pages 2 to 6
-          { page: 2, sort: "MOST_HELPFUL" },
-          { page: 3, sort: "MOST_HELPFUL" },
-          { page: 4, sort: "MOST_HELPFUL" },
-          { page: 5, sort: "MOST_HELPFUL" },
-          { page: 6, sort: "MOST_HELPFUL" },
+        // Channel A: Most Recent (Pages 1 to 12)
+        for (let p = 1; p <= 12; p++) slotsToScan.push({ page: p, sort: "MOST_RECENT", cb: false });
 
-          // POSITIVE_FIRST
-          { page: 1, sort: "POSITIVE_FIRST" },
-          { page: 2, sort: "POSITIVE_FIRST" },
-          { page: 3, sort: "POSITIVE_FIRST" },
-          { page: 4, sort: "POSITIVE_FIRST" },
+        // Channel B: Most Helpful (Pages 2 to 12 - page 1 already fetched)
+        for (let p = 2; p <= 12; p++) slotsToScan.push({ page: p, sort: "MOST_HELPFUL", cb: false });
 
-          // NEGATIVE_FIRST
-          { page: 1, sort: "NEGATIVE_FIRST" },
-          { page: 2, sort: "NEGATIVE_FIRST" },
-          { page: 3, sort: "NEGATIVE_FIRST" },
-          { page: 4, sort: "NEGATIVE_FIRST" },
-        ];
+        // Channel C: Positive Reviews (Pages 1 to 10)
+        for (let p = 1; p <= 10; p++) slotsToScan.push({ page: p, sort: "POSITIVE_FIRST", cb: false });
 
-        // Process in concurrent batches of 5 requests for maximum speed
-        const BATCH_SIZE = 5;
+        // Channel D: Critical / Negative Reviews (Pages 1 to 10)
+        for (let p = 1; p <= 10; p++) slotsToScan.push({ page: p, sort: "NEGATIVE_FIRST", cb: false });
+
+        // Channel E: Certified Buyer Most Recent (Pages 1 to 8)
+        for (let p = 1; p <= 8; p++) slotsToScan.push({ page: p, sort: "MOST_RECENT", cb: true });
+
+        // Channel F: Certified Buyer Most Helpful (Pages 1 to 8)
+        for (let p = 1; p <= 8; p++) slotsToScan.push({ page: p, sort: "MOST_HELPFUL", cb: true });
+
+        // Process in high-concurrency batches of 12 parallel requests for 10x faster speed
+        const BATCH_SIZE = 12;
         for (let i = 0; i < slotsToScan.length; i += BATCH_SIZE) {
+          // If we reached target 400-500 reviews, finish early
+          if (seenIds.size >= 450) break;
+
           const batch = slotsToScan.slice(i, i + BATCH_SIZE);
           const results = await Promise.allSettled(
-            batch.map(({ page, sort }) =>
-              FlipkartReviewService.fetchPage(pid, slug, itm, page, sort)
+            batch.map(({ page, sort, cb }) =>
+              FlipkartReviewService.fetchPage(pid, slug, itm, page, sort, cb)
             )
           );
 

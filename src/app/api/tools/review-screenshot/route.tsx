@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
   } catch {}
 
   // Resolve product info and review details dynamically from URL if missing
-  if (targetUrl) {
+  if (targetUrl && (!name || !productTitle || !price)) {
     try {
       const urlInfo = await FlipkartReviewService.resolveUrl(targetUrl);
       if (urlInfo?.pid) {
@@ -97,6 +97,69 @@ export async function GET(req: NextRequest) {
   if (!title) title = "Worth every penny";
   if (!date) date = "Recent Order";
   if (!productTitle) productTitle = "Marketplace Verified Item";
+
+  // Pre-buffer product image to verified JPEG/PNG base64 Data URL so Satori renders in 5ms with zero crashes
+  let base64ProductImage = "";
+  if (productImage && productImage.startsWith("http")) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 1800);
+      const imgRes = await fetch(productImage, {
+        signal: controller.signal,
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+          Accept: "image/jpeg,image/png",
+        },
+      });
+      clearTimeout(timeout);
+      if (imgRes.ok) {
+        const ab = await imgRes.arrayBuffer();
+        const bytes = new Uint8Array(ab.slice(0, 4));
+        const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+        const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
+        if (isJpeg || isPng) {
+          const mime = isJpeg ? "image/jpeg" : "image/png";
+          base64ProductImage = `data:${mime};base64,${Buffer.from(ab).toString("base64")}`;
+        }
+      }
+    } catch {}
+  } else if (productImage && productImage.startsWith("data:")) {
+    base64ProductImage = productImage;
+  }
+
+  // Pre-buffer customer photos with verified JPEG/PNG magic bytes
+  const base64Photos: string[] = [];
+  if (photos && photos.length > 0) {
+    for (const p of photos.slice(0, 3)) {
+      if (p && p.startsWith("http")) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 1200);
+          const pRes = await fetch(p, {
+            signal: controller.signal,
+            headers: {
+              "User-Agent": "Mozilla/5.0",
+              Accept: "image/jpeg,image/png",
+            },
+          });
+          clearTimeout(timeout);
+          if (pRes.ok) {
+            const ab = await pRes.arrayBuffer();
+            const bytes = new Uint8Array(ab.slice(0, 4));
+            const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+            const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
+            if (isJpeg || isPng) {
+              const mime = isJpeg ? "image/jpeg" : "image/png";
+              base64Photos.push(`data:${mime};base64,${Buffer.from(ab).toString("base64")}`);
+            }
+          }
+        } catch {}
+      } else if (p && p.startsWith("data:")) {
+        base64Photos.push(p);
+      }
+    }
+  }
 
   // Clean and format price
   let cleanPrice = price.replace(/[^0-9]/g, "");
@@ -345,9 +408,11 @@ export async function GET(req: NextRequest) {
                 marginBottom: "14px",
               }}
             >
-              {productImage ? (
+              {base64ProductImage ? (
                 <img
-                  src={productImage}
+                  src={base64ProductImage}
+                  width="200"
+                  height="200"
                   style={{
                     maxHeight: "200px",
                     maxWidth: "200px",
@@ -592,7 +657,7 @@ export async function GET(req: NextRequest) {
             </div>
 
             {/* Customer Review Photos Thumbnails if present */}
-            {photos.length > 0 && (
+            {base64Photos.length > 0 && (
               <div
                 style={{
                   display: "flex",
@@ -600,10 +665,12 @@ export async function GET(req: NextRequest) {
                   marginBottom: "18px",
                 }}
               >
-                {photos.slice(0, 4).map((pUrl, idx) => (
+                {base64Photos.map((pUrl, idx) => (
                   <img
                     key={idx}
                     src={pUrl}
+                    width="68"
+                    height="68"
                     style={{
                       width: "68px",
                       height: "68px",

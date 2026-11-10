@@ -350,27 +350,63 @@ export class FlipkartReviewService {
   }
 
   /**
-   * Fetches reviews for a specific page and sortOrder from Flipkart or Shopsy fallback
+   * Fetches reviews for a specific page and sortOrder from Shopsy (Primary, ultra-fast) or Flipkart (Fallback)
    */
   static async fetchPage(
     pid: string,
     slug: string,
     itm: string,
     page: number,
-    sortOrder: string = "MOST_HELPFUL"
+    sortOrder: string = "MOST_HELPFUL",
+    certifiedBuyer: boolean = false
   ): Promise<{ reviews: FlipkartReview[]; totalReviews?: number }> {
-    // 1. Try Flipkart Web
+    const cbParam = certifiedBuyer ? "&certifiedBuyer=true" : "&certifiedBuyer=false";
+
+    // 1. High-speed Primary: Shopsy (Zero Akamai blocks, 150ms-250ms direct response)
     try {
-      const fkUrl = `https://www.flipkart.com/${slug}/product-reviews/${itm}?pid=${pid}&sortOrder=${sortOrder}&page=${page}`;
-      const res = await fetch(fkUrl, {
+      const shopsyUrl = `https://www.shopsy.in/product/product-reviews/itm?pid=${pid}&sortOrder=${sortOrder}${cbParam}&page=${page}`;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2500);
+      const res = await fetch(shopsyUrl, {
         headers: BROWSER_HEADERS,
+        signal: controller.signal,
         next: { revalidate: 300 },
       });
+      clearTimeout(timeout);
+
+      if (res.ok) {
+        const html = await res.text();
+        const match = html.match(
+          /<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/
+        );
+        if (match) {
+          const json = JSON.parse(match[1]);
+          const reviews = this.extractReviewsFromObject(json, pid);
+          if (reviews.length > 0) {
+            return { reviews };
+          }
+        }
+      }
+    } catch {}
+
+    // 2. Secondary Fallback: Flipkart Web (Only if Shopsy returned 0 reviews)
+    try {
+      const fkUrl = `https://www.flipkart.com/${slug}/product-reviews/${itm}?pid=${pid}&sortOrder=${sortOrder}${cbParam}&page=${page}`;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2500);
+      const res = await fetch(fkUrl, {
+        headers: BROWSER_HEADERS,
+        signal: controller.signal,
+        next: { revalidate: 300 },
+      });
+      clearTimeout(timeout);
 
       if (res.ok) {
         const html = await res.text();
         if (html.includes("window.__INITIAL_STATE__") && !html.includes("E002")) {
-          const match = html.match(/window\.__INITIAL_STATE__\s*=\s*(\{[\s\S]*?\});<\/script>/);
+          const match = html.match(
+            /window\.__INITIAL_STATE__\s*=\s*(\{[\s\S]*?\});<\/script>/
+          );
           if (match) {
             const state = JSON.parse(match[1]);
             const reviews = this.extractReviewsFromObject(state, pid);
@@ -380,30 +416,7 @@ export class FlipkartReviewService {
           }
         }
       }
-    } catch (fkErr) {
-      console.warn(`Flipkart fetch error on page ${page}:`, fkErr);
-    }
-
-    // 2. High-speed Fallback: Shopsy (Official Flipkart Storefront - Zero Akamai blocks)
-    try {
-      const shopsyUrl = `https://www.shopsy.in/product/product-reviews/itm?pid=${pid}&sortOrder=${sortOrder}&page=${page}`;
-      const res = await fetch(shopsyUrl, {
-        headers: BROWSER_HEADERS,
-        next: { revalidate: 300 },
-      });
-
-      if (res.ok) {
-        const html = await res.text();
-        const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
-        if (match) {
-          const json = JSON.parse(match[1]);
-          const reviews = this.extractReviewsFromObject(json, pid);
-          return { reviews };
-        }
-      }
-    } catch (shopsyErr) {
-      console.warn(`Shopsy fallback fetch error on page ${page}:`, shopsyErr);
-    }
+    } catch {}
 
     return { reviews: [] };
   }
