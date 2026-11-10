@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { OnboardingModal } from "@/components/common/OnboardingModal";
+import SanaChatWidget from "@/components/chat/SanaChatWidget";
 
 import { PremiumLoader } from "@/components/common/PremiumLoader";
 
@@ -165,6 +166,9 @@ export default function DashboardLayout({
             {children}
           </div>
         </main>
+
+        {/* 🌸 SANA AI CHATBOT ASSISTANT */}
+        {!isGuest && <SanaChatWidget />}
       </div>
 
       {profileData?.isTerminated && !(pathname === "/app/settings" || pathname === "/app/support") && (
