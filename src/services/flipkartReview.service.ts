@@ -109,6 +109,30 @@ export class FlipkartReviewService {
       }
     }
 
+    // Fallback: If URL doesn't have ?pid= directly (e.g. copied from app or clean /p/itm URL), fetch once to extract PID
+    if (!pid && (resolvedUrl.includes("/p/") || resolvedUrl.includes("flipkart.com"))) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3500);
+        const pageRes = await fetch(resolvedUrl, {
+          headers: BROWSER_HEADERS,
+          signal: controller.signal,
+          redirect: "follow",
+        });
+        clearTimeout(timeout);
+        if (pageRes.ok) {
+          const text = await pageRes.text();
+          const match =
+            text.match(/[?&]pid=([A-Z0-9]{16})/i) ||
+            text.match(/"productId":"([A-Z0-9]{16})"/i) ||
+            text.match(/pid=([A-Z0-9]{16})/i);
+          if (match) {
+            pid = match[1].toUpperCase();
+          }
+        }
+      } catch {}
+    }
+
     // Extract slug and itm
     let slug = "product";
     let itm = "itm";
@@ -308,6 +332,18 @@ export class FlipkartReviewService {
         const ogImg = text.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
         if (ogImg) imageUrl = ogImg;
 
+        if (!imageUrl) {
+          const twImg = text.match(/<meta name="twitter:image" content="([^"]+)"/)?.[1];
+          if (twImg) imageUrl = twImg;
+        }
+
+        if (!imageUrl) {
+          const flixcartMatch = text.match(
+            /https:\/\/rukminim[0-9]*\.flixcart\.com\/image\/[0-9]+\/[0-9]+\/[^\s"']+\.(?:jpeg|jpg|png)/i
+          );
+          if (flixcartMatch) imageUrl = flixcartMatch[0];
+        }
+
         const m = text.match(/window\.__INITIAL_STATE__\s*=\s*(\{[\s\S]*?\});<\/script>/);
         if (m) {
           try {
@@ -323,10 +359,25 @@ export class FlipkartReviewService {
               for (const k of Object.keys(o)) findPrice(o[k]);
             }
             findPrice(json);
-            if (price && mrp && mrp > price) {
-              discount = `${Math.round(((mrp - price) / mrp) * 100)}% off`;
-            }
           } catch {}
+        }
+
+        if (!price) {
+          const priceMatch =
+            text.match(/"finalPrice":\s*\{\s*"value":\s*([0-9]+)/i) ||
+            text.match(/"price":\s*([0-9]+)/i);
+          if (priceMatch) price = parseInt(priceMatch[1], 10);
+        }
+
+        if (!mrp) {
+          const mrpMatch =
+            text.match(/"mrp":\s*\{\s*"value":\s*([0-9]+)/i) ||
+            text.match(/"mrp":\s*([0-9]+)/i);
+          if (mrpMatch) mrp = parseInt(mrpMatch[1], 10);
+        }
+
+        if (price && mrp && mrp > price) {
+          discount = `${Math.round(((mrp - price) / mrp) * 100)}% off`;
         }
       }
     } catch {}

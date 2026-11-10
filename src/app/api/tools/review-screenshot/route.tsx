@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
   let title = searchParams.get("title") || "";
   let text = searchParams.get("text") || "";
   let date = searchParams.get("date") || "";
+  let location = searchParams.get("location") || "";
   let helpful = searchParams.get("helpful") || "113";
   let productTitle = searchParams.get("productTitle") || "";
   let productImage = searchParams.get("productImage") || "";
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
   } catch {}
 
   // Resolve product info and review details dynamically from URL if missing
-  if (targetUrl && (!name || !productTitle || !price)) {
+  if (targetUrl && (!name || !productTitle || !productImage || !price)) {
     try {
       const urlInfo = await FlipkartReviewService.resolveUrl(targetUrl);
       if (urlInfo?.pid) {
@@ -41,7 +42,8 @@ export async function GET(req: NextRequest) {
         if (!productTitle || !productImage || !price) {
           const productMeta = await FlipkartReviewService.fetchProductMeta(
             urlInfo.pid,
-            urlInfo.slug
+            urlInfo.slug,
+            urlInfo.itm
           );
           if (productMeta) {
             if (!productTitle && productMeta.title) productTitle = productMeta.title;
@@ -59,7 +61,7 @@ export async function GET(req: NextRequest) {
             .join(" ");
         }
 
-        if (!name) {
+        if (!name || !location) {
           const page1 = await FlipkartReviewService.fetchPage(
             urlInfo.pid,
             urlInfo.slug,
@@ -79,6 +81,7 @@ export async function GET(req: NextRequest) {
             title = matched.title || title;
             text = matched.text || text;
             date = matched.date || date;
+            if (!location && matched.location) location = matched.location;
             helpful = String(matched.helpful || helpful);
             if (matched.images && matched.images.length > 0 && photos.length === 0) {
               photos = matched.images.slice(0, 4);
@@ -116,13 +119,13 @@ export async function GET(req: NextRequest) {
   if (productImage && productImage.startsWith("http")) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 1800);
+      const timeout = setTimeout(() => controller.abort(), 2500);
       const imgRes = await fetch(productImage, {
         signal: controller.signal,
         headers: {
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-          Accept: "image/jpeg,image/png",
+          Accept: "image/jpeg,image/png,*/*;q=0.8",
         },
       });
       clearTimeout(timeout);
@@ -134,9 +137,15 @@ export async function GET(req: NextRequest) {
         if (isJpeg || isPng) {
           const mime = isJpeg ? "image/jpeg" : "image/png";
           base64ProductImage = `data:${mime};base64,${toBase64(ab)}`;
+        } else {
+          base64ProductImage = productImage;
         }
+      } else {
+        base64ProductImage = productImage;
       }
-    } catch {}
+    } catch {
+      base64ProductImage = productImage;
+    }
   } else if (productImage && productImage.startsWith("data:")) {
     base64ProductImage = productImage;
   }
@@ -706,18 +715,19 @@ export async function GET(req: NextRequest) {
                 color: "#878787",
                 borderTop: "1px solid #f0f0f0",
                 paddingTop: "14px",
-                marginTop: "auto",
+                marginTop: "16px",
               }}
             >
-              {/* Name, Certified Buyer Badge, Date */}
+              {/* Name, Certified Buyer Badge, Location, Date/Time */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "8px",
+                  gap: "6px",
+                  flexWrap: "wrap",
                 }}
               >
-                <span style={{ fontWeight: 500, color: "#878787" }}>
+                <span style={{ fontWeight: 600, color: "#878787" }}>
                   {name}
                 </span>
 
@@ -731,8 +741,8 @@ export async function GET(req: NextRequest) {
                   >
                     <div
                       style={{
-                        width: "13px",
-                        height: "13px",
+                        width: "14px",
+                        height: "14px",
                         borderRadius: "9999px",
                         backgroundColor: "#878787",
                         display: "flex",
@@ -744,8 +754,14 @@ export async function GET(req: NextRequest) {
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                     </div>
-                    <span style={{ color: "#878787" }}>Certified Buyer</span>
+                    <span style={{ color: "#878787" }}>
+                      Certified Buyer{location ? `, ${location}` : ""}
+                    </span>
                   </div>
+                )}
+
+                {!verified && location && (
+                  <span style={{ color: "#878787" }}>, {location}</span>
                 )}
 
                 <span>•</span>
@@ -770,7 +786,9 @@ export async function GET(req: NextRequest) {
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#878787" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
                   </svg>
-                  <span>{helpful}</span>
+                  <span style={{ fontSize: "11px", color: "#878787", fontWeight: 500 }}>
+                    {helpful}
+                  </span>
                 </div>
                 <div
                   style={{
@@ -782,7 +800,9 @@ export async function GET(req: NextRequest) {
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#878787" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3" />
                   </svg>
-                  <span>17</span>
+                  <span style={{ fontSize: "11px", color: "#878787", fontWeight: 500 }}>
+                    17
+                  </span>
                 </div>
               </div>
             </div>

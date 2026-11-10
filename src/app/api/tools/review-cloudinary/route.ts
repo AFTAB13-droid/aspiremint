@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
     if (body.title) internalScreenshotUrl.searchParams.set("title", body.title);
     if (body.text) internalScreenshotUrl.searchParams.set("text", body.text);
     if (body.date) internalScreenshotUrl.searchParams.set("date", body.date);
+    if (body.location) internalScreenshotUrl.searchParams.set("location", body.location);
     if (body.attributes) internalScreenshotUrl.searchParams.set("attributes", body.attributes);
     if (body.helpful) internalScreenshotUrl.searchParams.set("helpful", String(body.helpful));
     if (body.productTitle) internalScreenshotUrl.searchParams.set("productTitle", body.productTitle);
