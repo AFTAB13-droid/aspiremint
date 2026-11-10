@@ -40,12 +40,12 @@ export interface FlipkartUrlInfo {
 
 const BROWSER_HEADERS: Record<string, string> = {
   "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
   Accept:
     "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-  "Accept-Language": "en-IN,en;q=0.9,hi;q=0.8",
+  "Accept-Language": "en-IN,en;q=0.9",
   "Sec-Ch-Ua":
-    '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+    '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
   "Sec-Ch-Ua-Mobile": "?0",
   "Sec-Ch-Ua-Platform": '"Windows"',
   "Sec-Fetch-Dest": "document",
@@ -53,8 +53,6 @@ const BROWSER_HEADERS: Record<string, string> = {
   "Sec-Fetch-Site": "none",
   "Sec-Fetch-User": "?1",
   "Upgrade-Insecure-Requests": "1",
-  Pragma: "no-cache",
-  "Cache-Control": "no-cache",
 };
 
 export class FlipkartReviewService {
@@ -242,115 +240,122 @@ export class FlipkartReviewService {
 
   /**
    * Fetches product metadata (Title, photo, price, mrp, discount, rating, totalReviews)
+   * Runs Flipkart review page and product page in parallel for sub-second responses.
    */
   static async fetchProductMeta(
     pid: string,
-    slug: string = "product"
+    slug: string = "product",
+    itm: string = "itm"
   ): Promise<FlipkartProductMeta | null> {
     if (!pid) return null;
 
-    // 1. Shopsy product page (super fast, no Akamai blocks)
-    try {
-      const shopsyUrl = `https://www.shopsy.in/product/p/itme?pid=${pid}`;
-      const res = await fetch(shopsyUrl, {
-        headers: BROWSER_HEADERS,
-        next: { revalidate: 300 },
-      });
-      if (res.ok) {
-        const html = await res.text();
-        const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
-        if (match) {
-          const json = JSON.parse(match[1]);
-          const pc = json.props?.pageProps?.initialState?.pageData?.RESPONSE?.pageData?.pageContext;
-          if (pc) {
-            let title = pc.titles?.title || pc.seo?.title || pc.tracking?.title || "";
-            let rawImg = pc.imageUrl || "";
-            let formattedImg = "";
-            if (rawImg) {
-              formattedImg = rawImg
-                .replace(/{@width}/g, "600")
-                .replace(/{@height}/g, "600")
-                .replace(/{@quality}/g, "85")
-                .replace("http://", "https://");
-            }
-            const finalPrice = pc.pricing?.finalPrice?.value;
-            const mrp = pc.pricing?.mrp;
-            let discount = "";
-            if (finalPrice && mrp && mrp > finalPrice) {
-              discount = `${Math.round(((mrp - finalPrice) / mrp) * 100)}% off`;
-            }
-            const reviewCount = pc.rating?.reviewCount;
-            const ratingCount = pc.rating?.ratingCount;
-            const averageRating = pc.rating?.average;
+    let title = "";
+    let imageUrl = "";
+    let price: number | undefined;
+    let mrp: number | undefined;
+    let discount = "";
+    let rating = 4.3;
+    let totalReviews = 0;
+    let totalRatings = 0;
 
-            if (title || formattedImg) {
-              return {
-                title,
-                imageUrl: formattedImg,
-                price: finalPrice,
-                mrp,
-                discount,
-                rating: averageRating,
-                totalReviews: reviewCount,
-                totalRatings: ratingCount,
-              };
+    const reviewUrl = `https://www.flipkart.com/${slug}/product-reviews/${itm}?pid=${pid}&page=1`;
+    const productUrl = `https://www.flipkart.com/${slug}/p/${itm}?pid=${pid}`;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+
+    try {
+      const [revRes, prodRes] = await Promise.allSettled([
+        fetch(reviewUrl, {
+          headers: BROWSER_HEADERS,
+          signal: controller.signal,
+          next: { revalidate: 300 },
+        }),
+        fetch(productUrl, {
+          headers: BROWSER_HEADERS,
+          signal: controller.signal,
+          next: { revalidate: 300 },
+        }),
+      ]);
+      clearTimeout(timeout);
+
+      // 1. Process Review Page (Title, Rating, Total Reviews, Total Ratings)
+      if (revRes.status === "fulfilled" && revRes.value.ok) {
+        const text = await revRes.value.text();
+        const titleMatch = text.match(/<title>([^:]+)\s+Reviews:/i);
+        if (titleMatch) {
+          title = titleMatch[1].trim();
+        }
+
+        const m = text.match(/window\.__INITIAL_STATE__\s*=\s*(\{[\s\S]*?\});<\/script>/);
+        if (m) {
+          try {
+            const json = JSON.parse(m[1]);
+            const slots = json.multiWidgetState?.widgetsData?.slots || {};
+            const slot2 = slots["2"]?.slotData?.widget?.data?.rating?.value;
+            if (slot2) {
+              totalReviews = slot2.reviewCount || totalReviews;
+              totalRatings = slot2.ratingCount || totalRatings;
+              rating = slot2.average || rating;
             }
-          }
+          } catch {}
         }
       }
-    } catch (err) {
-      console.warn("Product meta fetch error on Shopsy:", err);
-    }
 
-    // 2. Shopsy reviews page fallback
-    try {
-      const reviewUrl = `https://www.shopsy.in/product/product-reviews/itm?pid=${pid}&page=1`;
-      const res = await fetch(reviewUrl, {
-        headers: BROWSER_HEADERS,
-        next: { revalidate: 300 },
-      });
-      if (res.ok) {
-        const html = await res.text();
-        const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
-        if (match) {
-          const json = JSON.parse(match[1]);
-          const response = json.props?.pageProps?.initialState?.pageData?.RESPONSE;
-          const pc = response?.pageData?.pageContext;
-          const title = pc?.tracking?.title || pc?.titles?.title || "";
-          let reviewCount = 0;
-          let rating = 4.2;
-          let ratingCount = 0;
-          for (const slot of response?.slots || []) {
-            const rVal = slot?.widget?.data?.rating?.value;
-            if (rVal) {
-              reviewCount = rVal.reviewCount || reviewCount;
-              rating = rVal.average || rating;
-              ratingCount = rVal.ratingCount || ratingCount;
+      // 2. Process Product Page (Product Photo, Pricing, MRP, Discount)
+      if (prodRes.status === "fulfilled" && prodRes.value.ok) {
+        const text = await prodRes.value.text();
+        const ogImg = text.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
+        if (ogImg) imageUrl = ogImg;
+
+        const m = text.match(/window\.__INITIAL_STATE__\s*=\s*(\{[\s\S]*?\});<\/script>/);
+        if (m) {
+          try {
+            const json = JSON.parse(m[1]);
+            function findPrice(o: any) {
+              if (!o || typeof o !== "object") return;
+              if (o.pricing) {
+                if (o.pricing.finalPrice?.value) price = o.pricing.finalPrice.value;
+                if (o.pricing.mrp?.value || typeof o.pricing.mrp === "number") {
+                  mrp = o.pricing.mrp?.value || o.pricing.mrp;
+                }
+              }
+              for (const k of Object.keys(o)) findPrice(o[k]);
             }
-          }
-          if (title || reviewCount > 0) {
-            return {
-              title,
-              imageUrl: "",
-              price: undefined,
-              mrp: undefined,
-              discount: "",
-              rating,
-              totalReviews: reviewCount,
-              totalRatings: ratingCount,
-            };
-          }
+            findPrice(json);
+            if (price && mrp && mrp > price) {
+              discount = `${Math.round(((mrp - price) / mrp) * 100)}% off`;
+            }
+          } catch {}
         }
       }
-    } catch (err) {
-      console.warn("Product meta fallback error on Shopsy reviews:", err);
+    } catch {}
+
+    if (!title && slug && slug !== "product") {
+      title = slug
+        .split("-")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ");
     }
 
-    return null;
+    if (!title && !imageUrl && totalReviews === 0) {
+      return null;
+    }
+
+    return {
+      title: title || "Marketplace Product",
+      imageUrl,
+      price,
+      mrp,
+      discount,
+      rating,
+      totalReviews,
+      totalRatings,
+    };
   }
 
   /**
-   * Fetches reviews for a specific page and sortOrder from Shopsy (Primary, ultra-fast) or Flipkart (Fallback)
+   * High-speed Flipkart Review Page Fetcher (< 800ms direct response)
    */
   static async fetchPage(
     pid: string,
@@ -360,40 +365,12 @@ export class FlipkartReviewService {
     sortOrder: string = "MOST_HELPFUL",
     certifiedBuyer: boolean = false
   ): Promise<{ reviews: FlipkartReview[]; totalReviews?: number }> {
-    const cbParam = certifiedBuyer ? "&certifiedBuyer=true" : "&certifiedBuyer=false";
+    const cbParam = certifiedBuyer ? "&certifiedBuyer=true" : "";
+    const fkUrl = `https://www.flipkart.com/${slug}/product-reviews/${itm}?pid=${pid}&sortOrder=${sortOrder}${cbParam}&page=${page}`;
 
-    // 1. High-speed Primary: Shopsy (Zero Akamai blocks, 150ms-250ms direct response)
     try {
-      const shopsyUrl = `https://www.shopsy.in/product/product-reviews/itm?pid=${pid}&sortOrder=${sortOrder}${cbParam}&page=${page}`;
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 2500);
-      const res = await fetch(shopsyUrl, {
-        headers: BROWSER_HEADERS,
-        signal: controller.signal,
-        next: { revalidate: 300 },
-      });
-      clearTimeout(timeout);
-
-      if (res.ok) {
-        const html = await res.text();
-        const match = html.match(
-          /<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/
-        );
-        if (match) {
-          const json = JSON.parse(match[1]);
-          const reviews = this.extractReviewsFromObject(json, pid);
-          if (reviews.length > 0) {
-            return { reviews };
-          }
-        }
-      }
-    } catch {}
-
-    // 2. Secondary Fallback: Flipkart Web (Only if Shopsy returned 0 reviews)
-    try {
-      const fkUrl = `https://www.flipkart.com/${slug}/product-reviews/${itm}?pid=${pid}&sortOrder=${sortOrder}${cbParam}&page=${page}`;
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 2500);
+      const timeout = setTimeout(() => controller.abort(), 4000);
       const res = await fetch(fkUrl, {
         headers: BROWSER_HEADERS,
         signal: controller.signal,
@@ -410,9 +387,16 @@ export class FlipkartReviewService {
           if (match) {
             const state = JSON.parse(match[1]);
             const reviews = this.extractReviewsFromObject(state, pid);
-            if (reviews.length > 0) {
-              return { reviews };
-            }
+
+            // Also check for total review count from rating widget
+            let totalReviews: number | undefined;
+            try {
+              const slots = state.multiWidgetState?.widgetsData?.slots || {};
+              const slot2 = slots["2"]?.slotData?.widget?.data?.rating?.value;
+              if (slot2?.reviewCount) totalReviews = slot2.reviewCount;
+            } catch {}
+
+            return { reviews, totalReviews };
           }
         }
       }

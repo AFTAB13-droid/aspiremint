@@ -98,6 +98,19 @@ export async function GET(req: NextRequest) {
   if (!date) date = "Recent Order";
   if (!productTitle) productTitle = "Marketplace Verified Item";
 
+  // Safe base64 converter compatible with both Edge and Node runtimes
+  const toBase64 = (ab: ArrayBuffer): string => {
+    if (typeof Buffer !== "undefined") {
+      return Buffer.from(ab).toString("base64");
+    }
+    const bytes = new Uint8Array(ab);
+    let binary = "";
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  };
+
   // Pre-buffer product image to verified JPEG/PNG base64 Data URL so Satori renders in 5ms with zero crashes
   let base64ProductImage = "";
   if (productImage && productImage.startsWith("http")) {
@@ -108,7 +121,7 @@ export async function GET(req: NextRequest) {
         signal: controller.signal,
         headers: {
           "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
           Accept: "image/jpeg,image/png",
         },
       });
@@ -120,7 +133,7 @@ export async function GET(req: NextRequest) {
         const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
         if (isJpeg || isPng) {
           const mime = isJpeg ? "image/jpeg" : "image/png";
-          base64ProductImage = `data:${mime};base64,${Buffer.from(ab).toString("base64")}`;
+          base64ProductImage = `data:${mime};base64,${toBase64(ab)}`;
         }
       }
     } catch {}
@@ -151,7 +164,7 @@ export async function GET(req: NextRequest) {
             const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
             if (isJpeg || isPng) {
               const mime = isJpeg ? "image/jpeg" : "image/png";
-              base64Photos.push(`data:${mime};base64,${Buffer.from(ab).toString("base64")}`);
+              base64Photos.push(`data:${mime};base64,${toBase64(ab)}`);
             }
           }
         } catch {}
@@ -883,6 +896,11 @@ export async function GET(req: NextRequest) {
       width: 1440,
       height: 810,
     }
+  );
+
+  response.headers.set(
+    "Cache-Control",
+    "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800"
   );
 
   if (shouldDownload) {

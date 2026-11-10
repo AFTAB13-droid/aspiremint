@@ -53,12 +53,12 @@ export async function GET(req: NextRequest) {
 
         sendEvent({
           type: "log",
-          msg: "Connecting to Flipkart & Shopsy catalog...",
+          msg: "Connecting to Flipkart marketplace catalog...",
         });
 
         // 2. Fetch product metadata (title, real photo, pricing, true total review count)
-        const meta = await FlipkartReviewService.fetchProductMeta(pid, slug);
-        const totalReviewsReported = meta?.totalReviews || 0;
+        const meta = await FlipkartReviewService.fetchProductMeta(pid, slug, itm);
+        let totalReviewsReported = meta?.totalReviews || 0;
 
         sendEvent({
           type: "meta",
@@ -96,6 +96,10 @@ export async function GET(req: NextRequest) {
           "MOST_HELPFUL"
         );
 
+        if (page1.totalReviews && page1.totalReviews > totalReviewsReported) {
+          totalReviewsReported = page1.totalReviews;
+        }
+
         if (page1.reviews && page1.reviews.length > 0) {
           const freshReviews: FlipkartReview[] = [];
           for (const r of page1.reviews) {
@@ -130,11 +134,11 @@ export async function GET(req: NextRequest) {
         // Aiming for 400-500 reviews with high concurrency
         const slotsToScan: Array<{ page: number; sort: string; cb: boolean }> = [];
 
-        // Channel A: Most Recent (Pages 1 to 12)
-        for (let p = 1; p <= 12; p++) slotsToScan.push({ page: p, sort: "MOST_RECENT", cb: false });
+        // Channel A: Most Recent (Pages 1 to 14)
+        for (let p = 1; p <= 14; p++) slotsToScan.push({ page: p, sort: "MOST_RECENT", cb: false });
 
-        // Channel B: Most Helpful (Pages 2 to 12 - page 1 already fetched)
-        for (let p = 2; p <= 12; p++) slotsToScan.push({ page: p, sort: "MOST_HELPFUL", cb: false });
+        // Channel B: Most Helpful (Pages 2 to 14 - page 1 already fetched)
+        for (let p = 2; p <= 14; p++) slotsToScan.push({ page: p, sort: "MOST_HELPFUL", cb: false });
 
         // Channel C: Positive Reviews (Pages 1 to 10)
         for (let p = 1; p <= 10; p++) slotsToScan.push({ page: p, sort: "POSITIVE_FIRST", cb: false });
@@ -148,8 +152,8 @@ export async function GET(req: NextRequest) {
         // Channel F: Certified Buyer Most Helpful (Pages 1 to 8)
         for (let p = 1; p <= 8; p++) slotsToScan.push({ page: p, sort: "MOST_HELPFUL", cb: true });
 
-        // Process in high-concurrency batches of 12 parallel requests for 10x faster speed
-        const BATCH_SIZE = 12;
+        // Process in high-concurrency batches of 10 parallel requests for 10x faster speed
+        const BATCH_SIZE = 10;
         for (let i = 0; i < slotsToScan.length; i += BATCH_SIZE) {
           // If we reached target 400-500 reviews, finish early
           if (seenIds.size >= 450) break;
