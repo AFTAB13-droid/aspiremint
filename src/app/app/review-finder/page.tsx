@@ -249,11 +249,11 @@ export default function ReviewFinderPage() {
     setStatusLog("Scanning product reviews...");
     setCurrentPage(1);
 
-    // Primary: direct connection (with CORS enabled on upstream), fallback: our edge proxy
-    const directUrl = `https://rikome.com/api/review-finder?url=${encodeURIComponent(rawTarget)}`;
-    const proxyUrl = `/api/tools/review-stream?url=${encodeURIComponent(rawTarget)}`;
+    // Auto-sanitize common PID typos (such as digit 0 in M0B instead of letter MOB)
+    const sanitizedTarget = rawTarget.replace(/([?&]pid=)M0B/i, "$1MOB");
+    const proxyUrl = `/api/tools/review-stream?url=${encodeURIComponent(sanitizedTarget)}`;
 
-    const initiateStream = (targetEndpoint: string, isFallback = false) => {
+    const initiateStream = (targetEndpoint: string) => {
       if (isStoppedRef.current) return;
       const es = new EventSource(targetEndpoint);
       eventSourceRef.current = es;
@@ -318,22 +318,17 @@ export default function ReviewFinderPage() {
       es.onerror = () => {
         es.close();
         if (isStoppedRef.current) return;
-        if (!isFallback && reviewsMapRef.current.size === 0) {
-          // Attempt fallback through edge proxy
-          initiateStream(proxyUrl, true);
+        setIsScanning(false);
+        if (reviewsMapRef.current.size === 0) {
+          setStatusLog("Could not connect. Ensure product URL includes pid or is active.");
+          toast.error("Could not load reviews. Please verify the Flipkart link.");
         } else {
-          setIsScanning(false);
-          if (reviewsMapRef.current.size === 0) {
-            setStatusLog("Could not connect. Ensure product URL includes pid or is active.");
-            toast.error("Could not load reviews. Please verify the Flipkart link.");
-          } else {
-            setStatusLog(`Scan finished with ${reviewsMapRef.current.size} reviews.`);
-          }
+          setStatusLog(`Scan finished with ${reviewsMapRef.current.size} reviews.`);
         }
       };
     };
 
-    initiateStream(directUrl, false);
+    initiateStream(proxyUrl);
   };
 
   const handleOpenAutofillModal = async (review: FlipkartReview) => {
@@ -504,12 +499,10 @@ export default function ReviewFinderPage() {
         event_category: "ReviewFinder",
         review_id: id,
       });
-      // Use direct screenshot generator or local proxy
-      const downloadUrl = `https://rikome.com/api/review-screenshot?url=${encodeURIComponent(permalink)}`;
-      const res = await fetch(downloadUrl);
-
+      
+      const res = await fetch(`/api/tools/review-screenshot?url=${encodeURIComponent(permalink)}&download=true`);
       if (!res.ok) {
-        throw new Error("Screenshot service error");
+        throw new Error("Could not generate proof screenshot");
       }
 
       const blob = await res.blob();
@@ -524,23 +517,7 @@ export default function ReviewFinderPage() {
 
       toast.success("Screenshot downloaded!", { id: toastId });
     } catch (err: any) {
-      // Fallback to internal route
-      try {
-        const fallbackRes = await fetch(`/api/tools/review-screenshot?url=${encodeURIComponent(permalink)}&download=true`);
-        if (!fallbackRes.ok) throw new Error("Could not generate proof screenshot");
-        const blob = await fallbackRes.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `flipkart-review-${id.slice(0, 8)}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        toast.success("Screenshot downloaded!", { id: toastId });
-      } catch (fallbackErr: any) {
-        toast.error(fallbackErr?.message || "Failed to download screenshot", { id: toastId });
-      }
+      toast.error(err?.message || "Failed to download screenshot", { id: toastId });
     } finally {
       setDownloadingId(null);
     }

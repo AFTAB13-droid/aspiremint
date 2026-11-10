@@ -26,6 +26,8 @@ export async function POST(req: NextRequest) {
     const upstreamUrl = `https://rikome.com/api/review-screenshot?url=${encodeURIComponent(targetUrl)}`;
     const upstreamRes = await fetch(upstreamUrl, {
       headers: {
+        Referer: "https://rikome.com/",
+        Origin: "https://rikome.com",
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       },

@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const targetUrl = searchParams.get("url")?.trim();
+  let targetUrl = searchParams.get("url")?.trim();
 
   if (!targetUrl) {
     return NextResponse.json(
@@ -13,6 +13,9 @@ export async function GET(req: NextRequest) {
       { status: 400 }
     );
   }
+
+  // Auto-correct common typos like M0B (digit 0) to MOB (letter O) in Flipkart PIDs
+  targetUrl = targetUrl.replace(/([?&]pid=)M0B/i, "$1MOB");
 
   try {
     let resolvedUrl = targetUrl;
@@ -38,6 +41,8 @@ export async function GET(req: NextRequest) {
     const upstreamRes = await fetch(upstreamUrl, {
       headers: {
         Accept: "text/event-stream",
+        Referer: "https://rikome.com/",
+        Origin: "https://rikome.com",
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       },
