@@ -86,6 +86,7 @@ export async function GET(req: NextRequest) {
             mrp: meta?.mrp,
             discount: meta?.discount,
             rating: meta?.rating,
+            debugError: meta?.debugError,
           },
         });
 

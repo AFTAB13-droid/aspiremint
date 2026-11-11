@@ -1000,7 +1000,7 @@ export default function ReviewFinderPage() {
         >
           <div className="flex items-center gap-4 min-w-0">
             {productMeta.imageUrl ? (
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-slate-50 dark:bg-slate-800 p-1 flex items-center justify-center shrink-0 border border-slate-100 dark:border-slate-700 overflow-hidden">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-slate-50 dark:bg-slate-800 p-1 flex items-center justify-center shrink-0 border border-slate-100 dark:border-slate-700 overflow-hidden shadow-xs">
                 <img
                   src={productMeta.imageUrl}
                   alt={productMeta.title || "Product"}
@@ -1008,7 +1008,12 @@ export default function ReviewFinderPage() {
                   loading="eager"
                 />
               </div>
-            ) : null}
+            ) : (
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 p-2 flex flex-col items-center justify-center shrink-0 text-blue-600 dark:text-blue-400">
+                <ShoppingBag className="w-6 h-6 sm:w-7 sm:h-7 opacity-80" />
+                <span className="text-[9px] font-bold mt-1 text-center leading-none">Flipkart</span>
+              </div>
+            )}
             <div className="min-w-0">
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 mb-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />

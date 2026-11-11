@@ -28,6 +28,7 @@ export interface FlipkartProductMeta {
   rating?: number;
   totalReviews?: number;
   totalRatings?: number;
+  debugError?: string;
 }
 
 export interface FlipkartUrlInfo {
@@ -131,6 +132,51 @@ export class FlipkartReviewService {
             text.match(/pid=([A-Z0-9]{16})/i);
           if (match) {
             pid = match[1].toUpperCase();
+
+            // Pre-populate productMetaMemoryCache from this page text (0ms subsequent lookup)
+            try {
+              let cachedImg = text.match(/<meta property="og:image" content="([^"]+)"/)?.[1] || "";
+              if (!cachedImg || cachedImg.includes("flipkart-plus")) {
+                const allRuk = [
+                  ...text.matchAll(
+                    /https:\/\/rukminim[0-9]*\.flixcart\.com\/image\/[0-9]+\/[0-9]+\/([^"'\s]+?\.(?:jpeg|jpg|png))/gi
+                  ),
+                ];
+                if (allRuk.length > 0) {
+                  cachedImg = `https://rukminim2.flixcart.com/image/600/600/${allRuk[0][1]}`;
+                }
+              }
+
+              let cachedPrice: number | undefined;
+              let cachedMrp: number | undefined;
+              const m = text.match(/window\.__INITIAL_STATE__\s*=\s*(\{[\s\S]*?\});<\/script>/);
+              if (m) {
+                try {
+                  const json = JSON.parse(m[1]);
+                  const jsonStr = JSON.stringify(json);
+                  const priceM =
+                    jsonStr.match(/"finalPrice":([0-9]+)/) ||
+                    jsonStr.match(/"price":([0-9]+)/);
+                  const mrpM = jsonStr.match(/"mrp":([0-9]+)/);
+                  if (priceM) cachedPrice = parseInt(priceM[1], 10);
+                  if (mrpM) cachedMrp = parseInt(mrpM[1], 10);
+                } catch {}
+              }
+
+              if (cachedImg || cachedPrice) {
+                let cachedDiscount = "";
+                if (cachedPrice && cachedMrp && cachedMrp > cachedPrice) {
+                  cachedDiscount = `${Math.round(((cachedMrp - cachedPrice) / cachedMrp) * 100)}% off`;
+                }
+                productMetaMemoryCache.set(pid, {
+                  title: "",
+                  imageUrl: cachedImg,
+                  price: cachedPrice,
+                  mrp: cachedMrp,
+                  discount: cachedDiscount,
+                });
+              }
+            } catch {}
           }
         }
       } catch {}
@@ -278,7 +324,14 @@ export class FlipkartReviewService {
 
     // Check in-memory cache for instant 0ms return on repeat queries
     if (productMetaMemoryCache.has(pid)) {
-      return productMetaMemoryCache.get(pid)!;
+      const cached = { ...productMetaMemoryCache.get(pid)! };
+      if (!cached.title && slug && slug !== "product") {
+        cached.title = slug
+          .split("-")
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ");
+      }
+      return cached;
     }
 
     let title = "";
@@ -290,59 +343,86 @@ export class FlipkartReviewService {
     let totalReviews = 0;
     let totalRatings = 0;
 
-    // Direct canonical PID endpoint - returns in ~700-900ms with product image and pricing
-    const directUrl = `https://www.flipkart.com/p/p/p?pid=${pid}`;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    let debugError = "";
 
-    try {
-      const res = await fetch(directUrl, {
-        headers: BROWSER_HEADERS,
-        signal: controller.signal,
-        cache: "no-store",
-      });
-      clearTimeout(timeout);
+    // Multi-candidate URLs: Try canonical full product page first, then /p/p/p, then search
+    const urlsToTry: string[] = [];
+    if (slug && slug !== "product" && itm && itm !== "itm") {
+      urlsToTry.push(`https://www.flipkart.com/${slug}/p/${itm}?pid=${pid}`);
+    }
+    urlsToTry.push(`https://www.flipkart.com/p/p/p?pid=${pid}`);
+    urlsToTry.push(`https://www.flipkart.com/search?q=${pid}`);
 
-      if (res.ok) {
-        const text = await res.text();
-        const ogImg = text.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
-        if (ogImg && !ogImg.includes("flipkart-plus")) imageUrl = ogImg;
+    for (const targetUrl of urlsToTry) {
+      if (imageUrl && price) break;
 
-        if (!imageUrl) {
-          const atlasMatch = text.match(/"preloadAtlasImageLinkTag":\s*"([^"]+)"/);
-          if (atlasMatch && atlasMatch[1]) {
-            imageUrl = atlasMatch[1].split("?")[0];
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 9000);
+
+      try {
+        const res = await fetch(targetUrl, {
+          headers: BROWSER_HEADERS,
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        clearTimeout(timeout);
+
+        if (res.ok) {
+          const text = await res.text();
+          if (!imageUrl) {
+            const ogImg = text.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
+            if (ogImg && !ogImg.includes("flipkart-plus")) imageUrl = ogImg;
           }
-        }
 
-        if (!imageUrl) {
-          const productActionImg = text.match(/"productImage":\s*"(https?:\/\/[^"]+)"/);
-          if (productActionImg && productActionImg[1]) {
-            imageUrl = productActionImg[1].replace("{@width}", "600").replace("{@height}", "600").split("?")[0];
+          if (!imageUrl) {
+            const atlasMatch = text.match(/"preloadAtlasImageLinkTag":\s*"([^"]+)"/);
+            if (atlasMatch && atlasMatch[1]) {
+              imageUrl = atlasMatch[1].split("?")[0];
+            }
           }
-        }
 
-        if (!imageUrl) {
-          const allRuk = [...text.matchAll(/https:\/\/rukminim[0-9]*\.flixcart\.com\/image\/[0-9]+\/[0-9]+\/([^"'\s]+?\.(?:jpeg|jpg|png))/gi)];
-          if (allRuk.length > 0) {
-            imageUrl = `https://rukminim2.flixcart.com/image/600/600/${allRuk[0][1]}`;
+          if (!imageUrl) {
+            const productActionImg = text.match(/"productImage":\s*"(https?:\/\/[^"]+)"/);
+            if (productActionImg && productActionImg[1]) {
+              imageUrl = productActionImg[1]
+                .replace("{@width}", "600")
+                .replace("{@height}", "600")
+                .split("?")[0];
+            }
           }
-        }
 
-        const m = text.match(/window\.__INITIAL_STATE__\s*=\s*(\{[\s\S]*?\});<\/script>/);
-        if (m) {
-          try {
-            const json = JSON.parse(m[1]);
-            const jsonStr = JSON.stringify(json);
-            const priceM = jsonStr.match(/"finalPrice":([0-9]+)/) || jsonStr.match(/"price":([0-9]+)/);
-            const mrpM = jsonStr.match(/"mrp":([0-9]+)/);
-            if (priceM) price = parseInt(priceM[1], 10);
-            if (mrpM) mrp = parseInt(mrpM[1], 10);
-          } catch {}
+          if (!imageUrl) {
+            const allRuk = [
+              ...text.matchAll(
+                /https:\/\/rukminim[0-9]*\.flixcart\.com\/image\/[0-9]+\/[0-9]+\/([^"'\s]+?\.(?:jpeg|jpg|png))/gi
+              ),
+            ];
+            if (allRuk.length > 0) {
+              imageUrl = `https://rukminim2.flixcart.com/image/600/600/${allRuk[0][1]}`;
+            }
+          }
+
+          if (!price) {
+            const m = text.match(/window\.__INITIAL_STATE__\s*=\s*(\{[\s\S]*?\});<\/script>/);
+            if (m) {
+              try {
+                const json = JSON.parse(m[1]);
+                const jsonStr = JSON.stringify(json);
+                const priceM =
+                  jsonStr.match(/"finalPrice":([0-9]+)/) ||
+                  jsonStr.match(/"price":([0-9]+)/);
+                const mrpM = jsonStr.match(/"mrp":([0-9]+)/);
+                if (priceM) price = parseInt(priceM[1], 10);
+                if (mrpM) mrp = parseInt(mrpM[1], 10);
+              } catch {}
+            }
+          }
+        } else {
+          debugError += `[${targetUrl.slice(0, 40)}: HTTP ${res.status}] `;
         }
+      } catch (err: any) {
+        debugError += `[${targetUrl.slice(0, 40)}: ${err?.name || "Err"}: ${err?.message || ""}] `;
       }
-    } catch (err) {
-      console.warn("Direct PID fetch timeout/error:", err);
     }
 
     // Always upscale rukminim images to 600x600 HD for crisp desktop rendering
@@ -370,6 +450,7 @@ export class FlipkartReviewService {
       rating,
       totalReviews,
       totalRatings,
+      debugError: debugError || undefined,
     };
 
     if (imageUrl || price) {
