@@ -29,6 +29,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { trackEvent } from "@/lib/gtag";
+import { generateFlipkartProofBlob } from "@/lib/reviewProofCanvas";
 
 interface FlipkartReview {
   id: string;
@@ -158,6 +159,13 @@ export default function ReviewFinderPage() {
 
   // Clean up on unmount
   useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem("last_product_meta");
+      if (saved) {
+        setProductMeta(JSON.parse(saved));
+      }
+    } catch {}
+
     return () => {
       isStoppedRef.current = true;
       if (eventSourceRef.current) {
@@ -287,7 +295,12 @@ export default function ReviewFinderPage() {
             case "meta":
               if (payload.total_pages) setTotalPagesFound(payload.total_pages);
               if (payload.total_reviews) setTotalReviewsCount(payload.total_reviews);
-              if (payload.product) setProductMeta(payload.product);
+              if (payload.product) {
+                setProductMeta(payload.product);
+                try {
+                  sessionStorage.setItem("last_product_meta", JSON.stringify(payload.product));
+                } catch {}
+              }
               break;
             case "progress":
               if (payload.slotsScanned) setScannedSlots(payload.slotsScanned);
@@ -385,9 +398,36 @@ export default function ReviewFinderPage() {
       const permalink = selectedReviewForAutofill.permalink || "";
       let screenshotUrl = "";
 
-      // Pre-buffer product image in browser to Base64 for instant Cloudinary generation
+      // 1. Generate instant authentic Flipkart desktop proof directly in browser (0ms server latency)
+      let directCanvasDataUrl = "";
+      try {
+        const proofBlob = await generateFlipkartProofBlob({
+          authorName: selectedReviewForAutofill.name || "Verified Customer",
+          rating: selectedReviewForAutofill.rating || "5",
+          reviewTitle: selectedReviewForAutofill.title || "Super!",
+          reviewText: selectedReviewForAutofill.text || "Quality meets expectations. Recommended purchase.",
+          reviewDate: selectedReviewForAutofill.date || "Recent Order",
+          helpfulCount: selectedReviewForAutofill.helpful || 0,
+          productTitle: productMeta?.title || "Marketplace Product",
+          productImageUrl: productMeta?.imageUrl || "",
+          price: productMeta?.price,
+          mrp: productMeta?.mrp,
+          discount: productMeta?.discount,
+        });
+
+        directCanvasDataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve((reader.result as string) || "");
+          reader.onerror = () => resolve("");
+          reader.readAsDataURL(proofBlob);
+        });
+      } catch (canvasErr) {
+        console.warn("Client canvas proof generation fallback:", canvasErr);
+      }
+
+      // Pre-buffer product image in browser to Base64 for instant Cloudinary generation as fallback
       let resolvedBase64Image = "";
-      if (productMeta?.imageUrl && typeof window !== "undefined") {
+      if (!directCanvasDataUrl && productMeta?.imageUrl && typeof window !== "undefined") {
         try {
           const imgFetch = await fetch(productMeta.imageUrl, { mode: "cors" });
           if (imgFetch.ok) {
@@ -402,7 +442,7 @@ export default function ReviewFinderPage() {
         } catch {}
       }
 
-      // 1. Upload review screenshot to Cloudinary
+      // 2. Upload review screenshot to Cloudinary
       try {
         const cRes = await fetch("/api/tools/review-cloudinary", {
           method: "POST",
@@ -410,6 +450,7 @@ export default function ReviewFinderPage() {
           body: JSON.stringify({
             url: permalink,
             orderId: order.userOrderId || order._id,
+            imageDataUrl: directCanvasDataUrl || undefined,
             name: selectedReviewForAutofill.name,
             rating: selectedReviewForAutofill.rating,
             title: selectedReviewForAutofill.title,
@@ -557,6 +598,41 @@ export default function ReviewFinderPage() {
 
       const review = reviews.find((r) => r.id === id);
 
+      // 1. Direct Instant Canvas Generation in Browser (0ms server latency, 100% resilient photo)
+      try {
+        const proofBlob = await generateFlipkartProofBlob({
+          authorName: review?.name || "Verified Customer",
+          rating: review?.rating || "5",
+          reviewTitle: review?.title || "Super!",
+          reviewText: review?.text || "Quality meets expectations. Recommended purchase.",
+          reviewDate: review?.date || "Recent Order",
+          helpfulCount: review?.helpful !== undefined ? review.helpful : 0,
+          productTitle: productMeta?.title || "Marketplace Product",
+          productImageUrl: productMeta?.imageUrl || "",
+          price: productMeta?.price,
+          mrp: productMeta?.mrp,
+          discount: productMeta?.discount,
+        });
+
+        const blobUrl = window.URL.createObjectURL(proofBlob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = blobUrl;
+        a.download = `flipkart-review-${(review?.name || id).replace(/[^a-zA-Z0-9]/g, "_").slice(0, 20)}.png`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          if (document.body.contains(a)) document.body.removeChild(a);
+          window.URL.revokeObjectURL(blobUrl);
+        }, 15000);
+
+        toast.success("Screenshot downloaded!", { id: toastId });
+        setDownloadingId(null);
+        return;
+      } catch (canvasErr) {
+        console.warn("Client canvas screenshot generation failed, falling back to server:", canvasErr);
+      }
+
       // Pre-buffer product image in browser to Base64 (0 CORS latency, Flipkart CDN supports Access-Control-Allow-Origin: *)
       let resolvedBase64Image = "";
       if (productMeta?.imageUrl && typeof window !== "undefined") {
@@ -613,6 +689,7 @@ export default function ReviewFinderPage() {
             window.URL.revokeObjectURL(blobUrl);
           }, 15000);
           toast.success("Screenshot downloaded!", { id: toastId });
+          setDownloadingId(null);
           return;
         }
       } catch (fetchErr) {

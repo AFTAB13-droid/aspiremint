@@ -116,7 +116,7 @@ export class FlipkartReviewService {
     if (!pid && (resolvedUrl.includes("/p/") || resolvedUrl.includes("flipkart.com"))) {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 3500);
+        const timeout = setTimeout(() => controller.abort(), 10000);
         const pageRes = await fetch(resolvedUrl, {
           headers: BROWSER_HEADERS,
           signal: controller.signal,
@@ -299,14 +299,28 @@ export class FlipkartReviewService {
       const res = await fetch(directUrl, {
         headers: BROWSER_HEADERS,
         signal: controller.signal,
-        next: { revalidate: 600 },
+        cache: "no-store",
       });
       clearTimeout(timeout);
 
       if (res.ok) {
         const text = await res.text();
         const ogImg = text.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
-        if (ogImg) imageUrl = ogImg;
+        if (ogImg && !ogImg.includes("flipkart-plus")) imageUrl = ogImg;
+
+        if (!imageUrl) {
+          const atlasMatch = text.match(/"preloadAtlasImageLinkTag":\s*"([^"]+)"/);
+          if (atlasMatch && atlasMatch[1]) {
+            imageUrl = atlasMatch[1].split("?")[0];
+          }
+        }
+
+        if (!imageUrl) {
+          const productActionImg = text.match(/"productImage":\s*"(https?:\/\/[^"]+)"/);
+          if (productActionImg && productActionImg[1]) {
+            imageUrl = productActionImg[1].replace("{@width}", "600").replace("{@height}", "600").split("?")[0];
+          }
+        }
 
         if (!imageUrl) {
           const allRuk = [...text.matchAll(/https:\/\/rukminim[0-9]*\.flixcart\.com\/image\/[0-9]+\/[0-9]+\/([^"'\s]+?\.(?:jpeg|jpg|png))/gi)];
