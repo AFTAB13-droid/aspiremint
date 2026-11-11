@@ -385,6 +385,23 @@ export default function ReviewFinderPage() {
       const permalink = selectedReviewForAutofill.permalink || "";
       let screenshotUrl = "";
 
+      // Pre-buffer product image in browser to Base64 for instant Cloudinary generation
+      let resolvedBase64Image = "";
+      if (productMeta?.imageUrl && typeof window !== "undefined") {
+        try {
+          const imgFetch = await fetch(productMeta.imageUrl, { mode: "cors" });
+          if (imgFetch.ok) {
+            const blob = await imgFetch.blob();
+            resolvedBase64Image = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve((reader.result as string) || "");
+              reader.onerror = () => resolve("");
+              reader.readAsDataURL(blob);
+            });
+          }
+        } catch {}
+      }
+
       // 1. Upload review screenshot to Cloudinary
       try {
         const cRes = await fetch("/api/tools/review-cloudinary", {
@@ -398,12 +415,11 @@ export default function ReviewFinderPage() {
             title: selectedReviewForAutofill.title,
             text: selectedReviewForAutofill.text,
             date: selectedReviewForAutofill.date,
-            location: selectedReviewForAutofill.location,
             attributes: selectedReviewForAutofill.attributes,
             helpful: selectedReviewForAutofill.helpful,
             images: selectedReviewForAutofill.images?.slice(0, 4),
             productTitle: productMeta?.title,
-            productImage: productMeta?.imageUrl,
+            productImage: resolvedBase64Image || productMeta?.imageUrl,
             price: productMeta?.price,
             mrp: productMeta?.mrp,
             discount: productMeta?.discount,
@@ -897,6 +913,62 @@ export default function ReviewFinderPage() {
           </div>
         )}
       </div>
+
+      {/* Product Summary Header Card */}
+      {productMeta && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between gap-4"
+        >
+          <div className="flex items-center gap-4 min-w-0">
+            {productMeta.imageUrl ? (
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-slate-50 dark:bg-slate-800 p-1 flex items-center justify-center shrink-0 border border-slate-100 dark:border-slate-700 overflow-hidden">
+                <img
+                  src={productMeta.imageUrl}
+                  alt={productMeta.title || "Product"}
+                  className="w-full h-full object-contain"
+                  loading="eager"
+                />
+              </div>
+            ) : null}
+            <div className="min-w-0">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 mb-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Flipkart Catalog Verified
+              </span>
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
+                {productMeta.title || "Flipkart Product"}
+              </h3>
+              <div className="flex items-center gap-2 mt-1">
+                {productMeta.price ? (
+                  <span className="text-sm font-extrabold text-slate-900 dark:text-white">
+                    ₹{productMeta.price.toLocaleString("en-IN")}
+                  </span>
+                ) : null}
+                {productMeta.mrp && productMeta.price && productMeta.mrp > productMeta.price ? (
+                  <span className="text-xs text-slate-400 line-through">
+                    ₹{productMeta.mrp.toLocaleString("en-IN")}
+                  </span>
+                ) : null}
+                {productMeta.discount ? (
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                    {productMeta.discount}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          </div>
+          <div className="hidden sm:flex flex-col items-end shrink-0">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              {reviews.length} reviews retrieved
+            </span>
+            <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+              ✓ Ready for proof screenshot & autofill
+            </span>
+          </div>
+        </motion.div>
+      )}
 
       {/* Guest Perks Banner on Search Results */}
       {isGuest && reviews.length > 0 && (

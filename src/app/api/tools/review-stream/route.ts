@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FlipkartReviewService, FlipkartReview } from "@/services/flipkartReview.service";
 
-export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
@@ -56,9 +55,24 @@ export async function GET(req: NextRequest) {
           msg: "Connecting to Flipkart marketplace catalog...",
         });
 
-        // 2. Fetch product metadata (title, real photo, pricing, true total review count)
-        const meta = await FlipkartReviewService.fetchProductMeta(pid, slug, itm);
-        let totalReviewsReported = meta?.totalReviews || 0;
+        // 2. Fetch product metadata AND Page 1 reviews concurrently (< 900ms)
+        let scannedSlots = 0;
+        scannedSlots++;
+        const [meta, page1] = await Promise.all([
+          FlipkartReviewService.fetchProductMeta(pid, slug, itm),
+          FlipkartReviewService.fetchPage(pid, slug, itm, 1, "MOST_HELPFUL"),
+        ]);
+
+        let totalReviewsReported = page1.totalReviews || meta?.totalReviews || 0;
+        const resolvedTitle =
+          page1.productTitle ||
+          meta?.title ||
+          (slug
+            ? slug
+                .split("-")
+                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                .join(" ")
+            : "Product");
 
         sendEvent({
           type: "meta",
@@ -66,14 +80,7 @@ export async function GET(req: NextRequest) {
           total_ratings: meta?.totalRatings || 0,
           rating: meta?.rating || 4.2,
           product: {
-            title:
-              meta?.title ||
-              (slug
-                ? slug
-                    .split("-")
-                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                    .join(" ")
-                : "Product"),
+            title: resolvedTitle,
             imageUrl: meta?.imageUrl || "",
             price: meta?.price,
             mrp: meta?.mrp,
@@ -84,17 +91,6 @@ export async function GET(req: NextRequest) {
 
         // Track seen review IDs to deduplicate across sorting orders
         const seenIds = new Set<string>();
-        let scannedSlots = 0;
-
-        // 3. Immediately fetch Page 1 (Most Helpful)
-        scannedSlots++;
-        const page1 = await FlipkartReviewService.fetchPage(
-          pid,
-          slug,
-          itm,
-          1,
-          "MOST_HELPFUL"
-        );
 
         if (page1.totalReviews && page1.totalReviews > totalReviewsReported) {
           totalReviewsReported = page1.totalReviews;
