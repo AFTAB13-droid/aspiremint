@@ -75,11 +75,14 @@ async function getFlipkartSessionCookie(): Promise<string> {
         Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
       },
     });
-    const setCookie = res.headers.get("set-cookie") || "";
-    if (setCookie) {
-      cachedFlipkartCookie = setCookie
-        .split(/,\s*(?=[a-zA-Z0-9_-]+=)/)
-        .map((c) => c.split(";")[0])
+    const setCookies = (res.headers as any).getSetCookie
+      ? (res.headers as any).getSetCookie()
+      : res.headers.get("set-cookie")
+      ? [res.headers.get("set-cookie")!]
+      : [];
+    if (setCookies.length > 0) {
+      cachedFlipkartCookie = setCookies
+        .map((c: string) => c.split(";")[0])
         .join("; ");
       lastCookieTimestamp = now;
       return cachedFlipkartCookie;

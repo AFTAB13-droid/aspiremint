@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FlipkartReviewService, FlipkartReview } from "@/services/flipkartReview.service";
+import connectToDatabase from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -64,7 +65,11 @@ export async function GET(req: NextRequest) {
         ]);
 
         let totalReviewsReported = page1.totalReviews || meta?.totalReviews || 0;
-        const resolvedTitle =
+        let finalImageUrl = meta?.imageUrl || "";
+        let finalPrice = meta?.price;
+        let finalMrp = meta?.mrp;
+        let finalDiscount = meta?.discount;
+        let finalTitle =
           page1.productTitle ||
           meta?.title ||
           (slug
@@ -74,17 +79,49 @@ export async function GET(req: NextRequest) {
                 .join(" ")
             : "Product");
 
+        // Database Fallback: If external catalog blocked AWS datacenter IP, fetch authentic image from MongoDB
+        if (!finalImageUrl) {
+          try {
+            await connectToDatabase();
+            const { ActiveDeal } = await import("@/modules/brand/deal.model");
+            const { Order } = await import("@/modules/order/order.model");
+
+            const deal = await ActiveDeal.findOne({
+              $or: [
+                { productLink: { $regex: pid, $options: "i" } },
+                { productCode: { $regex: pid, $options: "i" } },
+              ],
+            }).lean();
+
+            if (deal?.productImage) {
+              finalImageUrl = deal.productImage;
+              if (deal.productDetails && (!finalTitle || finalTitle === "Product")) {
+                finalTitle = deal.productDetails;
+              }
+            }
+
+            if (!finalImageUrl) {
+              const order = await Order.findOne({
+                productCode: { $regex: pid, $options: "i" },
+              }).lean();
+              if (order?.amount && !finalPrice) {
+                finalPrice = order.amount;
+              }
+            }
+          } catch {}
+        }
+
         sendEvent({
           type: "meta",
           total_reviews: totalReviewsReported,
           total_ratings: meta?.totalRatings || 0,
           rating: meta?.rating || 4.2,
           product: {
-            title: resolvedTitle,
-            imageUrl: meta?.imageUrl || "",
-            price: meta?.price,
-            mrp: meta?.mrp,
-            discount: meta?.discount,
+            title: finalTitle,
+            imageUrl: finalImageUrl,
+            price: finalPrice,
+            mrp: finalMrp,
+            discount: finalDiscount,
             rating: meta?.rating,
             debugError: meta?.debugError,
           },
