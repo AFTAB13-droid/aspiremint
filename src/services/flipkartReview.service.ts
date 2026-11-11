@@ -389,70 +389,84 @@ export class FlipkartReviewService {
     let debugError = "";
 
     // Candidate 1: Shopsy Catalog Page (Flipkart's lightweight platform - zero 429 rate limit, 100% exact PID matching)
-    try {
-      const shopsyRes = await fetch(`https://www.shopsy.in/p/p/p?pid=${pid}`, {
-        headers: {
-          "User-Agent": BROWSER_HEADERS["User-Agent"],
-          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        },
-        cache: "no-store",
-      });
-      if (shopsyRes.ok) {
-        const shopsyHtml = await shopsyRes.text();
-        const nextDataMatch = shopsyHtml.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
-        if (nextDataMatch) {
-          try {
-            const nextData = JSON.parse(nextDataMatch[1]);
-            const pageContext = nextData.props?.pageProps?.initialState?.pageData?.RESPONSE?.pageData?.pageContext;
-            if (pageContext && (pageContext.productId === pid || !pageContext.productId)) {
-              if (pageContext.imageUrl) {
-                imageUrl = pageContext.imageUrl
-                  .replace(/\\u002f/g, "/")
-                  .replace(/\{@width\}/g, "600")
-                  .replace(/\{@height\}/g, "600")
-                  .split("?")[0]
-                  .replace("http://", "https://")
-                  .replace("rukmini1.flixcart.com", "rukminim2.flixcart.com")
-                  .replace("rukminim1.flixcart.com", "rukminim2.flixcart.com");
+    const SHOPSY_HEADERS = {
+      "User-Agent":
+        "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+      "Accept-Language": "en-IN,en;q=0.9",
+    };
+
+    const shopsyUrls: string[] = [];
+    if (slug && slug !== "product" && itm && itm !== "itm") {
+      shopsyUrls.push(`https://www.shopsy.in/${slug}/p/${itm}?pid=${pid}`);
+    }
+    shopsyUrls.push(`https://www.shopsy.in/product/p/itm?pid=${pid}`);
+    shopsyUrls.push(`https://www.shopsy.in/p/p/p?pid=${pid}`);
+
+    for (const shopsyUrl of shopsyUrls) {
+      if (imageUrl && price) break;
+      try {
+        const shopsyRes = await fetch(shopsyUrl, {
+          headers: SHOPSY_HEADERS,
+          cache: "no-store",
+        });
+        if (shopsyRes.ok) {
+          const shopsyHtml = await shopsyRes.text();
+          const nextDataMatch = shopsyHtml.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
+          if (nextDataMatch) {
+            try {
+              const nextData = JSON.parse(nextDataMatch[1]);
+              const pageContext = nextData.props?.pageProps?.initialState?.pageData?.RESPONSE?.pageData?.pageContext;
+              if (pageContext && (pageContext.productId === pid || !pageContext.productId)) {
+                if (pageContext.imageUrl) {
+                  imageUrl = pageContext.imageUrl
+                    .replace(/\\u002f/g, "/")
+                    .replace(/\{@width\}/g, "600")
+                    .replace(/\{@height\}/g, "600")
+                    .split("?")[0]
+                    .replace("http://", "https://")
+                    .replace("rukmini1.flixcart.com", "rukminim2.flixcart.com")
+                    .replace("rukminim1.flixcart.com", "rukminim2.flixcart.com");
+                }
+                if (pageContext.titles?.title) {
+                  title = pageContext.titles.title;
+                }
+                const pricing = pageContext.pricing;
+                if (pricing) {
+                  if (typeof pricing.finalPrice?.value === "number") {
+                    price = pricing.finalPrice.value;
+                  } else if (typeof pricing.fsp === "number") {
+                    price = pricing.fsp;
+                  }
+                  if (typeof pricing.mrp === "number") {
+                    mrp = pricing.mrp;
+                  }
+                  if (pricing.totalDiscount) {
+                    discount = `${pricing.totalDiscount}% off`;
+                  }
+                }
+                if (pageContext.rating) {
+                  if (typeof pageContext.rating.average === "number") {
+                    rating = pageContext.rating.average;
+                  }
+                  if (typeof pageContext.rating.reviewCount === "number") {
+                    totalReviews = pageContext.rating.reviewCount;
+                  }
+                  if (typeof pageContext.rating.count === "number") {
+                    totalRatings = pageContext.rating.count;
+                  }
+                }
               }
-              if (pageContext.titles?.title) {
-                title = pageContext.titles.title;
-              }
-              const pricing = pageContext.pricing;
-              if (pricing) {
-                if (typeof pricing.finalPrice?.value === "number") {
-                  price = pricing.finalPrice.value;
-                } else if (typeof pricing.fsp === "number") {
-                  price = pricing.fsp;
-                }
-                if (typeof pricing.mrp === "number") {
-                  mrp = pricing.mrp;
-                }
-                if (pricing.totalDiscount) {
-                  discount = `${pricing.totalDiscount}% off`;
-                }
-              }
-              if (pageContext.rating) {
-                if (typeof pageContext.rating.average === "number") {
-                  rating = pageContext.rating.average;
-                }
-                if (typeof pageContext.rating.reviewCount === "number") {
-                  totalReviews = pageContext.rating.reviewCount;
-                }
-                if (typeof pageContext.rating.count === "number") {
-                  totalRatings = pageContext.rating.count;
-                }
-              }
+            } catch (e: any) {
+              debugError += `[ShopsyJSON: ${e.message}] `;
             }
-          } catch (e: any) {
-            debugError += `[ShopsyJSON: ${e.message}] `;
           }
+        } else {
+          debugError += `[${shopsyUrl.slice(0, 35)}: HTTP ${shopsyRes.status}] `;
         }
-      } else {
-        debugError += `[Shopsy: HTTP ${shopsyRes.status}] `;
+      } catch (e: any) {
+        debugError += `[${shopsyUrl.slice(0, 35)}: ${e.message}] `;
       }
-    } catch (e: any) {
-      debugError += `[ShopsyFetch: ${e.message}] `;
     }
 
     // Candidate 2: Direct Flipkart Product Page (if image or price missing)

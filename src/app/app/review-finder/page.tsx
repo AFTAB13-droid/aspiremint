@@ -296,9 +296,30 @@ export default function ReviewFinderPage() {
               if (payload.total_pages) setTotalPagesFound(payload.total_pages);
               if (payload.total_reviews) setTotalReviewsCount(payload.total_reviews);
               if (payload.product) {
-                setProductMeta(payload.product);
+                let enrichedProduct = { ...payload.product };
+                // Fallback to verified image/pricing from matching user order if catalog fetch was blocked
+                if (!enrichedProduct.imageUrl && userOrders.length > 0) {
+                  const pidMatch = inputUrl.match(/[?&]pid=([A-Z0-9]{16})/i);
+                  const currentPid = pidMatch ? pidMatch[1].toUpperCase() : "";
+                  const matchedOrder = userOrders.find(
+                    (o) =>
+                      (inputUrl && o.productLink && inputUrl.includes(o.productLink)) ||
+                      (o.productLink && inputUrl.includes(o.productLink)) ||
+                      (currentPid && o.productLink && o.productLink.toUpperCase().includes(currentPid))
+                  );
+                  if (matchedOrder) {
+                    if (matchedOrder.productImage) enrichedProduct.imageUrl = matchedOrder.productImage;
+                    if (matchedOrder.productTitle && (!enrichedProduct.title || enrichedProduct.title === "Product")) {
+                      enrichedProduct.title = matchedOrder.productTitle;
+                    }
+                    if (matchedOrder.dealAmount && !enrichedProduct.price) {
+                      enrichedProduct.price = matchedOrder.dealAmount;
+                    }
+                  }
+                }
+                setProductMeta(enrichedProduct);
                 try {
-                  sessionStorage.setItem("last_product_meta", JSON.stringify(payload.product));
+                  sessionStorage.setItem("last_product_meta", JSON.stringify(enrichedProduct));
                 } catch {}
               }
               break;
