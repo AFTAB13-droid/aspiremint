@@ -59,6 +59,35 @@ const BROWSER_HEADERS: Record<string, string> = {
 // High-speed in-memory cache for product metadata (0ms on repeat queries)
 const productMetaMemoryCache = new Map<string, FlipkartProductMeta>();
 
+// In-memory session cookie cache to bypass Flipkart datacenter 429 rate-limiting
+let cachedFlipkartCookie = "";
+let lastCookieTimestamp = 0;
+
+async function getFlipkartSessionCookie(): Promise<string> {
+  const now = Date.now();
+  if (cachedFlipkartCookie && now - lastCookieTimestamp < 15 * 60 * 1000) {
+    return cachedFlipkartCookie;
+  }
+  try {
+    const res = await fetch("https://www.flipkart.com/", {
+      headers: {
+        "User-Agent": BROWSER_HEADERS["User-Agent"],
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+    });
+    const setCookie = res.headers.get("set-cookie") || "";
+    if (setCookie) {
+      cachedFlipkartCookie = setCookie
+        .split(/,\s*(?=[a-zA-Z0-9_-]+=)/)
+        .map((c) => c.split(";")[0])
+        .join("; ");
+      lastCookieTimestamp = now;
+      return cachedFlipkartCookie;
+    }
+  } catch {}
+  return cachedFlipkartCookie || "";
+}
+
 export class FlipkartReviewService {
   /**
    * Resolves short links (dl.flipkart.com, fkrt.it) and extracts pid, slug, and itm
@@ -116,10 +145,14 @@ export class FlipkartReviewService {
     // Fallback: If URL doesn't have ?pid= directly (e.g. copied from app or clean /p/itm URL), fetch once to extract PID
     if (!pid && (resolvedUrl.includes("/p/") || resolvedUrl.includes("flipkart.com"))) {
       try {
+        const sessionCookie = await getFlipkartSessionCookie();
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 10000);
         const pageRes = await fetch(resolvedUrl, {
-          headers: BROWSER_HEADERS,
+          headers: {
+            ...BROWSER_HEADERS,
+            ...(sessionCookie ? { Cookie: sessionCookie } : {}),
+          },
           signal: controller.signal,
           redirect: "follow",
         });
@@ -135,24 +168,25 @@ export class FlipkartReviewService {
 
             // Pre-populate productMetaMemoryCache from this page text (0ms subsequent lookup)
             try {
-              let cachedImg = text.match(/<meta property="og:image" content="([^"]+)"/)?.[1] || "";
-              if (!cachedImg || cachedImg.includes("flipkart-plus")) {
-                const allRuk = [
-                  ...text.matchAll(
-                    /https:\/\/rukminim[0-9]*\.flixcart\.com\/image\/[0-9]+\/[0-9]+\/([^"'\s]+?\.(?:jpeg|jpg|png))/gi
-                  ),
-                ];
-                if (allRuk.length > 0) {
-                  cachedImg = `https://rukminim2.flixcart.com/image/600/600/${allRuk[0][1]}`;
-                }
-              }
-
+              let cachedImg = "";
               let cachedPrice: number | undefined;
               let cachedMrp: number | undefined;
+
               const m = text.match(/window\.__INITIAL_STATE__\s*=\s*(\{[\s\S]*?\});<\/script>/);
               if (m) {
+                const str = m[1];
+                const pMatch = str.match(/"productImage":\s*"([^"]+)"/);
+                if (pMatch) {
+                  cachedImg = pMatch[1]
+                    .replace(/\\u002f/g, "/")
+                    .replace(/\{@width\}/g, "600")
+                    .replace(/\{@height\}/g, "600")
+                    .split("?")[0]
+                    .replace("rukminim1", "rukminim2");
+                }
+
                 try {
-                  const json = JSON.parse(m[1]);
+                  const json = JSON.parse(str);
                   const jsonStr = JSON.stringify(json);
                   const priceM =
                     jsonStr.match(/"finalPrice":([0-9]+)/) ||
@@ -161,6 +195,13 @@ export class FlipkartReviewService {
                   if (priceM) cachedPrice = parseInt(priceM[1], 10);
                   if (mrpM) cachedMrp = parseInt(mrpM[1], 10);
                 } catch {}
+              }
+
+              if (!cachedImg) {
+                const og = text.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
+                if (og && !og.includes("flipkart-plus") && !og.includes("default")) {
+                  cachedImg = og;
+                }
               }
 
               if (cachedImg || cachedPrice) {
@@ -345,13 +386,16 @@ export class FlipkartReviewService {
 
     let debugError = "";
 
-    // Multi-candidate URLs: Try canonical full product page first, then /p/p/p, then search
+    // Acquire session cookie to prevent Flipkart 429 rate-limiting
+    const sessionCookie = await getFlipkartSessionCookie();
+
+    // Multi-candidate URLs: Try canonical full product page first, then /p/p/p
+    // NEVER query search?q= because search pages display random sponsored ads
     const urlsToTry: string[] = [];
     if (slug && slug !== "product" && itm && itm !== "itm") {
       urlsToTry.push(`https://www.flipkart.com/${slug}/p/${itm}?pid=${pid}`);
     }
     urlsToTry.push(`https://www.flipkart.com/p/p/p?pid=${pid}`);
-    urlsToTry.push(`https://www.flipkart.com/search?q=${pid}`);
 
     for (const targetUrl of urlsToTry) {
       if (imageUrl && price) break;
@@ -361,7 +405,10 @@ export class FlipkartReviewService {
 
       try {
         const res = await fetch(targetUrl, {
-          headers: BROWSER_HEADERS,
+          headers: {
+            ...BROWSER_HEADERS,
+            ...(sessionCookie ? { Cookie: sessionCookie } : {}),
+          },
           signal: controller.signal,
           cache: "no-store",
         });
@@ -369,44 +416,26 @@ export class FlipkartReviewService {
 
         if (res.ok) {
           const text = await res.text();
-          if (!imageUrl) {
-            const ogImg = text.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
-            if (ogImg && !ogImg.includes("flipkart-plus")) imageUrl = ogImg;
-          }
 
-          if (!imageUrl) {
-            const atlasMatch = text.match(/"preloadAtlasImageLinkTag":\s*"([^"]+)"/);
-            if (atlasMatch && atlasMatch[1]) {
-              imageUrl = atlasMatch[1].split("?")[0];
+          // 1. Extract exact product hero photo and pricing from INITIAL_STATE
+          const m = text.match(/window\.__INITIAL_STATE__\s*=\s*(\{[\s\S]*?\});<\/script>/);
+          if (m) {
+            const str = m[1];
+            if (!imageUrl) {
+              const pMatch = str.match(/"productImage":\s*"([^"]+)"/);
+              if (pMatch) {
+                imageUrl = pMatch[1]
+                  .replace(/\\u002f/g, "/")
+                  .replace(/\{@width\}/g, "600")
+                  .replace(/\{@height\}/g, "600")
+                  .split("?")[0]
+                  .replace("rukminim1", "rukminim2");
+              }
             }
-          }
 
-          if (!imageUrl) {
-            const productActionImg = text.match(/"productImage":\s*"(https?:\/\/[^"]+)"/);
-            if (productActionImg && productActionImg[1]) {
-              imageUrl = productActionImg[1]
-                .replace("{@width}", "600")
-                .replace("{@height}", "600")
-                .split("?")[0];
-            }
-          }
-
-          if (!imageUrl) {
-            const allRuk = [
-              ...text.matchAll(
-                /https:\/\/rukminim[0-9]*\.flixcart\.com\/image\/[0-9]+\/[0-9]+\/([^"'\s]+?\.(?:jpeg|jpg|png))/gi
-              ),
-            ];
-            if (allRuk.length > 0) {
-              imageUrl = `https://rukminim2.flixcart.com/image/600/600/${allRuk[0][1]}`;
-            }
-          }
-
-          if (!price) {
-            const m = text.match(/window\.__INITIAL_STATE__\s*=\s*(\{[\s\S]*?\});<\/script>/);
-            if (m) {
+            if (!price) {
               try {
-                const json = JSON.parse(m[1]);
+                const json = JSON.parse(str);
                 const jsonStr = JSON.stringify(json);
                 const priceM =
                   jsonStr.match(/"finalPrice":([0-9]+)/) ||
@@ -415,6 +444,14 @@ export class FlipkartReviewService {
                 if (priceM) price = parseInt(priceM[1], 10);
                 if (mrpM) mrp = parseInt(mrpM[1], 10);
               } catch {}
+            }
+          }
+
+          // 2. Fallback to verified canonical og:image (never sponsored/promos)
+          if (!imageUrl) {
+            const ogImg = text.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
+            if (ogImg && !ogImg.includes("flipkart-plus") && !ogImg.includes("default")) {
+              imageUrl = ogImg;
             }
           }
         } else {
