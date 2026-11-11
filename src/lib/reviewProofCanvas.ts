@@ -355,9 +355,12 @@ function loadImageAsync(url: string): Promise<HTMLImageElement> {
     img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = () => {
-      // If direct crossOrigin fails, try fetching via blob URL
+      // Step 2: Try fetching direct blob
       fetch(url)
-        .then((res) => res.blob())
+        .then((res) => {
+          if (!res.ok) throw new Error("Direct blob fetch failed");
+          return res.blob();
+        })
         .then((blob) => {
           const blobUrl = URL.createObjectURL(blob);
           const fallbackImg = new Image();
@@ -365,10 +368,31 @@ function loadImageAsync(url: string): Promise<HTMLImageElement> {
             URL.revokeObjectURL(blobUrl);
             resolve(fallbackImg);
           };
-          fallbackImg.onerror = reject;
+          fallbackImg.onerror = () => tryProxyFallback();
           fallbackImg.src = blobUrl;
         })
-        .catch(reject);
+        .catch(() => tryProxyFallback());
+
+      function tryProxyFallback() {
+        // Step 3: Server-side proxy fallback (bypasses adblockers, browser tracking protections)
+        const proxyUrl = `/api/tools/image-proxy?url=${encodeURIComponent(url)}`;
+        fetch(proxyUrl)
+          .then((res) => {
+            if (!res.ok) throw new Error("Image proxy failed");
+            return res.blob();
+          })
+          .then((blob) => {
+            const blobUrl = URL.createObjectURL(blob);
+            const proxyImg = new Image();
+            proxyImg.onload = () => {
+              URL.revokeObjectURL(blobUrl);
+              resolve(proxyImg);
+            };
+            proxyImg.onerror = reject;
+            proxyImg.src = blobUrl;
+          })
+          .catch(reject);
+      }
     };
     img.src = url;
   });

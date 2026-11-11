@@ -70,9 +70,9 @@ export async function GET(req: NextRequest) {
         let finalMrp = meta?.mrp;
         let finalDiscount = meta?.discount;
         let finalTitle =
-          page1.productTitle ||
-          meta?.title ||
-          (slug
+          (page1.productTitle && page1.productTitle.toLowerCase() !== "product" ? page1.productTitle : "") ||
+          (meta?.title && meta.title.toLowerCase() !== "product" ? meta.title : "") ||
+          (slug && slug !== "product"
             ? slug
                 .split("-")
                 .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
