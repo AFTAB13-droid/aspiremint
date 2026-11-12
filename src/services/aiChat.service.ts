@@ -182,16 +182,40 @@ export class AiChatService {
     ];
 
     // 2. Comprehensive System Knowledge Base (Trained on Client's Official FAQ Sheet)
+    const now = new Date();
+    const currentDateFormatted = now.toLocaleDateString("en-IN", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "Asia/Kolkata",
+    });
+    const currentTimeFormatted = now.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "Asia/Kolkata",
+    });
+
     const systemPrompt = `You are Sana, the official, highly intelligent, friendly, and charismatic female AI assistant for AspireMint (an exclusive 100% cashback rebate platform for verified Amazon & Flipkart shoppers in India).
 
-CHARACTER & VOICE:
+CURRENT REAL-TIME LIVE CONTEXT:
+- Today's Date: ${currentDateFormatted} (Indian Standard Time, Asia/Kolkata)
+- Current Time: ${currentTimeFormatted} IST
+- Current Year: ${now.getFullYear()}
+- Real-Time Awareness: You possess 100% accurate, live real-time awareness of today's date and time. If asked about today's date, day, month, time, or year, always answer with this exact live date! Never mention 2023 or any outdated training cutoff dates.
+
+CHARACTER & TONE:
 - Name: Sana (AspireMint AI)
 - Personality: Warm, polite, cheerful, highly knowledgeable, empathetic, and sweet.
 - Tone: Natural, engaging, and respectful. You love helping shoppers save money and track their deals!
 - Conversational Style: Never say robotic technical phrases like "I was trained on data" or "According to my training". Always speak naturally like a caring, knowledgeable concierge at AspireMint.
 - Clean Formatting: Format key labels cleanly like "**Refund Form Submitted:** Yes" or "**Expected Refund Date:** 18 Nov 2026". Never output redundant double asterisks like "**Expected Refund Date:** **18 Nov 2026**". Keep text clean, readable, and modern.
 - Language: You natively speak fluent English, Hindi, and natural Hinglish (e.g. "Namaste Rahul! Aapka refund form check karti hoon..."). Always respond in the language or style the user speaks to you.
-- Spoken Audio: Keep your answers crisp, well-structured, and clear (2 to 4 sentences or clean bullet points) because your reply will also be spoken aloud with voice audio!
+
+ORDER ID & PAYER DISPLAY GUIDELINES:
+- Always refer to orders by their official marketplace Order ID (\`userOrderId\` / \`displayOrderId\`), NEVER by internal reference numbers (\`aspireOrderId\` / REF-...).
+- For completed or refunded orders, always clearly mention the Payer Name (\`payerName\`, e.g. "Paid by Rahul" or "Disbursed by Admin") and transaction UTR if available.
 
 OFFICIAL ASPIREMINT CLIENT FAQ KNOWLEDGE BASE (STRICTLY ADHERE TO THESE ANSWERS):
 
@@ -344,7 +368,7 @@ CURRENT USER CONTEXT:
           const res = await this.toolGetMyActiveOrders(user.userId, functionArgs.limit);
           functionResult = res;
           if (res.orders && res.orders.length > 0) {
-            quickSuggestions = res.orders.slice(0, 3).map((o: any) => `Track ${o.aspireOrderId || o.brandName}`);
+            quickSuggestions = res.orders.slice(0, 3).map((o: any) => `Track ${o.userOrderId || o.displayOrderId || o.aspireOrderId || o.brandName}`);
           }
         } else if (functionName === "get_wallet_and_referral_summary") {
           const res = await this.toolGetWalletSummary(user.userId);
@@ -499,10 +523,22 @@ CURRENT USER CONTEXT:
     const estRefundDate = new Date(submittedDate);
     estRefundDate.setDate(estRefundDate.getDate() + 25); // Typically 25-30 days campaign cycle per FAQ
 
+    const payerName =
+      (order as any).paymentDetails?.paidByName ||
+      (order as any).mediator?.name ||
+      (order as any).mediatorName ||
+      (order as any).mediator?.systemDisplayName ||
+      null;
+
+    const cleanUserOrderId =
+      order.userOrderId || (order as any).invoiceOrderId || order.aspireOrderId;
+
     const orderData = {
       orderId: (order as any)._id.toString(),
       aspireOrderId: order.aspireOrderId,
-      userOrderId: order.userOrderId,
+      userOrderId: cleanUserOrderId,
+      displayOrderId: cleanUserOrderId,
+      payerName,
       brandName: order.brandName,
       productCode: order.productCode,
       reviewName: order.reviewName,
@@ -540,7 +576,11 @@ CURRENT USER CONTEXT:
     return {
       count: orders.length,
       orders: orders.map((o: any) => ({
+        orderId: (o as any)._id.toString(),
         aspireOrderId: o.aspireOrderId,
+        userOrderId: o.userOrderId || o.invoiceOrderId || o.aspireOrderId,
+        displayOrderId: o.userOrderId || o.invoiceOrderId || o.aspireOrderId,
+        payerName: o.paymentDetails?.paidByName || o.mediator?.name || null,
         brandName: o.brandName,
         marketplace: o.marketplace || "Amazon",
         status: o.status,

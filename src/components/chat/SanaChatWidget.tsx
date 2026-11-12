@@ -7,10 +7,10 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import {
-  MessageCircle, X, Send, Volume2, VolumeX, Mic, MicOff,
+  MessageCircle, X, Send, Mic, MicOff,
   Sparkles, Package, Gift, Wallet, ArrowRight, RefreshCw,
   ExternalLink, CheckCircle2, Clock, AlertCircle, ShoppingBag,
-  Square, ChevronDown, Share2, Copy, Check, PartyPopper,
+  ChevronDown, Share2, Copy, Check, PartyPopper,
   HelpCircle, PlayCircle, Search
 } from "lucide-react";
 import { SoundFX } from "@/utils/soundEffects";
@@ -164,8 +164,6 @@ export default function SanaChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [copiedPitchId, setCopiedPitchId] = useState<string | null>(null);
@@ -190,7 +188,6 @@ export default function SanaChatWidget() {
           id: "welcome-1",
           role: "assistant",
           content: `Namaste ${userName}! 🌸 I'm **Sana**, your personal AspireMint shopping companion.\n\nI can help you track your **refunds & orders**, claim **100% cashback deals**, or check your **wallet balance & referral rewards**! How can I assist you today?`,
-          speechText: `Namaste ${userName}! I'm Sana, your personal shopping companion. How can I assist you with your orders, refunds, or deals today?`,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
@@ -208,11 +205,9 @@ export default function SanaChatWidget() {
     }
   }, [messages, isOpen, loading]);
 
-  // Stop speech when closing widget
+  // Cleanup when closing widget
   useEffect(() => {
     if (!isOpen) {
-      SanaSpeechEngine.stop();
-      setIsSpeaking(false);
       setShowCelebration(false);
       if (recognitionControllerRef.current) {
         recognitionControllerRef.current.stop();
@@ -227,34 +222,6 @@ export default function SanaChatWidget() {
     setTimeout(() => {
       setShowCelebration(false);
     }, 5500);
-  };
-
-  const handleSpeakText = (text: string) => {
-    if (!isVoiceEnabled) return;
-    setIsSpeaking(true);
-    SanaSpeechEngine.speak(
-      text,
-      () => setIsSpeaking(true),
-      () => setIsSpeaking(false),
-      () => setIsSpeaking(false)
-    );
-  };
-
-  const handleStopSpeaking = () => {
-    SanaSpeechEngine.stop();
-    setIsSpeaking(false);
-  };
-
-  const handleToggleVoice = () => {
-    if (isVoiceEnabled) {
-      handleStopSpeaking();
-      setIsVoiceEnabled(false);
-      toast("Sana's voice muted", { icon: "🔇" });
-    } else {
-      setIsVoiceEnabled(true);
-      toast("Sana's voice enabled! 🌸", { icon: "🔊" });
-      handleSpeakText("Voice enabled! I'm ready to speak with you.");
-    }
   };
 
   // Voice Input (Microphone Dictation)
@@ -272,7 +239,6 @@ export default function SanaChatWidget() {
       return;
     }
 
-    handleStopSpeaking();
     setIsListening(true);
     SoundFX.playCoinChime();
     toast("Listening... Speak in Hindi or English", { icon: "🎙️" });
@@ -354,11 +320,6 @@ export default function SanaChatWidget() {
         if (json.data.celebrate) {
           triggerCelebration();
         }
-
-        // Speak response if voice is enabled
-        if (isVoiceEnabled && json.data.speechText) {
-          handleSpeakText(json.data.speechText);
-        }
       } else {
         const errorMsg: ChatMessage = {
           id: `ai-err-${Date.now()}`,
@@ -397,11 +358,6 @@ export default function SanaChatWidget() {
           whileTap={{ scale: 0.95 }}
           className="relative group flex items-center gap-2.5 p-2.5 sm:px-4 sm:py-3 rounded-full bg-gradient-to-r from-pink-600 via-rose-500 to-indigo-600 text-white shadow-xl shadow-pink-500/25 border-2 border-white/30 backdrop-blur-md cursor-pointer transition-all"
         >
-          {/* Ambient Glowing Wave while speaking */}
-          {isSpeaking && (
-            <span className="absolute inset-0 rounded-full bg-pink-400 animate-ping opacity-30 pointer-events-none" />
-          )}
-
           {/* SANA AVATAR ICON */}
           <div className="relative w-9 h-9 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border border-white/40 shadow-inner">
             <span className="text-xl">🌸</span>
@@ -413,11 +369,7 @@ export default function SanaChatWidget() {
           <div className="hidden sm:flex flex-col text-left">
             <span className="text-xs font-black tracking-tight leading-tight flex items-center gap-1.5">
               <span>Sana AI</span>
-              {isSpeaking ? (
-                <span className="text-[10px] text-pink-200 animate-pulse font-bold">Speaking...</span>
-              ) : (
-                <Sparkles className="w-3 h-3 text-amber-300" />
-              )}
+              <Sparkles className="w-3 h-3 text-amber-300" />
             </span>
             <span className="text-[10px] text-pink-100 font-medium">Order & Cashback Help</span>
           </div>
@@ -453,12 +405,6 @@ export default function SanaChatWidget() {
                 <div className="flex items-center gap-2.5">
                   <div className="relative w-10 h-10 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center text-2xl shadow-inner">
                     🌸
-                    {isSpeaking && (
-                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-300 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-pink-400" />
-                      </span>
-                    )}
                   </div>
                   <div>
                     <h3 className="font-black text-sm flex items-center gap-1.5 leading-tight">
@@ -466,7 +412,7 @@ export default function SanaChatWidget() {
                       <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/20 font-bold">AI</span>
                     </h3>
                     <p className="text-[11px] text-pink-100 font-medium">
-                      {isSpeaking ? "🔊 Speaking aloud..." : "Speaks Hindi, Hinglish & English"}
+                      Online • Hindi, Hinglish & English
                     </p>
                   </div>
                 </div>
@@ -480,26 +426,6 @@ export default function SanaChatWidget() {
                     className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition active:scale-95"
                   >
                     <PartyPopper className="w-3.5 h-3.5 text-amber-300" />
-                  </button>
-
-                  {/* Stop Speech Button */}
-                  {isSpeaking && (
-                    <button
-                      onClick={handleStopSpeaking}
-                      title="Stop Voice"
-                      className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white transition active:scale-95"
-                    >
-                      <Square className="w-3.5 h-3.5 fill-white" />
-                    </button>
-                  )}
-
-                  {/* Toggle Voice Audio Button */}
-                  <button
-                    onClick={handleToggleVoice}
-                    title={isVoiceEnabled ? "Mute Voice" : "Enable Voice"}
-                    className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white transition active:scale-95"
-                  >
-                    {isVoiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-pink-200" />}
                   </button>
 
                   {/* Close / Minimize */}
@@ -634,17 +560,9 @@ export default function SanaChatWidget() {
                             {renderFormattedContent(msg.content)}
                           </div>
 
-                          {/* REPLAY VOICE BUTTON (FOR SANA) */}
                           {!isUser && (
-                            <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
+                            <div className="mt-2 pt-1 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-end text-[10px] text-slate-400">
                               <span className="font-mono">{msg.timestamp}</span>
-                              <button
-                                onClick={() => handleSpeakText(msg.speechText || msg.content)}
-                                className="flex items-center gap-1 text-pink-600 dark:text-pink-400 hover:text-pink-700 font-bold py-0.5 px-2 rounded-md hover:bg-pink-50 dark:hover:bg-pink-950/40 transition active:scale-95"
-                              >
-                                <Volume2 className="w-3 h-3" />
-                                <span>Speak</span>
-                              </button>
                             </div>
                           )}
                         </div>
@@ -663,14 +581,14 @@ export default function SanaChatWidget() {
                                       : "bg-white dark:bg-slate-900 border-indigo-100 dark:border-indigo-900/40"
                                   }`}>
                                     <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-                                      <div className="flex items-center gap-1.5">
-                                        <Package className={`w-4 h-4 ${card.data.isRefunded ? "text-emerald-600" : "text-indigo-600"}`} />
-                                        <span className="font-bold text-xs text-slate-900 dark:text-white">
-                                          {card.data.aspireOrderId}
+                                      <div className="flex items-center gap-1.5 min-w-0">
+                                        <Package className={`w-4 h-4 shrink-0 ${card.data.isRefunded ? "text-emerald-600" : "text-indigo-600"}`} />
+                                        <span className="font-bold text-xs text-slate-900 dark:text-white font-mono truncate">
+                                          {card.data.userOrderId || card.data.displayOrderId || card.data.aspireOrderId}
                                         </span>
                                       </div>
                                       <span
-                                        className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                                        className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider shrink-0 ${
                                           card.data.statusColor === "emerald"
                                             ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
                                             : card.data.statusColor === "blue"
@@ -701,10 +619,27 @@ export default function SanaChatWidget() {
                                         </div>
                                       </div>
 
-                                      {card.data.payoutUtr && (
-                                        <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-[10px] font-mono text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between">
-                                          <span>UTR: {card.data.payoutUtr}</span>
-                                          <span className="font-bold">Paid ✅</span>
+                                      {/* Payer Name & Completed Refund Details */}
+                                      {(card.data.isRefunded || card.data.payerName || card.data.payoutUtr) && (
+                                        <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-[10px] text-emerald-900 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 space-y-1">
+                                          <div className="flex items-center justify-between">
+                                            <span className="font-medium text-emerald-800 dark:text-emerald-300">
+                                              Payer: <span className="font-black text-emerald-950 dark:text-white uppercase tracking-tight">{card.data.payerName || "System / Admin"}</span>
+                                            </span>
+                                            <span className="font-black text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded text-[9px]">
+                                              Refund Completed ✅
+                                            </span>
+                                          </div>
+                                          {card.data.payoutUtr && (
+                                            <div className="font-mono text-[9px] text-emerald-700 dark:text-emerald-400 pt-0.5">
+                                              UTR: {card.data.payoutUtr}
+                                            </div>
+                                          )}
+                                          {card.data.paidAt && (
+                                            <div className="text-[9px] text-slate-500 dark:text-slate-400">
+                                              Disbursed on: {card.data.paidAt}
+                                            </div>
+                                          )}
                                         </div>
                                       )}
                                     </div>
