@@ -3,6 +3,7 @@ import connectToDatabase from "@/lib/db";
 import { Order, OrderStatus } from "@/modules/order/order.model";
 import { ActiveDeal } from "@/modules/brand/deal.model";
 import { ReferralService } from "@/services/referral.service";
+import { AiChatLog } from "@/modules/ai/aiChatLog.model";
 import formatDate from "@/utils/formatDate";
 
 const openai = new OpenAI({
@@ -214,8 +215,14 @@ CHARACTER & TONE:
 - Language: You natively speak fluent English, Hindi, and natural Hinglish (e.g. "Namaste Rahul! Aapka refund form check karti hoon..."). Always respond in the language or style the user speaks to you.
 
 ORDER ID & PAYER DISPLAY GUIDELINES:
-- Always refer to orders by their official marketplace Order ID (\`userOrderId\` / \`displayOrderId\`), NEVER by internal reference numbers (\`aspireOrderId\` / REF-...).
-- For completed or refunded orders, always clearly mention the Payer Name (\`payerName\`, e.g. "Paid by Rahul" or "Disbursed by Admin") and transaction UTR if available.
+- Always refer to orders by their official marketplace Order ID (userOrderId / displayOrderId), NEVER by internal reference numbers (aspireOrderId / REF-...).
+- For completed or refunded orders, always clearly mention the Payer Name (payerName, e.g. "Paid by Rahul" or "Disbursed by Admin") and transaction UTR if available.
+
+STRICT DOMAIN GUARDRAIL (NO GENERAL TRIVIA / OFF-TOPIC QUESTIONS):
+- You are strictly an e-commerce cashback & order concierge for AspireMint (100% rebate deals on Amazon & Flipkart in India).
+- If the user asks ANY general knowledge question, politics (e.g. 'Who is the Prime Minister of India?'), trivia, weather, homework, coding, jokes, celebrities, or anything outside AspireMint deals and orders, do NOT answer the trivia!
+- Immediately and politely reply in 1 short sentence:
+  "Namaste! I am Sana, your AspireMint shopping assistant. I specialize only in our 100% cashback deals, order status, and refund tracking on Amazon & Flipkart. How can I assist you with your AspireMint orders today?"
 
 OFFICIAL ASPIREMINT CLIENT FAQ KNOWLEDGE BASE (STRICTLY ADHERE TO THESE ANSWERS):
 
@@ -320,14 +327,21 @@ CURRENT USER CONTEXT:
     // 4. First OpenAI Completion Call
     let completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
+      user: user.userId,
       messages: apiMessages,
       tools,
       tool_choice: "auto",
       temperature: 0.7,
-      max_tokens: 550,
+      max_tokens: 500,
     });
 
+    let promptTokens = completion.usage?.prompt_tokens || 0;
+    let completionTokens = completion.usage?.completion_tokens || 0;
+    let totalTokens = completion.usage?.total_tokens || 0;
+
     let assistantMessage = completion.choices[0]?.message;
+    const toolsUsedList: string[] = [];
+    const ordersInquiredList: string[] = [];
 
     // 5. Handle Tool Calls Loop (if Sana decides to call functions)
     if (assistantMessage?.tool_calls && assistantMessage.tool_calls.length > 0) {
@@ -336,6 +350,7 @@ CURRENT USER CONTEXT:
       for (const toolCall of assistantMessage.tool_calls) {
         if (toolCall.type !== "function") continue;
         const functionName = toolCall.function.name;
+        toolsUsedList.push(functionName);
         let functionArgs: any = {};
         try {
           functionArgs = JSON.parse(toolCall.function.arguments);
@@ -346,6 +361,7 @@ CURRENT USER CONTEXT:
         let functionResult: any = {};
 
         if (functionName === "lookup_order") {
+          if (functionArgs.orderId) ordersInquiredList.push(functionArgs.orderId);
           const res = await this.toolLookupOrder(functionArgs.orderId, user.userId);
           functionResult = res;
           if (res.found && res.order) {
@@ -427,10 +443,15 @@ CURRENT USER CONTEXT:
       // Second Completion Call with tool results
       completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
+        user: user.userId,
         messages: apiMessages,
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: 450,
       });
+
+      promptTokens += completion.usage?.prompt_tokens || 0;
+      completionTokens += completion.usage?.completion_tokens || 0;
+      totalTokens += completion.usage?.total_tokens || 0;
 
       assistantMessage = completion.choices[0]?.message;
     }
@@ -439,6 +460,48 @@ CURRENT USER CONTEXT:
       assistantMessage?.content ||
       "Namaste! I'm here to assist you with your AspireMint orders, cashback deals, and referral rewards. What can I check for you?";
     const speechText = cleanTextForSpeech(reply);
+
+    // Calculate real-time estimated costs (gpt-4o-mini rates: $0.15/1M input, $0.60/1M output)
+    const costUsd = (promptTokens * 0.15) / 1_000_000 + (completionTokens * 0.6) / 1_000_000;
+    const costInr = costUsd * 86.5;
+
+    // Categorize intent for deep admin analytics
+    const lastUserMsg = messages[messages.length - 1]?.content || "";
+    const lowerUser = lastUserMsg.toLowerCase();
+    let intentCategory: "ORDER_TRACKING" | "REFUND_STATUS" | "DEAL_DISCOVERY" | "RULES_FAQ" | "OFF_TOPIC" | "GENERAL" = "GENERAL";
+
+    if (toolsUsedList.includes("lookup_order") || lowerUser.includes("order") || lowerUser.includes("track")) {
+      intentCategory = "ORDER_TRACKING";
+    } else if (lowerUser.includes("refund") || lowerUser.includes("payout") || lowerUser.includes("utr") || lowerUser.includes("money")) {
+      intentCategory = "REFUND_STATUS";
+    } else if (toolsUsedList.includes("find_active_deals") || lowerUser.includes("deal") || lowerUser.includes("cashback") || lowerUser.includes("product")) {
+      intentCategory = "DEAL_DISCOVERY";
+    } else if (toolsUsedList.includes("explain_platform_rules") || lowerUser.includes("rule") || lowerUser.includes("coupon") || lowerUser.includes("process")) {
+      intentCategory = "RULES_FAQ";
+    } else if (reply.includes("specializ") || reply.includes("shopping assistant") || reply.includes("100% cashback deals, order status")) {
+      intentCategory = "OFF_TOPIC";
+    }
+
+    // Fire-and-forget asynchronous audit log to MongoDB (0ms latency impact on user chat)
+    AiChatLog.create({
+      userId: user.userId,
+      userName: user.name || "Shopper",
+      userEmail: user.email || "",
+      userRole: user.role || "USER",
+      aspireMintId: user.aspireMintId || "",
+      userMessage: lastUserMsg,
+      sanaReply: reply,
+      intentCategory,
+      toolsUsed: toolsUsedList,
+      tokens: {
+        promptTokens,
+        completionTokens,
+        totalTokens,
+      },
+      estimatedCostUsd: costUsd,
+      estimatedCostInr: costInr,
+      ordersInquired: ordersInquiredList.length > 0 ? ordersInquiredList : undefined,
+    }).catch((logErr) => console.error("AiChatLog async save error:", logErr));
 
     return {
       reply,

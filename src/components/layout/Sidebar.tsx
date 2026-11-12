@@ -171,6 +171,14 @@ const navLinks: NavLink[] = [
     )
   },
   {
+    name: "Sana AI Center",
+    href: "/app/admin/sana",
+    roles: ["ADMIN", "SUBADMIN"],
+    icon: (
+      <span className="text-base flex items-center justify-center">🌸</span>
+    )
+  },
+  {
     name: "Live Analytics",
     href: "/app/admin/analytics",
     roles: ["ADMIN"],
