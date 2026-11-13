@@ -565,29 +565,18 @@ export function ActiveDealsTable({
                 </td>
                 <td className="px-6 py-6 text-center">
                     <div className="flex flex-col items-center justify-center">
-                      {isAskJuhiDeal(deal) ? (
-                        <a
-                          href={getJuhiWhatsAppUrl(deal)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-2xl border border-emerald-200 shadow-sm transition-all group"
-                          title="Click to Ask Juhi on WhatsApp"
-                        >
-                          <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
-                          <span className="text-[11px] font-black">Ask Juhi</span>
-                        </a>
-                      ) : (
-                        <div className="flex items-center gap-1.5 bg-indigo-50/50 px-3 py-1.5 rounded-2xl border border-indigo-100 shadow-sm relative overflow-hidden group">
-                          <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-pulse" />
-                          {Number(deal.juhiCommission) === 0 ? (
-                            <span className="text-[11px] font-black text-emerald-600">Full Refund</span>
-                          ) : (
-                            <span className={`text-[11px] font-black ${Number(deal.juhiCommission) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                              {Number(deal.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(deal.juhiCommission))}
-                            </span>
-                          )}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-1.5 bg-indigo-50/50 px-3 py-1.5 rounded-2xl border border-indigo-100 shadow-sm relative overflow-hidden group">
+                        <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-pulse" />
+                        {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === "N/A" ? (
+                          <span className="text-[11px] font-black text-indigo-600">Ask Juhi</span>
+                        ) : Number(deal.juhiCommission) === 0 ? (
+                          <span className="text-[11px] font-black text-emerald-600">Full Refund</span>
+                        ) : (
+                          <span className={`text-[11px] font-black ${Number(deal.juhiCommission) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {Number(deal.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(deal.juhiCommission))}
+                          </span>
+                        )}
+                      </div>
                     </div>
                 </td>
                 <td className="px-6 py-6 text-center">
@@ -603,7 +592,7 @@ export function ActiveDealsTable({
                       </a>
                          <span className="text-[7px] font-black uppercase text-indigo-400/70 tracking-widest group-hover:text-indigo-600">View Link</span>
                       </div>
-                   ) : role === 'USER' ? (
+                   ) : (
                       <div className="flex flex-col items-center gap-1">
                          <a 
                            href={getJuhiProductLinkRequestUrl(deal)}
@@ -612,12 +601,10 @@ export function ActiveDealsTable({
                            className="h-9 px-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center gap-1.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white transition-all shadow-sm group/btn text-[8px] font-black uppercase tracking-wider"
                            title="Click to request Product Link from Juhi on WhatsApp"
                          >
-                           <WhatsAppIcon className="w-3 h-3 text-emerald-500 group-hover/btn:text-white transition-colors" />
+                           <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-500 group-hover/btn:text-white transition-colors" />
                            <span>Get Link</span>
                          </a>
                       </div>
-                   ) : (
-                      <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Private</span>
                    )}
                 </td>
               {!isAdm && (
