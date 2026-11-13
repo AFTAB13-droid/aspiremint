@@ -13,7 +13,7 @@ import {
   Flame, ShoppingBag, Info, AlertTriangle, MessageSquare, 
   Clock, Tag, ShieldCheck, DollarSign, Send, Bell
 } from "lucide-react";
-import { isAskJuhiDeal, getJuhiWhatsAppUrl } from "@/utils/whatsapp";
+import { isAskJuhiDeal, isMissingProductLink, getJuhiWhatsAppUrl, getJuhiProductLinkRequestUrl } from "@/utils/whatsapp";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 
 export default function SingleDealDetailPage() {
@@ -537,6 +537,30 @@ export default function SingleDealDetailPage() {
               </a>
             )
           )}
+
+          {/* Missing Product Link - Ask Juhi Button */}
+          {!deal.productLink && role === 'USER' && (
+            <a
+              href={getJuhiProductLinkRequestUrl(deal, (session?.user as any)?.aspireMintId || (session?.user as any)?.id)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-5 bg-gradient-to-br from-emerald-950 via-slate-900 to-emerald-900 text-white rounded-[28px] shadow-xl flex items-center justify-between group hover:scale-[1.01] active:scale-[0.99] transition-all border border-emerald-500/30"
+              title="Request Product Link from Juhi on WhatsApp"
+            >
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-emerald-500/20 backdrop-blur-md flex items-center justify-center text-emerald-400 border border-emerald-500/30 group-hover:rotate-12 transition-transform">
+                  <WhatsAppIcon className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Product Link Private</p>
+                  <p className="text-sm font-black text-white uppercase tracking-tight mt-0.5">Get Product Link from Juhi</p>
+                </div>
+              </div>
+              <div className="h-10 px-4 bg-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-emerald-600/30">
+                Get Link
+              </div>
+            </a>
+          )}
         </div>
 
         {/* Right Section: Core Specifications, Inventory & CTA */}
@@ -752,6 +776,16 @@ export default function SingleDealDetailPage() {
                   >
                     <WhatsAppIcon className="w-5 h-5" />
                     Ask Juhi on WhatsApp
+                  </a>
+                ) : isMissingProductLink(deal) ? (
+                  <a
+                    href={getJuhiProductLinkRequestUrl(deal, (session?.user as any)?.aspireMintId || (session?.user as any)?.id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full h-14 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2.5 shadow-xl shadow-emerald-600/30 active:scale-95 transition-all"
+                  >
+                    <WhatsAppIcon className="w-5 h-5" />
+                    Get Product Link
                   </a>
                 ) : (
                   <Link
@@ -1196,6 +1230,17 @@ export default function SingleDealDetailPage() {
                           <WhatsAppIcon className="w-3 h-3" />
                           <span>Ask Juhi</span>
                         </a>
+                      ) : isMissingProductLink(rel) ? (
+                        <a
+                          href={getJuhiProductLinkRequestUrl(rel, (session?.user as any)?.aspireMintId || (session?.user as any)?.id)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-8.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-wider shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex-1"
+                        >
+                          <WhatsAppIcon className="w-3 h-3" />
+                          <span>Get Link</span>
+                        </a>
                       ) : (
                         <Link
                           href={`/app/orders/new?brand=${encodeURIComponent(rel.brandName)}&product=${rel.productCode}&dealType=${rel.dealType}`}
@@ -1253,6 +1298,16 @@ export default function SingleDealDetailPage() {
               >
                 <WhatsAppIcon className="w-4 h-4" />
                 Ask Juhi on WhatsApp
+              </a>
+            ) : isMissingProductLink(deal) ? (
+              <a
+                href={getJuhiProductLinkRequestUrl(deal, (session?.user as any)?.aspireMintId || (session?.user as any)?.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full h-12 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 active:scale-95 transition-all"
+              >
+                <WhatsAppIcon className="w-4 h-4" />
+                Get Product Link
               </a>
             ) : (
               <Link

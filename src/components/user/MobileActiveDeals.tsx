@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { formatTimeAgo } from "@/utils/formatTimeAgo";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { isAskJuhiDeal, getJuhiWhatsAppUrl } from "@/utils/whatsapp";
+import { isAskJuhiDeal, isMissingProductLink, getJuhiWhatsAppUrl, getJuhiProductLinkRequestUrl } from "@/utils/whatsapp";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 
 interface MobileActiveDealsProps {
@@ -524,7 +524,7 @@ export function MobileActiveDeals({
                        <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest">View Page</span>
                     </Link>
 
-                    {deal.productLink && (
+                    {deal.productLink ? (
                        <a 
                          href={deal.userRemarks?.trim() ? `/app/activedeals/notice/${deal.productCode || deal._id}` : deal.productLink} 
                          target={deal.userRemarks?.trim() ? undefined : "_blank"} 
@@ -537,7 +537,21 @@ export function MobileActiveDeals({
                           </div>
                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Link</span>
                        </a>
-                    )}
+                    ) : role === 'USER' ? (
+                       <a 
+                         href={getJuhiProductLinkRequestUrl(deal)} 
+                         target="_blank" 
+                         rel="noopener noreferrer" 
+                         onClick={(e) => e.stopPropagation()} 
+                         className="flex items-center gap-1.5 group/link"
+                         title="Request Product Link from Juhi on WhatsApp"
+                       >
+                          <div className="h-7 w-7 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-lg flex items-center justify-center border border-emerald-100 dark:border-emerald-900/50 group-hover/link:bg-emerald-600 group-hover/link:text-white transition-all">
+                             <WhatsAppIcon className="w-3.5 h-3.5" />
+                          </div>
+                          <span className="text-[8px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Get Link</span>
+                       </a>
+                    ) : null}
                     <div 
                       className="flex items-center gap-1.5 cursor-pointer" 
                       onClick={(e) => {
@@ -677,6 +691,18 @@ export function MobileActiveDeals({
                         >
                           <WhatsAppIcon className="w-3.5 h-3.5" />
                           Ask Juhi
+                        </a>
+                      ) : isMissingProductLink(deal) ? (
+                        <a 
+                          href={getJuhiProductLinkRequestUrl(deal)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-11 px-5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 active:scale-95 transition-all"
+                          title="Request Product Link from Juhi on WhatsApp"
+                        >
+                          <WhatsAppIcon className="w-3.5 h-3.5" />
+                          Get Link
                         </a>
                       ) : deal.remainingSlots > 0 ? (
                         <Link 

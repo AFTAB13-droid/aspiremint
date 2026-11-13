@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { Select } from "@/components/ui/Select";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { MobileActiveDeals } from "@/components/user/MobileActiveDeals";
-import { isAskJuhiDeal, getJuhiWhatsAppUrl } from "@/utils/whatsapp";
+import { isAskJuhiDeal, isMissingProductLink, getJuhiWhatsAppUrl, getJuhiProductLinkRequestUrl } from "@/utils/whatsapp";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 
 interface ActiveDealsTableProps {
@@ -601,10 +601,23 @@ export function ActiveDealsTable({
                       >
                          <svg className="w-4 h-4 group-hover/btn:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                       </a>
-                                          <span className="text-[7px] font-black uppercase text-indigo-400/70 tracking-widest group-hover:text-indigo-600">View Link</span>
-                    </div>
-                 ) : (
-                      <span className="text-[10px] font-black text-slate-200 uppercase tracking-widest italic">Private</span>
+                         <span className="text-[7px] font-black uppercase text-indigo-400/70 tracking-widest group-hover:text-indigo-600">View Link</span>
+                      </div>
+                   ) : role === 'USER' ? (
+                      <div className="flex flex-col items-center gap-1">
+                         <a 
+                           href={getJuhiProductLinkRequestUrl(deal)}
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           className="h-9 px-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center gap-1.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white transition-all shadow-sm group/btn text-[8px] font-black uppercase tracking-wider"
+                           title="Click to request Product Link from Juhi on WhatsApp"
+                         >
+                           <WhatsAppIcon className="w-3 h-3 text-emerald-500 group-hover/btn:text-white transition-colors" />
+                           <span>Get Link</span>
+                         </a>
+                      </div>
+                   ) : (
+                      <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Private</span>
                    )}
                 </td>
               {!isAdm && (
@@ -678,6 +691,17 @@ export function ActiveDealsTable({
                             >
                               <WhatsAppIcon className="w-3.5 h-3.5" />
                               Ask Juhi
+                            </a>
+                          ) : isMissingProductLink(deal) ? (
+                            <a 
+                              href={getJuhiProductLinkRequestUrl(deal)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-5 h-10 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-emerald-600/20"
+                              title="Request Product Link from Juhi on WhatsApp"
+                            >
+                              <WhatsAppIcon className="w-3.5 h-3.5" />
+                              Get Product Link
                             </a>
                           ) : deal.remainingSlots > 0 ? (
                             <Link 
