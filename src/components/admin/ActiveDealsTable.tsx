@@ -9,6 +9,8 @@ import toast from "react-hot-toast";
 import { Select } from "@/components/ui/Select";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { MobileActiveDeals } from "@/components/user/MobileActiveDeals";
+import { isAskJuhiDeal, getJuhiWhatsAppUrl } from "@/utils/whatsapp";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 
 interface ActiveDealsTableProps {
   deals: any[];
@@ -563,18 +565,29 @@ export function ActiveDealsTable({
                 </td>
                 <td className="px-6 py-6 text-center">
                     <div className="flex flex-col items-center justify-center">
-                      <div className="flex items-center gap-1.5 bg-indigo-50/50 px-3 py-1.5 rounded-2xl border border-indigo-100 shadow-sm relative overflow-hidden group">
-                        <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-pulse" />
-                        {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === "N/A" ? (
-                          <span className="text-[11px] font-black text-indigo-600">Ask Juhi</span>
-                        ) : Number(deal.juhiCommission) === 0 ? (
-                          <span className="text-[11px] font-black text-emerald-600">Full Refund</span>
-                        ) : (
-                          <span className={`text-[11px] font-black ${Number(deal.juhiCommission) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                            {Number(deal.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(deal.juhiCommission))}
-                          </span>
-                        )}
-                      </div>
+                      {isAskJuhiDeal(deal) ? (
+                        <a
+                          href={getJuhiWhatsAppUrl(deal)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-2xl border border-emerald-200 shadow-sm transition-all group"
+                          title="Click to Ask Juhi on WhatsApp"
+                        >
+                          <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
+                          <span className="text-[11px] font-black">Ask Juhi</span>
+                        </a>
+                      ) : (
+                        <div className="flex items-center gap-1.5 bg-indigo-50/50 px-3 py-1.5 rounded-2xl border border-indigo-100 shadow-sm relative overflow-hidden group">
+                          <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-pulse" />
+                          {Number(deal.juhiCommission) === 0 ? (
+                            <span className="text-[11px] font-black text-emerald-600">Full Refund</span>
+                          ) : (
+                            <span className={`text-[11px] font-black ${Number(deal.juhiCommission) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                              {Number(deal.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(deal.juhiCommission))}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                 </td>
                 <td className="px-6 py-6 text-center">
@@ -655,6 +668,17 @@ export function ActiveDealsTable({
                               </svg>
                               Notify Me
                             </Link>
+                          ) : isAskJuhiDeal(deal) ? (
+                            <a 
+                              href={getJuhiWhatsAppUrl(deal)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-5 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-emerald-600/20"
+                              title="Ask Juhi on WhatsApp for deal details & link"
+                            >
+                              <WhatsAppIcon className="w-3.5 h-3.5" />
+                              Ask Juhi
+                            </a>
                           ) : deal.remainingSlots > 0 ? (
                             <Link 
                               href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}

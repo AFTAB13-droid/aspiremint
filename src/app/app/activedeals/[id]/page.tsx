@@ -13,6 +13,8 @@ import {
   Flame, ShoppingBag, Info, AlertTriangle, MessageSquare, 
   Clock, Tag, ShieldCheck, DollarSign, Send, Bell
 } from "lucide-react";
+import { isAskJuhiDeal, getJuhiWhatsAppUrl } from "@/utils/whatsapp";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 
 export default function SingleDealDetailPage() {
   const params = useParams();
@@ -648,18 +650,29 @@ export default function SingleDealDetailPage() {
                 <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Commission / Less</p>
                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Deduction or Incentive tier</p>
               </div>
-              <div className="text-right bg-white px-4 py-2 rounded-2xl border border-indigo-100 shadow-sm relative z-10 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
-                {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === "N/A" ? (
-                  <span className="text-sm font-black text-indigo-600">Ask Juhi</span>
-                ) : Number(deal.juhiCommission) === 0 ? (
-                  <span className="text-sm font-black text-emerald-600">Full Refund</span>
-                ) : (
-                  <span className={`text-base font-black ${Number(deal.juhiCommission) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {Number(deal.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(deal.juhiCommission))}
-                  </span>
-                )}
-              </div>
+              {isAskJuhiDeal(deal) ? (
+                <a
+                  href={getJuhiWhatsAppUrl(deal, (session?.user as any)?.aspireMintId || (session?.user as any)?.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-right bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-4 py-2 rounded-2xl border border-emerald-200 shadow-sm relative z-10 flex items-center gap-2 transition-all group"
+                  title="Click to Ask Juhi on WhatsApp"
+                >
+                  <WhatsAppIcon className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-black">Ask Juhi</span>
+                </a>
+              ) : (
+                <div className="text-right bg-white px-4 py-2 rounded-2xl border border-indigo-100 shadow-sm relative z-10 flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
+                  {Number(deal.juhiCommission) === 0 ? (
+                    <span className="text-sm font-black text-emerald-600">Full Refund</span>
+                  ) : (
+                    <span className={`text-base font-black ${Number(deal.juhiCommission) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {Number(deal.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(deal.juhiCommission))}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Economics & Yield Card (For Admin & Mediator) */}
@@ -730,6 +743,16 @@ export default function SingleDealDetailPage() {
                       {subscribing ? "Updating..." : isSubscribed ? "Notification Enabled 🔔" : "Notify Me When Live 🔔"}
                     </button>
                   </>
+                ) : isAskJuhiDeal(deal) ? (
+                  <a
+                    href={getJuhiWhatsAppUrl(deal, (session?.user as any)?.aspireMintId || (session?.user as any)?.id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full h-14 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2.5 shadow-xl shadow-emerald-600/30 active:scale-95 transition-all"
+                  >
+                    <WhatsAppIcon className="w-5 h-5" />
+                    Ask Juhi on WhatsApp
+                  </a>
                 ) : (
                   <Link
                     href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
@@ -1110,18 +1133,30 @@ export default function SingleDealDetailPage() {
                     {/* Commission / Payout Row */}
                     <div className="pt-1 flex items-center justify-between">
                       {role === 'USER' ? (
-                        <div className="flex items-center gap-1.5 bg-indigo-50/60 dark:bg-indigo-950/40 px-2.5 py-1 rounded-xl border border-indigo-100/60 dark:border-indigo-900/50">
-                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Comm./Less:</span>
-                          {rel.juhiCommission === undefined || rel.juhiCommission === null || rel.juhiCommission === "N/A" ? (
-                            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400">Ask Juhi</span>
-                          ) : Number(rel.juhiCommission) === 0 ? (
-                            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">Full Refund</span>
-                          ) : (
-                            <span className={`text-[10px] font-black ${Number(rel.juhiCommission) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                              {Number(rel.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(rel.juhiCommission))}
-                            </span>
-                          )}
-                        </div>
+                        isAskJuhiDeal(rel) ? (
+                          <a
+                            href={getJuhiWhatsAppUrl(rel, (session?.user as any)?.aspireMintId || (session?.user as any)?.id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 px-2.5 py-1 rounded-xl border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 transition-all group"
+                            title="Click to Ask Juhi on WhatsApp"
+                          >
+                            <WhatsAppIcon className="w-2.5 h-2.5 text-emerald-500 group-hover:scale-110 transition-transform" />
+                            <span className="text-[10px] font-black">Ask Juhi</span>
+                          </a>
+                        ) : (
+                          <div className="flex items-center gap-1.5 bg-indigo-50/60 dark:bg-indigo-950/40 px-2.5 py-1 rounded-xl border border-indigo-100/60 dark:border-indigo-900/50">
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Comm./Less:</span>
+                            {Number(rel.juhiCommission) === 0 ? (
+                              <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">Full Refund</span>
+                            ) : (
+                              <span className={`text-[10px] font-black ${Number(rel.juhiCommission) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                                {Number(rel.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(rel.juhiCommission))}
+                              </span>
+                            )}
+                          </div>
+                        )
                       ) : (
                         <div className="flex items-center gap-1.5">
                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Payout:</span>
@@ -1150,14 +1185,27 @@ export default function SingleDealDetailPage() {
                     )}
 
                     {role === 'USER' && rel.remainingSlots > 0 ? (
-                      <Link
-                        href={`/app/orders/new?brand=${encodeURIComponent(rel.brandName)}&product=${rel.productCode}&dealType=${rel.dealType}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="h-8.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-wider shadow-md shadow-blue-600/20 active:scale-95 transition-all flex-1"
-                      >
-                        <span>Fill Form</span>
-                        <ShoppingBag className="w-3 h-3" />
-                      </Link>
+                      isAskJuhiDeal(rel) ? (
+                        <a
+                          href={getJuhiWhatsAppUrl(rel, (session?.user as any)?.aspireMintId || (session?.user as any)?.id)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-8.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-wider shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex-1"
+                        >
+                          <WhatsAppIcon className="w-3 h-3" />
+                          <span>Ask Juhi</span>
+                        </a>
+                      ) : (
+                        <Link
+                          href={`/app/orders/new?brand=${encodeURIComponent(rel.brandName)}&product=${rel.productCode}&dealType=${rel.dealType}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-8.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-wider shadow-md shadow-blue-600/20 active:scale-95 transition-all flex-1"
+                        >
+                          <span>Fill Form</span>
+                          <ShoppingBag className="w-3 h-3" />
+                        </Link>
+                      )
                     ) : (
                       <div className="h-8.5 px-3 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white flex items-center justify-center gap-1 text-[8px] font-black uppercase tracking-wider transition-all flex-1 shadow-2xs">
                         <span>View Deal</span>
@@ -1196,6 +1244,16 @@ export default function SingleDealDetailPage() {
                   {subscribing ? "Updating..." : isSubscribed ? "We'll Notify You 🔔" : "Notify Me 🔔"}
                 </button>
               </>
+            ) : isAskJuhiDeal(deal) ? (
+              <a
+                href={getJuhiWhatsAppUrl(deal, (session?.user as any)?.aspireMintId || (session?.user as any)?.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full h-12 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 active:scale-95 transition-all"
+              >
+                <WhatsAppIcon className="w-4 h-4" />
+                Ask Juhi on WhatsApp
+              </a>
             ) : (
               <Link
                 href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}

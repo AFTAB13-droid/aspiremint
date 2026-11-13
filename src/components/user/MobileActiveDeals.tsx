@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { formatTimeAgo } from "@/utils/formatTimeAgo";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { isAskJuhiDeal, getJuhiWhatsAppUrl } from "@/utils/whatsapp";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 
 interface MobileActiveDealsProps {
   deals: any[];
@@ -622,18 +624,30 @@ export function MobileActiveDeals({
                   ) : (
                     <div className="flex flex-col">
                       <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest leading-none">Comm./Less</p>
-                      <div className="flex items-center gap-1.5 mt-1 bg-indigo-50/50 dark:bg-indigo-950/40 px-2 py-1 rounded-xl border border-indigo-100 dark:border-indigo-900/50 shadow-sm self-start">
-                        <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                        {deal.juhiCommission === undefined || deal.juhiCommission === null || deal.juhiCommission === "N/A" ? (
-                          <span className="text-xs font-black text-indigo-600 dark:text-indigo-400">Ask Juhi</span>
-                        ) : Number(deal.juhiCommission) === 0 ? (
-                          <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">Full Refund</span>
-                        ) : (
-                          <span className={`text-xs font-black ${Number(deal.juhiCommission) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                            {Number(deal.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(deal.juhiCommission))}
-                          </span>
-                        )}
-                      </div>
+                      {isAskJuhiDeal(deal) ? (
+                        <a
+                          href={getJuhiWhatsAppUrl(deal)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex items-center gap-1.5 mt-1 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 px-2.5 py-1 rounded-xl border border-emerald-200 dark:border-emerald-800 shadow-sm self-start text-emerald-600 dark:text-emerald-400 transition-all group"
+                          title="Click to Ask Juhi on WhatsApp"
+                        >
+                          <WhatsAppIcon className="w-3 h-3 text-emerald-500 group-hover:scale-110 transition-transform" />
+                          <span className="text-xs font-black">Ask Juhi</span>
+                        </a>
+                      ) : (
+                        <div className="flex items-center gap-1.5 mt-1 bg-indigo-50/50 dark:bg-indigo-950/40 px-2 py-1 rounded-xl border border-indigo-100 dark:border-indigo-900/50 shadow-sm self-start">
+                          <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                          {Number(deal.juhiCommission) === 0 ? (
+                            <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">Full Refund</span>
+                          ) : (
+                            <span className={`text-xs font-black ${Number(deal.juhiCommission) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                              {Number(deal.juhiCommission) >= 0 ? '+' : '-'}₹{Math.abs(Number(deal.juhiCommission))}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -652,6 +666,18 @@ export function MobileActiveDeals({
                           </svg>
                           Notify Me
                         </button>
+                      ) : isAskJuhiDeal(deal) ? (
+                        <a 
+                          href={getJuhiWhatsAppUrl(deal)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-11 px-5 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 active:scale-95 transition-all"
+                          title="Ask Juhi on WhatsApp for deal details & link"
+                        >
+                          <WhatsAppIcon className="w-3.5 h-3.5" />
+                          Ask Juhi
+                        </a>
                       ) : deal.remainingSlots > 0 ? (
                         <Link 
                           href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
