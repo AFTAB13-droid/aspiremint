@@ -56,6 +56,20 @@ export const VaultCoinSplash: React.FC<SplashProps> = ({
       className={`${containerClasses} flex flex-col items-center justify-center bg-gradient-to-b from-[#f8fafc] via-white to-[#f1f5f9] text-slate-900 font-sans`}
       style={{ perspective: 1200 }}
     >
+      {/* Optional Quick Skip for returning users */}
+      {onComplete && !containerMode && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          onClick={onComplete}
+          className="absolute top-5 right-5 z-30 px-3.5 py-1.5 rounded-full bg-white/80 hover:bg-white border border-slate-200/90 shadow-sm text-[11px] font-black text-slate-500 hover:text-slate-900 backdrop-blur-md transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
+        >
+          <span>Skip</span>
+          <span className="text-emerald-600 font-bold">›</span>
+        </motion.button>
+      )}
+
       {/* 1. CINEMATIC LUXURY PEARL LIGHT BACKGROUND */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Soft Radial Mint & Warm Champagne Gold Aura */}
