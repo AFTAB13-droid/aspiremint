@@ -49,13 +49,13 @@ export const GlassPrismSplash: React.FC<SplashProps> = ({
 
   return (
     <div
-      className={`${containerClasses} flex flex-col items-center justify-center bg-[#020617] text-white font-sans`}
+      className={`${containerClasses} flex flex-col items-center justify-center bg-gradient-to-b from-white via-sky-50/40 to-slate-100 text-slate-900 font-sans`}
       style={{ perspective: 1400 }}
     >
-      {/* 1. DEEP SAPPHIRE & SPECTRAL CAUSTIC BACKGROUND */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Prismatic Radial Flare */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-cyan-500/20 via-sky-600/10 to-indigo-500/20 rounded-full blur-[140px]" />
+      {/* 1. LUMINOUS FROSTED ICE & SPECTRAL CAUSTIC BACKGROUND */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Soft Prismatic Radial Flare */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-sky-200/50 via-cyan-100/40 to-indigo-100/40 rounded-full blur-[120px]" />
         
         {/* Soft Volumetric Light Beams */}
         <motion.div
@@ -67,15 +67,15 @@ export const GlassPrismSplash: React.FC<SplashProps> = ({
             repeat: Infinity,
             ease: "linear",
           }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-15"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-25"
           style={{
-            background: "conic-gradient(from 0deg, transparent 0deg, #38bdf8 30deg, transparent 70deg, #34d399 150deg, transparent 210deg, #818cf8 300deg, transparent 360deg)",
-            filter: "blur(40px)",
+            background: "conic-gradient(from 0deg, transparent 0deg, #38bdf8 35deg, transparent 70deg, #34d399 150deg, transparent 210deg, #818cf8 300deg, transparent 360deg)",
+            filter: "blur(50px)",
           }}
         />
       </div>
 
-      {/* 2. 3D FROSTED GLASS PRISM / CAUSTIC EMBLEM */}
+      {/* 2. 3D FROSTED CRYSTAL PRISM / CAUSTIC EMBLEM */}
       <div className="relative flex flex-col items-center z-10">
         <motion.div
           style={{ transformStyle: "preserve-3d" }}
@@ -102,35 +102,35 @@ export const GlassPrismSplash: React.FC<SplashProps> = ({
                 animate={{ scale: 2.4, opacity: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.85, ease: "easeOut" }}
-                className="absolute inset-0 rounded-3xl bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-400 blur-2xl pointer-events-none"
+                className="absolute inset-0 rounded-3xl bg-gradient-to-r from-cyan-300 via-sky-200 to-indigo-300 blur-2xl pointer-events-none"
               />
             )}
           </AnimatePresence>
 
-          {/* 3D Glass Prism Container */}
+          {/* 3D Glass Prism Container (Frosted Crystal White) */}
           <div
             className={`relative ${
               isMobilePreview ? "w-28 h-28" : "w-36 h-36"
-            } rounded-3xl p-[1px] bg-gradient-to-br from-white/40 via-cyan-400/30 to-white/5 backdrop-blur-2xl shadow-[0_20px_50px_rgba(6,182,212,0.3)] flex items-center justify-center`}
+            } rounded-3xl p-[1.5px] bg-gradient-to-br from-white via-cyan-200/60 to-sky-300/50 backdrop-blur-2xl shadow-[0_20px_50px_rgba(14,165,233,0.22),0_10px_20px_rgba(0,0,0,0.06)] flex items-center justify-center`}
             style={{
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
             }}
           >
             {/* Inner Glass Prism Facet */}
-            <div className="w-full h-full rounded-3xl bg-gradient-to-br from-white/10 via-cyan-950/20 to-black/40 border border-white/20 flex items-center justify-center relative overflow-hidden">
+            <div className="w-full h-full rounded-3xl bg-gradient-to-br from-white/90 via-sky-50/70 to-white/95 border border-white flex items-center justify-center relative overflow-hidden shadow-inner">
               {/* Specular Diagonal Reflection */}
-              <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+              <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white to-transparent pointer-events-none" />
 
-              {/* Minimalist 3D Laser-cut AspireMint Peak Logo */}
+              {/* Minimalist 3D Laser-cut AspireMint Peak Logo (Vivid Cyan) */}
               <svg
                 viewBox="0 0 100 100"
-                className="w-16 h-16 relative z-10 drop-shadow-[0_0_20px_rgba(56,189,248,0.9)]"
+                className="w-16 h-16 relative z-10 drop-shadow-[0_4px_12px_rgba(2,132,199,0.35)]"
                 fill="none"
               >
                 <motion.path
                   d="M16 80L36 24L52 64L68 24L84 80"
-                  stroke="url(#prismGrad)"
+                  stroke="url(#prismGradLight)"
                   strokeWidth="9"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -140,7 +140,7 @@ export const GlassPrismSplash: React.FC<SplashProps> = ({
                 />
                 <motion.path
                   d="M26 58H44"
-                  stroke="#38bdf8"
+                  stroke="#0284c7"
                   strokeWidth="7"
                   strokeLinecap="round"
                   initial={{ scaleX: 0 }}
@@ -149,10 +149,10 @@ export const GlassPrismSplash: React.FC<SplashProps> = ({
                   style={{ originX: 0 }}
                 />
                 <defs>
-                  <linearGradient id="prismGrad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#e0f2fe" />
-                    <stop offset="50%" stopColor="#38bdf8" />
-                    <stop offset="100%" stopColor="#818cf8" />
+                  <linearGradient id="prismGradLight" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#0369a1" />
+                    <stop offset="50%" stopColor="#0284c7" />
+                    <stop offset="100%" stopColor="#4f46e5" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -166,13 +166,13 @@ export const GlassPrismSplash: React.FC<SplashProps> = ({
                   repeatDelay: 1.8,
                   ease: "easeInOut",
                 }}
-                className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-cyan-300/30 to-transparent skew-x-[-25deg] pointer-events-none"
+                className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-cyan-400/25 to-transparent skew-x-[-25deg] pointer-events-none"
               />
             </div>
           </div>
         </motion.div>
 
-        {/* 3. MINIMALIST APPLE-STYLE TYPOGRAPHY */}
+        {/* 3. MINIMALIST APPLE-STYLE TYPOGRAPHY (LIGHT) */}
         <motion.div
           initial={{ opacity: 0, filter: "blur(12px)", y: 15 }}
           animate={{
@@ -186,23 +186,23 @@ export const GlassPrismSplash: React.FC<SplashProps> = ({
           <h1
             className={`${
               isMobilePreview ? "text-2xl tracking-[0.3em]" : "text-3xl tracking-[0.35em]"
-            } font-semibold uppercase bg-clip-text text-transparent bg-gradient-to-r from-white via-sky-100 to-slate-400`}
+            } font-bold uppercase text-slate-900 drop-shadow-sm`}
           >
             AspireMint
           </h1>
-          <p className="mt-2 text-[10px] tracking-[0.3em] uppercase text-cyan-400/80 font-medium">
+          <p className="mt-2 text-[10px] tracking-[0.3em] uppercase text-sky-700 font-bold">
             Intelligence · Precision · Cashback
           </p>
         </motion.div>
       </div>
 
-      {/* 4. SLEEK HORIZON BEAM */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-48 sm:w-60 h-[2px] bg-slate-900 rounded-full overflow-hidden">
+      {/* 4. SLEEK HORIZON BEAM (LIGHT) */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-48 sm:w-60 h-[2.5px] bg-slate-200 rounded-full overflow-hidden">
         <motion.div
           initial={{ width: "0%" }}
           animate={{ width: "100%" }}
           transition={{ duration: 2.3, ease: [0.65, 0, 0.35, 1] }}
-          className="h-full bg-gradient-to-r from-sky-400 via-cyan-300 to-indigo-400 shadow-[0_0_10px_rgba(56,189,248,0.8)]"
+          className="h-full bg-gradient-to-r from-sky-400 via-cyan-400 to-indigo-500 shadow-[0_0_8px_rgba(2,132,199,0.5)]"
         />
       </div>
     </div>

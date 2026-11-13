@@ -53,24 +53,24 @@ export const VaultCoinSplash: React.FC<SplashProps> = ({
 
   return (
     <div
-      className={`${containerClasses} flex flex-col items-center justify-center bg-[#030712] text-white font-sans`}
+      className={`${containerClasses} flex flex-col items-center justify-center bg-gradient-to-b from-[#f8fafc] via-white to-[#f1f5f9] text-slate-900 font-sans`}
       style={{ perspective: 1200 }}
     >
-      {/* 1. CINEMATIC LUXURY OBSIDIAN BACKGROUND */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Radial Emerald & Gold Aura */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-emerald-500/15 via-teal-500/10 to-amber-500/10 rounded-full blur-[120px]" />
+      {/* 1. CINEMATIC LUXURY PEARL LIGHT BACKGROUND */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Soft Radial Mint & Warm Champagne Gold Aura */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[650px] bg-gradient-to-tr from-emerald-100/70 via-teal-50/60 to-amber-100/50 rounded-full blur-[110px]" />
         
-        {/* Subtle Geometric Cyber-Grid */}
+        {/* Subtle Geometric Ambient Grid */}
         <div 
-          className="absolute inset-0 opacity-[0.04]"
+          className="absolute inset-0 opacity-[0.03]"
           style={{
-            backgroundImage: "linear-gradient(#10b981 1px, transparent 1px), linear-gradient(90deg, #10b981 1px, transparent 1px)",
-            backgroundSize: "40px 40px"
+            backgroundImage: "linear-gradient(#0f172a 1px, transparent 1px), linear-gradient(90deg, #0f172a 1px, transparent 1px)",
+            backgroundSize: "36px 36px"
           }}
         />
 
-        {/* Orbiting Sparkles / Micro-Gold Dust */}
+        {/* Floating Luminous Gold & Emerald Micro-Dust */}
         {[...Array(12)].map((_, i) => (
           <motion.div
             key={i}
@@ -78,12 +78,12 @@ export const VaultCoinSplash: React.FC<SplashProps> = ({
               x: (i % 2 === 0 ? 1 : -1) * (60 + (i * 18)),
               y: (i % 3 === 0 ? 1 : -1) * (40 + (i * 14)),
               opacity: 0,
-              scale: 0.4,
+              scale: 0.5,
             }}
             animate={{
               y: [(i % 3 === 0 ? 1 : -1) * (40 + (i * 14)), (i % 3 === 0 ? 1 : -1) * (20 + (i * 10))],
-              opacity: [0, 0.7, 0],
-              scale: [0.4, 1.2, 0.4],
+              opacity: [0, 0.75, 0],
+              scale: [0.5, 1.2, 0.5],
             }}
             transition={{
               duration: 2 + (i % 3) * 0.5,
@@ -91,12 +91,12 @@ export const VaultCoinSplash: React.FC<SplashProps> = ({
               ease: "easeInOut",
               delay: i * 0.15,
             }}
-            className="absolute top-1/2 left-1/2 w-1.5 h-1.5 rounded-full bg-gradient-to-r from-amber-300 to-emerald-400 blur-[0.5px]"
+            className="absolute top-1/2 left-1/2 w-1.5 h-1.5 rounded-full bg-gradient-to-r from-amber-400 to-emerald-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"
           />
         ))}
       </div>
 
-      {/* 2. HYPER-REALISTIC 3D MINTED COIN ASSEMBLY */}
+      {/* 2. HYPER-REALISTIC 3D MINTED COIN ASSEMBLY (LIGHT FINISH) */}
       <div className="relative flex flex-col items-center z-10">
         <motion.div
           style={{ transformStyle: "preserve-3d" }}
@@ -124,43 +124,43 @@ export const VaultCoinSplash: React.FC<SplashProps> = ({
                   animate={{ scale: 2.8, opacity: 0 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.9, ease: "easeOut" }}
-                  className="absolute inset-0 rounded-full border border-emerald-400/80 shadow-[0_0_40px_rgba(16,185,129,0.6)] pointer-events-none"
+                  className="absolute inset-0 rounded-full border-2 border-emerald-400/80 shadow-[0_0_35px_rgba(16,185,129,0.4)] pointer-events-none"
                 />
                 <motion.div
                   initial={{ scale: 0.6, opacity: 0.8 }}
                   animate={{ scale: 2.1, opacity: 0 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
-                  className="absolute inset-0 rounded-full border border-amber-300/60 shadow-[0_0_30px_rgba(245,158,11,0.4)] pointer-events-none"
+                  className="absolute inset-0 rounded-full border border-amber-400/70 shadow-[0_0_25px_rgba(245,158,11,0.3)] pointer-events-none"
                 />
               </>
             )}
           </AnimatePresence>
 
-          {/* 3D Coin Body (Diameter ~140px on desktop, ~120px on mobile) */}
+          {/* 3D Coin Body (Polished Gold & Mint Enamel) */}
           <div
             className={`relative ${
               isMobilePreview ? "w-28 h-28" : "w-36 h-36"
-            } rounded-full p-[3px] bg-gradient-to-tr from-amber-400 via-emerald-300 to-amber-500 shadow-[0_0_50px_rgba(16,185,129,0.35),0_20px_40px_rgba(0,0,0,0.8)]`}
+            } rounded-full p-[3px] bg-gradient-to-tr from-amber-400 via-yellow-200 to-emerald-400 shadow-[0_20px_45px_rgba(16,185,129,0.22),0_10px_25px_rgba(0,0,0,0.08)]`}
           >
             {/* Outer Coin Rim Ridges */}
-            <div className="w-full h-full rounded-full bg-[#0a0f1d] p-2 flex items-center justify-center relative overflow-hidden border border-amber-400/30">
-              {/* Radial Brushed Metal Background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/70 via-slate-900 to-[#05111a]" />
+            <div className="w-full h-full rounded-full bg-white p-2 flex items-center justify-center relative overflow-hidden border border-amber-300 shadow-inner">
+              {/* Pearl Enamel Radial Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white via-slate-50 to-emerald-50/50" />
               
               {/* Circular Coin Bevel Track */}
-              <div className="absolute inset-2 rounded-full border border-dashed border-emerald-400/40 animate-[spin_20s_linear_infinite]" />
+              <div className="absolute inset-2 rounded-full border border-dashed border-emerald-500/30 animate-[spin_20s_linear_infinite]" />
 
               {/* Embossed AspireMint Geometric Crown / Peak Logo */}
               <svg
                 viewBox="0 0 100 100"
-                className="w-16 h-16 relative z-10 drop-shadow-[0_4px_12px_rgba(16,185,129,0.7)]"
+                className="w-16 h-16 relative z-10 drop-shadow-[0_4px_10px_rgba(5,150,105,0.3)]"
                 fill="none"
               >
                 {/* 3D Minted Structural Peaks */}
                 <motion.path
                   d="M14 78L36 22L52 62L68 22L86 78"
-                  stroke="url(#coinGoldGrad)"
+                  stroke="url(#coinGoldGradLight)"
                   strokeWidth="10"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -171,7 +171,7 @@ export const VaultCoinSplash: React.FC<SplashProps> = ({
                 {/* Horizontal Mint Bar */}
                 <motion.path
                   d="M24 56H42"
-                  stroke="#34d399"
+                  stroke="#059669"
                   strokeWidth="8"
                   strokeLinecap="round"
                   initial={{ scaleX: 0 }}
@@ -180,10 +180,10 @@ export const VaultCoinSplash: React.FC<SplashProps> = ({
                   style={{ originX: 0 }}
                 />
                 <defs>
-                  <linearGradient id="coinGoldGrad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#fbbf24" />
-                    <stop offset="45%" stopColor="#34d399" />
-                    <stop offset="100%" stopColor="#f59e0b" />
+                  <linearGradient id="coinGoldGradLight" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#d97706" />
+                    <stop offset="45%" stopColor="#10b981" />
+                    <stop offset="100%" stopColor="#059669" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -197,13 +197,13 @@ export const VaultCoinSplash: React.FC<SplashProps> = ({
                   repeatDelay: 1.5,
                   ease: "easeInOut",
                 }}
-                className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/35 to-transparent skew-x-[-30deg] pointer-events-none"
+                className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/70 to-transparent skew-x-[-30deg] pointer-events-none"
               />
             </div>
           </div>
         </motion.div>
 
-        {/* 3. LUXURY CHROME TYPOGRAPHY */}
+        {/* 3. LUXURY TYPOGRAPHY (LIGHT FINISH) */}
         <motion.div
           initial={{ opacity: 0, y: 25 }}
           animate={{
@@ -214,24 +214,24 @@ export const VaultCoinSplash: React.FC<SplashProps> = ({
           className="mt-8 flex flex-col items-center text-center"
         >
           {/* Main Title: ASPIRE·MINT */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <span
               className={`${
                 isMobilePreview ? "text-2xl" : "text-4xl"
-              } font-black tracking-[0.25em] bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-300 drop-shadow-[0_4px_16px_rgba(255,255,255,0.2)]`}
+              } font-black tracking-[0.25em] text-slate-900 drop-shadow-sm`}
             >
               ASPIRE
             </span>
             <span
               className={`${
                 isMobilePreview ? "text-2xl" : "text-4xl"
-              } font-black tracking-[0.25em] bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300 drop-shadow-[0_0_20px_rgba(52,211,153,0.5)]`}
+              } font-black tracking-[0.25em] bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-700 drop-shadow-[0_2px_12px_rgba(16,185,129,0.3)]`}
             >
               MINT
             </span>
           </div>
 
-          {/* Subtitle Badge */}
+          {/* Subtitle Badge (Light Pearl Pill) */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{
@@ -239,23 +239,23 @@ export const VaultCoinSplash: React.FC<SplashProps> = ({
               scale: phase === 3 ? 1 : 0.9,
             }}
             transition={{ duration: 0.4 }}
-            className="mt-3 flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/30 backdrop-blur-md shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+            className="mt-3 flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/90 shadow-sm"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-800">
               100% CashBack · Exclusive Deals
             </span>
           </motion.div>
         </motion.div>
       </div>
 
-      {/* 4. EXECUTIVE PROGRESS HORIZON BAR */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-48 sm:w-64 h-[3px] bg-slate-800/80 rounded-full overflow-hidden">
+      {/* 4. EXECUTIVE PROGRESS HORIZON BAR (LIGHT) */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-48 sm:w-64 h-[3px] bg-slate-200/90 rounded-full overflow-hidden">
         <motion.div
           initial={{ width: "0%" }}
           animate={{ width: "100%" }}
           transition={{ duration: 2.4, ease: [0.65, 0, 0.35, 1] }}
-          className="h-full bg-gradient-to-r from-amber-400 via-emerald-400 to-teal-300 shadow-[0_0_12px_rgba(52,211,153,0.8)]"
+          className="h-full bg-gradient-to-r from-amber-400 via-emerald-500 to-teal-400 shadow-[0_0_8px_rgba(16,185,129,0.6)]"
         />
       </div>
     </div>
