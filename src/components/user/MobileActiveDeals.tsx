@@ -680,30 +680,6 @@ export function MobileActiveDeals({
                           </svg>
                           Notify Me
                         </button>
-                      ) : isAskJuhiDeal(deal) ? (
-                        <a 
-                          href={getJuhiWhatsAppUrl(deal)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="h-11 px-5 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 active:scale-95 transition-all"
-                          title="Ask Juhi on WhatsApp for deal details & link"
-                        >
-                          <WhatsAppIcon className="w-3.5 h-3.5" />
-                          Ask Juhi
-                        </a>
-                      ) : isMissingProductLink(deal) ? (
-                        <a 
-                          href={getJuhiProductLinkRequestUrl(deal)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="h-11 px-5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 active:scale-95 transition-all"
-                          title="Request Product Link from Juhi on WhatsApp"
-                        >
-                          <WhatsAppIcon className="w-3.5 h-3.5" />
-                          Get Link
-                        </a>
                       ) : deal.remainingSlots > 0 ? (
                         <Link 
                           href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}

@@ -681,28 +681,6 @@ export function ActiveDealsTable({
                               </svg>
                               Notify Me
                             </Link>
-                          ) : isAskJuhiDeal(deal) ? (
-                            <a 
-                              href={getJuhiWhatsAppUrl(deal)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-5 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-emerald-600/20"
-                              title="Ask Juhi on WhatsApp for deal details & link"
-                            >
-                              <WhatsAppIcon className="w-3.5 h-3.5" />
-                              Ask Juhi
-                            </a>
-                          ) : isMissingProductLink(deal) ? (
-                            <a 
-                              href={getJuhiProductLinkRequestUrl(deal)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-5 h-10 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-emerald-600/20"
-                              title="Request Product Link from Juhi on WhatsApp"
-                            >
-                              <WhatsAppIcon className="w-3.5 h-3.5" />
-                              Get Product Link
-                            </a>
                           ) : deal.remainingSlots > 0 ? (
                             <Link 
                               href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}

@@ -100,7 +100,6 @@ export function getJuhiWhatsAppUrl(deal: any, buyerId?: string): string {
     `• *Review Type:* ${reviewType}`,
     marketplace ? `• *Marketplace:* ${marketplace}` : null,
     deal?.productCode ? `• *Deal Link:* ${origin}/app/activedeals/${deal.productCode}` : null,
-    buyerId ? `• *Buyer AM-ID:* ${buyerId}` : null,
     ``,
     `Looking forward to your guidance!`
   ].filter(Boolean);
@@ -141,7 +140,6 @@ export function getJuhiProductLinkRequestUrl(deal: any, buyerId?: string): strin
     `• *Review Type:* ${reviewType}`,
     marketplace ? `• *Marketplace:* ${marketplace}` : null,
     deal?.productCode ? `• *Deal Link:* ${origin}/app/activedeals/${deal.productCode}` : null,
-    buyerId ? `• *Buyer AM-ID:* ${buyerId}` : null,
     ``,
     `Looking forward to your guidance!`
   ].filter(Boolean);

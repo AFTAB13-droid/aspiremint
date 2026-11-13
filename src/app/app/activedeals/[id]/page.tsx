@@ -767,26 +767,6 @@ export default function SingleDealDetailPage() {
                       {subscribing ? "Updating..." : isSubscribed ? "Notification Enabled 🔔" : "Notify Me When Live 🔔"}
                     </button>
                   </>
-                ) : isAskJuhiDeal(deal) ? (
-                  <a
-                    href={getJuhiWhatsAppUrl(deal, (session?.user as any)?.aspireMintId || (session?.user as any)?.id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full h-14 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2.5 shadow-xl shadow-emerald-600/30 active:scale-95 transition-all"
-                  >
-                    <WhatsAppIcon className="w-5 h-5" />
-                    Ask Juhi on WhatsApp
-                  </a>
-                ) : isMissingProductLink(deal) ? (
-                  <a
-                    href={getJuhiProductLinkRequestUrl(deal, (session?.user as any)?.aspireMintId || (session?.user as any)?.id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full h-14 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2.5 shadow-xl shadow-emerald-600/30 active:scale-95 transition-all"
-                  >
-                    <WhatsAppIcon className="w-5 h-5" />
-                    Get Product Link
-                  </a>
                 ) : (
                   <Link
                     href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
@@ -1219,38 +1199,14 @@ export default function SingleDealDetailPage() {
                     )}
 
                     {role === 'USER' && rel.remainingSlots > 0 ? (
-                      isAskJuhiDeal(rel) ? (
-                        <a
-                          href={getJuhiWhatsAppUrl(rel, (session?.user as any)?.aspireMintId || (session?.user as any)?.id)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="h-8.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-wider shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex-1"
-                        >
-                          <WhatsAppIcon className="w-3 h-3" />
-                          <span>Ask Juhi</span>
-                        </a>
-                      ) : isMissingProductLink(rel) ? (
-                        <a
-                          href={getJuhiProductLinkRequestUrl(rel, (session?.user as any)?.aspireMintId || (session?.user as any)?.id)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="h-8.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-wider shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex-1"
-                        >
-                          <WhatsAppIcon className="w-3 h-3" />
-                          <span>Get Link</span>
-                        </a>
-                      ) : (
-                        <Link
-                          href={`/app/orders/new?brand=${encodeURIComponent(rel.brandName)}&product=${rel.productCode}&dealType=${rel.dealType}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="h-8.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-wider shadow-md shadow-blue-600/20 active:scale-95 transition-all flex-1"
-                        >
-                          <span>Fill Form</span>
-                          <ShoppingBag className="w-3 h-3" />
-                        </Link>
-                      )
+                      <Link
+                        href={`/app/orders/new?brand=${encodeURIComponent(rel.brandName)}&product=${rel.productCode}&dealType=${rel.dealType}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-8.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-wider shadow-md shadow-blue-600/20 active:scale-95 transition-all flex-1"
+                      >
+                        <span>Fill Form</span>
+                        <ShoppingBag className="w-3 h-3" />
+                      </Link>
                     ) : (
                       <div className="h-8.5 px-3 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white flex items-center justify-center gap-1 text-[8px] font-black uppercase tracking-wider transition-all flex-1 shadow-2xs">
                         <span>View Deal</span>
@@ -1289,26 +1245,6 @@ export default function SingleDealDetailPage() {
                   {subscribing ? "Updating..." : isSubscribed ? "We'll Notify You 🔔" : "Notify Me 🔔"}
                 </button>
               </>
-            ) : isAskJuhiDeal(deal) ? (
-              <a
-                href={getJuhiWhatsAppUrl(deal, (session?.user as any)?.aspireMintId || (session?.user as any)?.id)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 active:scale-95 transition-all"
-              >
-                <WhatsAppIcon className="w-4 h-4" />
-                Ask Juhi on WhatsApp
-              </a>
-            ) : isMissingProductLink(deal) ? (
-              <a
-                href={getJuhiProductLinkRequestUrl(deal, (session?.user as any)?.aspireMintId || (session?.user as any)?.id)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 active:scale-95 transition-all"
-              >
-                <WhatsAppIcon className="w-4 h-4" />
-                Get Product Link
-              </a>
             ) : (
               <Link
                 href={`/app/orders/new?brand=${encodeURIComponent(deal.brandName)}&product=${deal.productCode}&dealType=${deal.dealType}`}
