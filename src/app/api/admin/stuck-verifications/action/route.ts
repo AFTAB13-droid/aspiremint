@@ -134,6 +134,17 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // 4. ACTION: DELETE (Permanent Database Purge)
+    if (action === "DELETE") {
+      const result = await Order.deleteMany({ _id: { $in: orderIds } });
+
+      return NextResponse.json({
+        success: true,
+        message: `Permanently deleted ${result.deletedCount} order(s) from database.`,
+        count: result.deletedCount,
+      });
+    }
+
     return NextResponse.json({ success: false, message: `Unsupported action: ${action}` }, { status: 400 });
   } catch (error: any) {
     console.error("POST /api/admin/stuck-verifications/action error:", error);

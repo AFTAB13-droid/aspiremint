@@ -75,22 +75,24 @@ export function CsvBulkVerificationModal({
         return false;
       }
 
-      // 2. Date Range Filter - Filter by when Refund Form was submitted
-      const refundDate = order.refundDetails?.submittedAt
-        ? new Date(order.refundDetails.submittedAt)
-        : (order.updatedAt ? new Date(order.updatedAt) : null);
+      // 2. Date Range Filter - Filter STRICTLY by when Refund Form was submitted in IST (UTC+05:30)
+      if (startDate || endDate) {
+        const submittedAtRaw = order.refundDetails?.submittedAt;
+        if (!submittedAtRaw) return false;
+        const refundTimeMs = new Date(submittedAtRaw).getTime();
+        if (isNaN(refundTimeMs)) return false;
 
-      if (startDate) {
-        if (!refundDate) return false;
-        const start = new Date(startDate);
-        start.setHours(0, 0, 0, 0);
-        if (refundDate < start) return false;
-      }
-      if (endDate) {
-        if (!refundDate) return false;
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        if (refundDate > end) return false;
+        // Parse YYYY-MM-DD into Indian Standard Time (UTC+05:30)
+        if (startDate) {
+          const [sY, sM, sD] = startDate.split("-").map(Number);
+          const startIST = new Date(`${sY}-${String(sM).padStart(2, "0")}-${String(sD).padStart(2, "0")}T00:00:00.000+05:30`).getTime();
+          if (!isNaN(startIST) && refundTimeMs < startIST) return false;
+        }
+        if (endDate) {
+          const [eY, eM, eD] = endDate.split("-").map(Number);
+          const endIST = new Date(`${eY}-${String(eM).padStart(2, "0")}-${String(eD).padStart(2, "0")}T23:59:59.999+05:30`).getTime();
+          if (!isNaN(endIST) && refundTimeMs > endIST) return false;
+        }
       }
 
       // 3. Review Type Filter
@@ -221,9 +223,10 @@ export function CsvBulkVerificationModal({
         : (ord.dealType === "Empty Box" ? (ord.amount + (ord.lessAmount || 0)) : (ord.amount - (ord.lessAmount || 0)));
 
       const buyerPhone = ord.buyer?.mobile || ord.mobile || "N/A";
-      const refundSubmittedAt = ord.refundDetails?.submittedAt || ord.updatedAt;
+      const refundSubmittedAt = ord.refundDetails?.submittedAt;
       const refundDateStr = refundSubmittedAt
         ? new Date(refundSubmittedAt).toLocaleString("en-IN", {
+            timeZone: "Asia/Kolkata",
             year: "numeric",
             month: "short",
             day: "2-digit",
@@ -373,10 +376,11 @@ export function CsvBulkVerificationModal({
           action = "SKIP";
         }
 
-        const refundSubmittedAt = matchedOrder?.refundDetails?.submittedAt || matchedOrder?.updatedAt;
+        const refundSubmittedAt = matchedOrder?.refundDetails?.submittedAt;
         const resolvedRefundDate = refundDateInFile || (
           refundSubmittedAt
             ? new Date(refundSubmittedAt).toLocaleString("en-IN", {
+                timeZone: "Asia/Kolkata",
                 year: "numeric",
                 month: "short",
                 day: "2-digit",
@@ -679,32 +683,37 @@ export function CsvBulkVerificationModal({
                 </div>
 
                 {/* Date Duration Filter */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1 flex items-center gap-1.5">
-                      <Calendar className="w-3 h-3 text-slate-400" />
-                      Refund Form Submitted From (Start Date)
-                    </label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full h-12 px-3.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                    />
-                  </div>
+                <div className="space-y-1.5 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1 flex items-center gap-1.5">
+                        <Calendar className="w-3 h-3 text-slate-400" />
+                        Refund Form Submitted From (Start Date - IST)
+                      </label>
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full h-12 px-3.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      />
+                    </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1 flex items-center gap-1.5">
-                      <Calendar className="w-3 h-3 text-slate-400" />
-                      Refund Form Submitted To (End Date)
-                    </label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full h-12 px-3.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                    />
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1 flex items-center gap-1.5">
+                        <Calendar className="w-3 h-3 text-slate-400" />
+                        Refund Form Submitted To (End Date - IST)
+                      </label>
+                      <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="w-full h-12 px-3.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                      />
+                    </div>
                   </div>
+                  <p className="text-[10px] text-slate-400 font-medium ml-1 flex items-center gap-1">
+                    <span>• Filters strictly by Refund Form submission timestamp in Indian Standard Time (IST, UTC+5:30).</span>
+                  </p>
                 </div>
               </div>
 

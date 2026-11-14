@@ -168,7 +168,6 @@ export async function POST(req: Request) {
           ifscCode: explicitIfsc || user.paymentDetails?.ifscCode,
           bankName: explicitBank || user.paymentDetails?.bankName,
           accountHolderName: explicitHolder || user.paymentDetails?.accountHolder,
-          ...(explicitUpi && { submittedAt: new Date() }),
           expectedPayout: dealType === 'Empty Box' ? ((parsedAmount || 0) + (Number(lessAmount) || 0)) : ((parsedAmount || 0) - (Number(lessAmount) || 0))
         },
         userRemarks: dealDoc.userRemarks || "",

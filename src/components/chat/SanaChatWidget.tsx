@@ -606,7 +606,7 @@ export default function SanaChatWidget() {
                                       </p>
                                       <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-500 pt-1">
                                         <div>
-                                          <span className="block text-slate-400">Form Submitted:</span>
+                                          <span className="block text-slate-400">Refund Form:</span>
                                           <span className="font-bold text-slate-700 dark:text-slate-300">
                                             {card.data.formSubmittedAt}
                                           </span>

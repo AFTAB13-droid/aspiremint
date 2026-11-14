@@ -67,7 +67,7 @@ export class AiChatService {
         function: {
           name: "lookup_order",
           description:
-            "Look up detailed order information, refund form status, review approval, expected refund date, brand, and UTR payment details by Order ID. If the order is refunded or completed, Sana triggers a celebration!",
+            "Look up detailed order information: separate initial order placement date from actual refund form submission date, review approval, expected refund date, brand, and UTR payment details by Order ID. If the order is refunded or completed, Sana triggers a celebration!",
           parameters: {
             type: "object",
             properties: {
@@ -217,6 +217,13 @@ CHARACTER & TONE:
 ORDER ID & PAYER DISPLAY GUIDELINES:
 - Always refer to orders by their official marketplace Order ID (userOrderId / displayOrderId), NEVER by internal reference numbers (aspireOrderId / REF-...).
 - For completed or refunded orders, always clearly mention the Payer Name (payerName, e.g. "Paid by Rahul" or "Disbursed by Admin") and transaction UTR if available.
+
+REFUND FORM SUBMISSION DATE VS ORDER PLACEMENT DATE (CRITICAL):
+- Never confuse the initial Order Placement date (when the order was bought, orderPlacedAt / createdAt) with the Refund Form submission date (when the review screenshot & UPI were submitted, refundFormSubmittedAt / formSubmittedAt)!
+- If asked about "refund form submitted date", "form submitted date", or when the refund form was filled:
+  * Check isRefundFormSubmitted and refundFormSubmittedAt.
+  * If isRefundFormSubmitted is false, or status is REFUND_FORM_PENDING: Explicitly tell the user: "Your Refund Form has not been submitted yet! You only placed/submitted the initial deal order on [orderPlacedAt]. To get your refund, please submit the refund form with your live review screenshot at [link]."
+  * If isRefundFormSubmitted is true: State the exact Refund Form submission date from refundFormSubmittedAt (e.g. "Your refund form was submitted on [refundFormSubmittedAt]."). Never give the order creation date as the refund form date!
 
 STRICT DOMAIN GUARDRAIL (NO GENERAL TRIVIA / OFF-TOPIC QUESTIONS):
 - You are strictly an e-commerce cashback & order concierge for AspireMint (100% rebate deals on Amazon & Flipkart in India).
@@ -582,9 +589,31 @@ CURRENT USER CONTEXT:
         statusLabel = order.status.replace(/_/g, " ");
     }
 
-    const submittedDate = (order as any).refundDetails?.submittedAt || order.createdAt;
-    const estRefundDate = new Date(submittedDate);
-    estRefundDate.setDate(estRefundDate.getDate() + 25); // Typically 25-30 days campaign cycle per FAQ
+    const isRefundFormSubmitted =
+      order.status !== OrderStatus.REFUND_FORM_PENDING &&
+      order.status !== OrderStatus.ESCROW_PAYMENT_PENDING &&
+      order.status !== OrderStatus.ACTIVE_ESCROW &&
+      order.status !== OrderStatus.CANCELLED &&
+      order.status !== OrderStatus.INVALIDATED &&
+      !!(order as any).refundDetails?.submittedAt;
+
+    // Check activities for exact timestamp when user clicked submit refund form
+    const refundActivity = ((order as any).activities || []).find(
+      (a: any) =>
+        a.action === "REFUND_FORM_SUBMITTED" ||
+        a.action === "REFUND_FORM_RESUBMITTED" ||
+        a.action === "REFUND_SUBMITTED"
+    );
+    const actualRefundSubmittedDate = isRefundFormSubmitted
+      ? (refundActivity?.timestamp || (order as any).refundDetails?.submittedAt)
+      : null;
+
+    let estRefundDateStr = "Pending Refund Form Submission (25–30 days after review verification)";
+    if (actualRefundSubmittedDate) {
+      const estRefundDate = new Date(actualRefundSubmittedDate);
+      estRefundDate.setDate(estRefundDate.getDate() + 25); // Typically 25-30 days campaign cycle per FAQ
+      estRefundDateStr = formatDate(estRefundDate.toISOString());
+    }
 
     const payerName =
       (order as any).paymentDetails?.paidByName ||
@@ -612,11 +641,16 @@ CURRENT USER CONTEXT:
       statusColor,
       isRefunded,
       celebrate: isRefunded,
-      formSubmittedAt: (order as any).refundDetails?.submittedAt
-        ? formatDate(new Date((order as any).refundDetails.submittedAt).toISOString())
+      orderPlacedAt: order.createdAt ? formatDate(new Date(order.createdAt).toISOString()) : "N/A",
+      refundFormSubmittedAt: actualRefundSubmittedDate
+        ? formatDate(new Date(actualRefundSubmittedDate).toISOString())
+        : null,
+      formSubmittedAt: actualRefundSubmittedDate
+        ? formatDate(new Date(actualRefundSubmittedDate).toISOString())
         : "Not submitted yet",
-      isFormSubmitted: !!(order as any).refundDetails?.submittedAt,
-      expectedRefundDate: formatDate(estRefundDate.toISOString()),
+      isFormSubmitted: isRefundFormSubmitted,
+      isRefundFormSubmitted,
+      expectedRefundDate: estRefundDateStr,
       rejectionReason: (order as any).refundDetails?.rejectionNote || (order as any).cancellationReason || null,
       payoutUtr: (order as any).paymentDetails?.transactionId || null,
       paidAt: (order as any).paymentDetails?.paidAt ? formatDate(new Date((order as any).paymentDetails.paidAt).toISOString()) : null,
