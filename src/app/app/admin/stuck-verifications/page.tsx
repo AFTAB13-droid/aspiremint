@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,26 +11,21 @@ import {
   Coins,
   Users,
   Search,
-  Filter,
   RefreshCw,
   FileSpreadsheet,
   CheckCircle2,
   XCircle,
-  UserCheck,
   ExternalLink,
   MessageCircle,
-  ArrowUpDown,
-  ShieldAlert,
-  ChevronRight,
-  Eye,
   AlertCircle,
   ArrowLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 export default function StuckVerificationsPage() {
   const { data: session } = useSession();
-  const role = (session?.user as any)?.role || "USER";
 
   const [orders, setOrders] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
@@ -43,14 +38,16 @@ export default function StuckVerificationsPage() {
   const [selectedMediator, setSelectedMediator] = useState("ALL");
   const [selectedMarketplace, setSelectedMarketplace] = useState("ALL");
   const [sortBy, setSortBy] = useState("oldest_stuck");
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ page: 1, limit: 15, totalCount: 0, totalPages: 1 });
 
-  // Bulk Selection & Modals
+  // Pagination (Matching User Directory)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Bulk Selection & Reject Modal (Reassign Removed)
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
-  const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
-  const [targetMediatorId, setTargetMediatorId] = useState("");
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [singleActionOrderId, setSingleActionOrderId] = useState<string | null>(null);
@@ -59,8 +56,8 @@ export default function StuckVerificationsPage() {
     setLoading(true);
     try {
       const params = new URLSearchParams({
-        page: page.toString(),
-        limit: "15",
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString(),
         search,
         daysRange,
         mediatorId: selectedMediator,
@@ -74,7 +71,8 @@ export default function StuckVerificationsPage() {
       if (json.success) {
         setOrders(json.orders);
         setStats(json.stats);
-        setPagination(json.pagination);
+        setTotalPages(json.pagination.totalPages || 1);
+        setTotalCount(json.pagination.totalCount || 0);
         if (json.activeMediators) {
           setActiveMediators(json.activeMediators);
         }
@@ -90,7 +88,7 @@ export default function StuckVerificationsPage() {
 
   useEffect(() => {
     fetchStuckOrders();
-  }, [page, search, daysRange, selectedMediator, selectedMarketplace, sortBy]);
+  }, [currentPage, itemsPerPage, search, daysRange, selectedMediator, selectedMarketplace, sortBy]);
 
   // Handle Multi-select
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,16 +103,11 @@ export default function StuckVerificationsPage() {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
   };
 
-  // Perform Resolution Actions
-  const handleExecuteAction = async (action: "APPROVE" | "REASSIGN" | "REJECT") => {
+  // Perform Actions: APPROVE or REJECT (Reassign Removed)
+  const handleExecuteAction = async (action: "APPROVE" | "REJECT") => {
     const targetIds = singleActionOrderId ? [singleActionOrderId] : selectedIds;
     if (targetIds.length === 0) {
       toast.error("Please select at least one order.");
-      return;
-    }
-
-    if (action === "REASSIGN" && !targetMediatorId) {
-      toast.error("Please select a mediator to reassign to.");
       return;
     }
 
@@ -126,7 +119,6 @@ export default function StuckVerificationsPage() {
         body: JSON.stringify({
           action,
           orderIds: targetIds,
-          targetMediatorId: action === "REASSIGN" ? targetMediatorId : undefined,
           rejectionReason: action === "REJECT" ? rejectionReason : undefined,
         }),
       });
@@ -136,10 +128,8 @@ export default function StuckVerificationsPage() {
         toast.success(json.message || `Action executed successfully!`);
         setSelectedIds([]);
         setSingleActionOrderId(null);
-        setIsReassignModalOpen(false);
         setIsRejectModalOpen(false);
         setRejectionReason("");
-        setTargetMediatorId("");
         fetchStuckOrders();
       } else {
         toast.error(json.message || "Failed to execute action.");
@@ -208,9 +198,9 @@ export default function StuckVerificationsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8 pb-24 px-4 md:px-0 pt-6 max-w-7xl mx-auto">
-      {/* 1. TOP HEADER & BREADCRUMBS */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+    <div className="w-full flex flex-col gap-8 md:gap-10 pb-20 px-4 md:px-0 pt-6">
+      {/* 1. TOP HEADER & BREADCRUMBS (FULL WIDTH) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6 w-full">
         <div>
           <div className="flex items-center gap-3">
             <Link
@@ -227,7 +217,7 @@ export default function StuckVerificationsPage() {
                 Delayed Verifications Hub
               </h1>
             </div>
-            <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
               30+ Days SLA Alert
             </span>
           </div>
@@ -246,7 +236,7 @@ export default function StuckVerificationsPage() {
           </button>
           <button
             onClick={handleExportCsv}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider shadow-md shadow-emerald-600/20 transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider shadow-md shadow-emerald-600/20 transition-all"
           >
             <FileSpreadsheet className="w-4 h-4" />
             <span>Export CSV</span>
@@ -254,12 +244,12 @@ export default function StuckVerificationsPage() {
         </div>
       </div>
 
-      {/* 2. EXECUTIVE SUMMARY METRICS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 2. EXECUTIVE SUMMARY METRICS (FULL WIDTH) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 w-full">
         {/* Card 1: Total Stuck */}
-        <div className="bg-gradient-to-br from-rose-500 to-red-600 rounded-3xl p-6 text-white shadow-xl shadow-rose-500/20 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-6 opacity-20">
-            <Clock className="w-20 h-20 -mt-6 -mr-6" />
+        <div className="bg-gradient-to-br from-rose-500 to-red-600 rounded-[32px] p-6 md:p-8 text-white shadow-xl shadow-rose-500/20 relative overflow-hidden border border-white/20">
+          <div className="absolute top-0 right-0 p-8 opacity-20">
+            <Clock className="w-24 h-24 -mt-8 -mr-8" />
           </div>
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-100">
             Delayed Orders (&gt;30d)
@@ -270,7 +260,7 @@ export default function StuckVerificationsPage() {
             </h3>
             <span className="text-xs font-bold text-rose-200">Orders</span>
           </div>
-          <div className="mt-3 flex items-center gap-1.5 text-[10px] font-bold text-rose-100">
+          <div className="mt-3 flex items-center gap-2 text-[10px] font-bold text-rose-100">
             <span>Critical (60d+): {stats?.tierCriticalCount || 0}</span>
             <span>•</span>
             <span>High (45d+): {stats?.tierHighCount || 0}</span>
@@ -278,9 +268,9 @@ export default function StuckVerificationsPage() {
         </div>
 
         {/* Card 2: Total Liability */}
-        <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl p-6 text-white shadow-xl shadow-amber-500/20 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-6 opacity-20">
-            <Coins className="w-20 h-20 -mt-6 -mr-6" />
+        <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-[32px] p-6 md:p-8 text-white shadow-xl shadow-amber-500/20 relative overflow-hidden border border-white/20">
+          <div className="absolute top-0 right-0 p-8 opacity-20">
+            <Coins className="w-24 h-24 -mt-8 -mr-8" />
           </div>
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-100">
             Pending Escrow Liability
@@ -297,9 +287,9 @@ export default function StuckVerificationsPage() {
         </div>
 
         {/* Card 3: Oldest Delayed */}
-        <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-3xl p-6 text-white shadow-xl shadow-purple-600/20 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-6 opacity-20">
-            <AlertCircle className="w-20 h-20 -mt-6 -mr-6" />
+        <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-[32px] p-6 md:p-8 text-white shadow-xl shadow-purple-600/20 relative overflow-hidden border border-white/20">
+          <div className="absolute top-0 right-0 p-8 opacity-20">
+            <AlertCircle className="w-24 h-24 -mt-8 -mr-8" />
           </div>
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-200">
             Longest In Verification
@@ -316,9 +306,9 @@ export default function StuckVerificationsPage() {
         </div>
 
         {/* Card 4: Mediator Bottleneck */}
-        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-6 text-white shadow-xl shadow-slate-900/20 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-6 opacity-20">
-            <Users className="w-20 h-20 -mt-6 -mr-6" />
+        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-[32px] p-6 md:p-8 text-white shadow-xl shadow-slate-900/20 relative overflow-hidden border border-white/20">
+          <div className="absolute top-0 right-0 p-8 opacity-20">
+            <Users className="w-24 h-24 -mt-8 -mr-8" />
           </div>
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
             Top Delaying Mediator
@@ -339,9 +329,9 @@ export default function StuckVerificationsPage() {
         </div>
       </div>
 
-      {/* 3. MEDIATOR BOTTLENECK INSPECTION CARD (Quick Nudge Row) */}
+      {/* 3. MEDIATOR BOTTLENECK INSPECTION CARD (FULL WIDTH) */}
       {stats?.mediatorBreakdown && stats.mediatorBreakdown.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm">
+        <div className="bg-white dark:bg-[#0E1526] border border-slate-100 dark:border-slate-800 rounded-[32px] p-6 shadow-sm w-full">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-indigo-500" />
@@ -365,7 +355,7 @@ export default function StuckVerificationsPage() {
               return (
                 <div
                   key={med.id}
-                  className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between"
+                  className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex items-center justify-between"
                 >
                   <div className="overflow-hidden">
                     <p className="text-xs font-black text-slate-900 dark:text-white truncate">{med.name}</p>
@@ -396,9 +386,9 @@ export default function StuckVerificationsPage() {
         </div>
       )}
 
-      {/* 4. FILTER & SEARCH CONTROLS */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
-        <div className="flex flex-col md:flex-row items-center gap-3">
+      {/* 4. FILTER BAR (FULL WIDTH) */}
+      <div className="bg-white dark:bg-[#0E1526] rounded-[32px] p-5 shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-4 w-full">
+        <div className="flex flex-col md:flex-row items-center gap-3 w-full">
           {/* Search Input */}
           <div className="relative w-full md:flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -408,21 +398,21 @@ export default function StuckVerificationsPage() {
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
-                setPage(1);
+                setCurrentPage(1);
               }}
-              className="w-full pl-11 pr-4 h-11 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-rose-500/20"
+              className="w-full pl-12 pr-4 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-rose-500/20 transition-all placeholder:text-slate-400"
             />
           </div>
 
           {/* Days Range Filter */}
-          <div className="w-full md:w-52">
+          <div className="w-full md:w-56">
             <select
               value={daysRange}
               onChange={(e) => {
                 setDaysRange(e.target.value);
-                setPage(1);
+                setCurrentPage(1);
               }}
-              className="w-full h-11 px-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white outline-none"
+              className="w-full h-12 px-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white outline-none"
             >
               <option value="ALL">All 30+ Days (All Delayed)</option>
               <option value="30_45">🟡 30 - 44 Days (Warning)</option>
@@ -432,14 +422,14 @@ export default function StuckVerificationsPage() {
           </div>
 
           {/* Mediator Filter */}
-          <div className="w-full md:w-48">
+          <div className="w-full md:w-52">
             <select
               value={selectedMediator}
               onChange={(e) => {
                 setSelectedMediator(e.target.value);
-                setPage(1);
+                setCurrentPage(1);
               }}
-              className="w-full h-11 px-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white outline-none"
+              className="w-full h-12 px-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white outline-none"
             >
               <option value="ALL">All Mediators</option>
               {activeMediators.map((m) => (
@@ -451,14 +441,14 @@ export default function StuckVerificationsPage() {
           </div>
 
           {/* Sort By */}
-          <div className="w-full md:w-48">
+          <div className="w-full md:w-52">
             <select
               value={sortBy}
               onChange={(e) => {
                 setSortBy(e.target.value);
-                setPage(1);
+                setCurrentPage(1);
               }}
-              className="w-full h-11 px-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white outline-none"
+              className="w-full h-12 px-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white outline-none"
             >
               <option value="oldest_stuck">Longest Delayed First</option>
               <option value="newest_stuck">Shortest Delayed First</option>
@@ -468,27 +458,27 @@ export default function StuckVerificationsPage() {
           </div>
         </div>
 
-        {/* BULK ACTIONS TOOLBAR (Appears when items are selected) */}
+        {/* BULK ACTIONS TOOLBAR (Approve & Reject Only - Reassign Removed) */}
         <AnimatePresence>
           {selectedIds.length > 0 && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3"
+              className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3"
             >
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1 rounded-full bg-rose-500/10 text-rose-500 border border-rose-500/20 text-xs font-black">
                   {selectedIds.length} Selected
                 </span>
-                <span className="text-xs text-slate-500">Apply action to selected orders:</span>
+                <span className="text-xs text-slate-500">Apply resolution to selected orders:</span>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleExecuteAction("APPROVE")}
                   disabled={actionLoading}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Bulk Approve</span>
@@ -497,22 +487,10 @@ export default function StuckVerificationsPage() {
                 <button
                   onClick={() => {
                     setSingleActionOrderId(null);
-                    setIsReassignModalOpen(true);
-                  }}
-                  disabled={actionLoading}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm"
-                >
-                  <UserCheck className="w-3.5 h-3.5" />
-                  <span>Bulk Reassign</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setSingleActionOrderId(null);
                     setIsRejectModalOpen(true);
                   }}
                   disabled={actionLoading}
-                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm"
+                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
                 >
                   <XCircle className="w-3.5 h-3.5" />
                   <span>Bulk Reject</span>
@@ -520,7 +498,7 @@ export default function StuckVerificationsPage() {
 
                 <button
                   onClick={() => setSelectedIds([])}
-                  className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold"
+                  className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold"
                 >
                   Deselect All
                 </button>
@@ -530,13 +508,13 @@ export default function StuckVerificationsPage() {
         </AnimatePresence>
       </div>
 
-      {/* 5. STUCK ORDERS TABLE (DESKTOP) */}
-      <div className="hidden md:block bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
-        <div className="overflow-x-auto">
+      {/* 5. STUCK ORDERS TABLE (DESKTOP - FULL WIDTH CARD) */}
+      <div className="hidden md:block rounded-[40px] border border-slate-100 dark:border-slate-800/80 bg-white dark:bg-[#0E1526] shadow-xl shadow-slate-200/40 relative overflow-hidden w-full">
+        <div className="max-h-[640px] overflow-y-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                <th className="px-6 py-4 w-12 text-center">
+            <thead className="sticky top-0 z-20">
+              <tr className="bg-slate-50 dark:bg-[#0B101D] border-b border-slate-100 dark:border-slate-800/80 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <th className="px-6 py-5 w-12 text-center">
                   <input
                     type="checkbox"
                     checked={orders.length > 0 && selectedIds.length === orders.length}
@@ -544,27 +522,27 @@ export default function StuckVerificationsPage() {
                     className="rounded border-slate-300 text-rose-600 focus:ring-rose-500"
                   />
                 </th>
-                <th className="px-6 py-4">Order &amp; Brand</th>
-                <th className="px-6 py-4">Buyer Identity</th>
-                <th className="px-6 py-4">Refund Form Filled</th>
-                <th className="px-6 py-4 text-center">Delay SLA</th>
-                <th className="px-6 py-4">Assigned Mediator</th>
-                <th className="px-6 py-4 text-right">Amount</th>
-                <th className="px-6 py-4 text-right">Resolution Actions</th>
+                <th className="px-6 py-5">Order &amp; Brand</th>
+                <th className="px-6 py-5">Buyer Identity</th>
+                <th className="px-6 py-5">Refund Form Filled</th>
+                <th className="px-6 py-5 text-center">Delay SLA</th>
+                <th className="px-6 py-5">Assigned Mediator</th>
+                <th className="px-6 py-5 text-right">Amount</th>
+                <th className="px-6 py-5 text-right">Resolution Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+            <tbody className="divide-y divide-slate-50 dark:divide-slate-800/60">
               {loading ? (
                 [...Array(6)].map((_, i) => (
                   <tr key={i}>
                     <td colSpan={8} className="p-4">
-                      <Skeleton className="h-14 w-full rounded-xl" />
+                      <Skeleton className="h-14 w-full rounded-2xl" />
                     </td>
                   </tr>
                 ))
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-16 text-center">
+                  <td colSpan={8} className="py-20 text-center">
                     <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
                     <h3 className="text-base font-black text-slate-900 dark:text-white">
                       Zero Delayed Verifications!
@@ -586,11 +564,11 @@ export default function StuckVerificationsPage() {
                   return (
                     <tr
                       key={ord._id}
-                      className={`hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors ${
+                      className={`hover:bg-slate-50/50 dark:hover:bg-[#172138] transition-colors ${
                         isSelected ? "bg-rose-50/40 dark:bg-rose-950/20" : ""
                       }`}
                     >
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-6 py-5 text-center">
                         <input
                           type="checkbox"
                           checked={isSelected}
@@ -600,7 +578,7 @@ export default function StuckVerificationsPage() {
                       </td>
 
                       {/* Order & Brand */}
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <div className="flex flex-col">
                           <div className="flex items-center gap-1.5">
                             <span className="font-mono text-xs font-black text-slate-900 dark:text-white">
@@ -620,14 +598,14 @@ export default function StuckVerificationsPage() {
                       </td>
 
                       {/* Buyer Identity */}
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <div className="flex flex-col">
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs font-black text-slate-900 dark:text-white">
                               {ord.buyer?.name || "Shopper"}
                             </span>
                             {ord.buyer?.aspireMintId && (
-                              <span className="text-[9px] font-mono font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.2 rounded">
+                              <span className="text-[9px] font-mono font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded">
                                 {ord.buyer.aspireMintId}
                               </span>
                             )}
@@ -654,7 +632,7 @@ export default function StuckVerificationsPage() {
                       </td>
 
                       {/* Refund Form Submission Date */}
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <div className="flex flex-col">
                           <span className="text-xs font-bold text-slate-900 dark:text-white font-mono">
                             {new Date(ord.refundFormSubmittedAt).toLocaleDateString("en-IN", {
@@ -670,7 +648,7 @@ export default function StuckVerificationsPage() {
                       </td>
 
                       {/* Delay SLA Badge */}
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-6 py-5 text-center">
                         <div className="inline-flex flex-col items-center">
                           <span
                             className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border flex items-center gap-1 ${
@@ -695,7 +673,7 @@ export default function StuckVerificationsPage() {
                       </td>
 
                       {/* Assigned Mediator */}
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-5">
                         <div className="flex flex-col">
                           <span className="text-xs font-black text-slate-900 dark:text-white truncate max-w-[140px]">
                             {ord.mediator?.systemDisplayName || ord.mediator?.name || "Unassigned"}
@@ -709,14 +687,14 @@ export default function StuckVerificationsPage() {
                       </td>
 
                       {/* Refund Amount */}
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-5 text-right">
                         <span className="text-sm font-black text-slate-900 dark:text-white font-mono">
                           ₹{ord.calculatedPayout}
                         </span>
                       </td>
 
-                      {/* Action Buttons */}
-                      <td className="px-6 py-4 text-right">
+                      {/* Action Buttons (Approve & Reject Only - Reassign Removed) */}
+                      <td className="px-6 py-5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           {/* Quick Approve */}
                           <button
@@ -724,22 +702,10 @@ export default function StuckVerificationsPage() {
                               setSingleActionOrderId(ord._id);
                               handleExecuteAction("APPROVE");
                             }}
-                            className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-600 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 dark:text-emerald-400 transition-all shadow-sm"
+                            className="p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-600 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 dark:text-emerald-400 transition-all shadow-sm active:scale-95"
                             title="Direct Approve Verification"
                           >
                             <CheckCircle2 className="w-4 h-4" />
-                          </button>
-
-                          {/* Quick Reassign */}
-                          <button
-                            onClick={() => {
-                              setSingleActionOrderId(ord._id);
-                              setIsReassignModalOpen(true);
-                            }}
-                            className="p-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 dark:text-indigo-400 transition-all shadow-sm"
-                            title="Reassign to another Mediator"
-                          >
-                            <UserCheck className="w-4 h-4" />
                           </button>
 
                           {/* Quick Reject */}
@@ -748,7 +714,7 @@ export default function StuckVerificationsPage() {
                               setSingleActionOrderId(ord._id);
                               setIsRejectModalOpen(true);
                             }}
-                            className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 dark:text-rose-400 transition-all shadow-sm"
+                            className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 dark:text-rose-400 transition-all shadow-sm active:scale-95"
                             title="Reject Verification"
                           >
                             <XCircle className="w-4 h-4" />
@@ -757,7 +723,7 @@ export default function StuckVerificationsPage() {
                           {/* View Full Order Details */}
                           <Link
                             href={`/app/orders/${ord._id}`}
-                            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all shadow-sm"
+                            className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all shadow-sm"
                             title="View Full Order Details"
                           >
                             <ExternalLink className="w-4 h-4" />
@@ -773,12 +739,12 @@ export default function StuckVerificationsPage() {
         </div>
       </div>
 
-      {/* 6. MOBILE CARDS VIEW */}
-      <div className="md:hidden space-y-4">
+      {/* 6. MOBILE CARDS VIEW (FULL WIDTH) */}
+      <div className="md:hidden space-y-4 w-full">
         {loading ? (
-          [...Array(4)].map((_, i) => <Skeleton key={i} className="h-44 w-full rounded-3xl" />)
+          [...Array(4)].map((_, i) => <Skeleton key={i} className="h-44 w-full rounded-[32px]" />)
         ) : orders.length === 0 ? (
-          <div className="py-12 text-center bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800">
+          <div className="py-12 text-center bg-white dark:bg-[#0E1526] rounded-[32px] p-6 border border-slate-100 dark:border-slate-800">
             <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-2" />
             <h3 className="text-base font-black">Zero Delayed Verifications</h3>
             <p className="text-xs text-slate-500 mt-1">All refund forms are within the 30-day window.</p>
@@ -787,7 +753,7 @@ export default function StuckVerificationsPage() {
           orders.map((ord) => (
             <div
               key={ord._id}
-              className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-lg space-y-3 relative overflow-hidden"
+              className="bg-white dark:bg-[#0E1526] rounded-[32px] p-6 border border-slate-100 dark:border-slate-800 shadow-lg space-y-3 relative overflow-hidden"
             >
               {/* Top row */}
               <div className="flex items-center justify-between">
@@ -807,7 +773,7 @@ export default function StuckVerificationsPage() {
               </div>
 
               {/* Details grid */}
-              <div className="grid grid-cols-2 gap-2 text-[11px] pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="grid grid-cols-2 gap-2 text-[11px] pt-2 border-t border-slate-50 dark:border-slate-800">
                 <div>
                   <span className="text-slate-400 text-[10px] uppercase font-bold">Buyer</span>
                   <p className="font-black text-slate-900 dark:text-white truncate">{ord.buyer?.name}</p>
@@ -831,29 +797,29 @@ export default function StuckVerificationsPage() {
                 </div>
               </div>
 
-              {/* Mobile Actions */}
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              {/* Mobile Actions: Approve & Reject Only */}
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-50 dark:border-slate-800">
                 <button
                   onClick={() => {
                     setSingleActionOrderId(ord._id);
-                    handleExecuteAction("APPROVE");
-                  }}
-                  className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase text-center shadow-sm"
+                    handleExecuteAction("APPROVE")}
+                  }
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase text-center shadow-sm"
                 >
                   Approve
                 </button>
                 <button
                   onClick={() => {
                     setSingleActionOrderId(ord._id);
-                    setIsReassignModalOpen(true);
+                    setIsRejectModalOpen(true);
                   }}
-                  className="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase text-center shadow-sm"
+                  className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase text-center shadow-sm"
                 >
-                  Reassign
+                  Reject
                 </button>
                 <Link
                   href={`/app/orders/${ord._id}`}
-                  className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                  className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                 >
                   <ExternalLink className="w-4 h-4" />
                 </Link>
@@ -863,99 +829,74 @@ export default function StuckVerificationsPage() {
         )}
       </div>
 
-      {/* 7. PAGINATION */}
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
-          <span className="text-xs font-bold text-slate-500">
-            Page {pagination.page} of {pagination.totalPages} ({pagination.totalCount} total orders)
-          </span>
-          <div className="flex items-center gap-2">
+      {/* 7. PAGINATION (EXACT SAME AS USER DIRECTORY / APP USERS) */}
+      {orders.length > 0 && (
+        <div className="flex flex-col md:flex-row items-center justify-center gap-6 mt-4 md:mt-8 pb-10 w-full">
+          {/* Show Limit Dropdown */}
+          <div className="flex items-center gap-4 px-4 py-2 bg-white dark:bg-[#0E1526] rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm order-2 md:order-1 h-[42px] overflow-visible z-20">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
+              Show Limit
+            </span>
+            <div className="w-[110px] scale-[0.85] origin-left">
+              <CustomDropdown
+                options={["8 rows", "15 rows", "25 rows", "50 rows", "100 rows"]}
+                value={`${itemsPerPage} rows`}
+                onChange={(val) => {
+                  setItemsPerPage(parseInt(val));
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Numbered Page Buttons with Arrows */}
+          <div className="flex items-center gap-4 order-1 md:order-2">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 disabled:opacity-40 text-xs font-bold text-slate-700 dark:text-slate-200"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+              className="h-10 w-10 bg-white dark:bg-[#0E1526] border border-slate-100 dark:border-slate-800 rounded-xl flex items-center justify-center text-slate-400 disabled:opacity-30 transition-all shadow-sm"
             >
-              Previous
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
+
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50/50 dark:bg-slate-800/40 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-x-auto max-w-[200px] md:max-w-none custom-scrollbar pb-1 md:pb-0">
+              {(() => {
+                const rangeSize = 3;
+                let start = Math.max(1, currentPage - 1);
+                let end = Math.min(totalPages, start + rangeSize - 1);
+                if (end - start + 1 < rangeSize) {
+                  start = Math.max(1, end - rangeSize + 1);
+                }
+                return Array.from({ length: Math.max(0, end - start + 1) }, (_, i) => start + i);
+              })().map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setCurrentPage(p)}
+                  className={`w-8 h-8 shrink-0 rounded-lg text-[10px] font-black transition-all ${
+                    currentPage === p
+                      ? "bg-indigo-600 text-white shadow-md"
+                      : "text-slate-400 hover:bg-white dark:hover:bg-slate-700"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
             <button
-              onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-              disabled={page === pagination.totalPages}
-              className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 disabled:opacity-40 text-xs font-bold text-slate-700 dark:text-slate-200"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+              className="h-10 w-10 bg-white dark:bg-[#0E1526] border border-slate-100 dark:border-slate-800 rounded-xl flex items-center justify-center text-slate-400 disabled:opacity-30 transition-all shadow-sm"
             >
-              Next
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
             </button>
           </div>
         </div>
       )}
-
-      {/* MODAL: REASSIGN MEDIATOR */}
-      <AnimatePresence>
-        {isReassignModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <UserCheck className="w-5 h-5 text-indigo-600" />
-                  <h3 className="text-base font-black">Reassign Mediator</h3>
-                </div>
-                <button
-                  onClick={() => setIsReassignModalOpen(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <p className="text-xs text-slate-500">
-                Select an active mediator to take over verification for{" "}
-                <span className="font-bold text-slate-900 dark:text-white">
-                  {singleActionOrderId ? "1 order" : `${selectedIds.length} orders`}
-                </span>
-                .
-              </p>
-
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                  Select Target Mediator
-                </label>
-                <select
-                  value={targetMediatorId}
-                  onChange={(e) => setTargetMediatorId(e.target.value)}
-                  className="w-full mt-1.5 h-12 px-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-white outline-none"
-                >
-                  <option value="">-- Choose Mediator --</option>
-                  {activeMediators.map((m) => (
-                    <option key={m._id} value={m._id}>
-                      {m.systemDisplayName || m.name} ({m.mobile || "No Mobile"})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2 pt-2">
-                <button
-                  onClick={() => setIsReassignModalOpen(false)}
-                  className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleExecuteAction("REASSIGN")}
-                  disabled={actionLoading || !targetMediatorId}
-                  className="flex-1 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black uppercase tracking-wider disabled:opacity-50"
-                >
-                  {actionLoading ? "Reassigning..." : "Confirm Reassign"}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* MODAL: REJECT VERIFICATION */}
       <AnimatePresence>
@@ -965,7 +906,7 @@ export default function StuckVerificationsPage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4"
+              className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[32px] p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
