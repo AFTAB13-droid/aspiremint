@@ -17,6 +17,7 @@ interface NavLink {
   href: string;
   icon: React.ReactNode;
   roles: ("USER" | "MEDIATOR" | "ADMIN" | "SUBADMIN")[];
+  badge?: string;
 }
 
 const navLinks: NavLink[] = [
@@ -147,6 +148,17 @@ const navLinks: NavLink[] = [
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    )
+  },
+  {
+    name: "Delayed Verifications",
+    href: "/app/admin/stuck-verifications",
+    badge: "30d+",
+    roles: ["ADMIN", "SUBADMIN"],
+    icon: (
+      <svg className="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
       </svg>
     )
   },
@@ -365,7 +377,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const isAdm = userRole === "ADMIN";
 
   // Group links for mobile "App-like" and desktop expanded sections
-  const knownSection1 = ["Dashboard", "Orders", "My Orders", "Active Deals", "My Refunds", "Review Finder", "My Activity", "Refunds", "Wallet", "My Wallet", "Passbook", "Refer and Earn", "Support", "Support Hub", "Reference Center"];
+  const knownSection1 = ["Dashboard", "Orders", "My Orders", "Active Deals", "My Refunds", "Review Finder", "My Activity", "Refunds", "Delayed Verifications", "Wallet", "My Wallet", "Passbook", "Refer and Earn", "Support", "Support Hub", "Reference Center"];
   const knownSection2 = ["User Directory", "Mediators Hub", "Live Analytics", "Leaderboard", "Referrals & Rewards", "WhatsApp Gateway", "Resolution Hub", "SOP Guidelines"];
 
   const section1Links = filteredLinks.filter(l => knownSection1.includes(l.name));
@@ -500,6 +512,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <span className={`text-base font-bold tracking-tight ${isActive ? 'text-blue-700 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
                         {link.name}
                       </span>
+                      {link.badge && !isLocked && (
+                        <span className="ml-auto px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-500/15 text-rose-500 border border-rose-500/30">
+                          {link.badge}
+                        </span>
+                      )}
                       {isLocked && (
                         <div className="ml-auto flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
                           <Lock className="w-3.5 h-3.5" />
@@ -806,6 +823,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                              <span className={`text-[15px] font-bold tracking-wide ${isActive ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white"}`}>
                                {link.name}
                              </span>
+                             {link.badge && !isLocked && (
+                               <span className="ml-auto px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-500/15 text-rose-500 border border-rose-500/30">
+                                 {link.badge}
+                               </span>
+                             )}
                              {isLocked && (
                                <div className="ml-auto flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800/60 px-2 py-0.5 rounded-md border border-slate-200/50 dark:border-slate-800">
                                  <Lock className="w-3 h-3 text-slate-400" />

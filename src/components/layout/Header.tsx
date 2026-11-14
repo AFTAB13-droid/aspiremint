@@ -52,6 +52,7 @@ export const Header: React.FC<HeaderProps> = ({ setMobileOpen, user, isFestiveAc
 
   // Map route to title for native-app feel on mobile
   const getPageTitle = () => {
+    if (pathname.includes("/app/admin/stuck-verifications")) return "Delayed Verifications";
     if (pathname.includes("/app/activedeals")) return "Active Deals";
     if (pathname.includes("/app/orders/new")) return "New Order";
     if (pathname.split("/").length > 4 && pathname.includes("/app/orders/")) return "Order Details";

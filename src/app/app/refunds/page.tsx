@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -11,7 +12,7 @@ import { BulkPaymentModal } from "@/components/admin/BulkPaymentModal";
 import { CsvBulkVerificationModal } from "@/components/admin/CsvBulkVerificationModal";
 import { RefundPayersModal } from "@/components/mediator/RefundPayersModal";
 import { CsvBulkPaymentModal } from "@/components/mediator/CsvBulkPaymentModal";
-import { FileSpreadsheet, Calendar, ChevronRight } from "lucide-react";
+import { FileSpreadsheet, Calendar, ChevronRight, AlertTriangle } from "lucide-react";
 
 function formatOrdinalDate(dateVal?: string | Date) {
   if (!dateVal) return "N/A";
@@ -324,12 +325,49 @@ export default function RefundsPage() {
     return filteredOrders.slice(start, start + itemsPerPage);
   }, [filteredOrders, currentPage, itemsPerPage]);
 
+  const stuckOver30Count = useMemo(() => {
+    if (role !== "ADMIN") return 0;
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return orders.filter((o: any) => {
+      const isVerifying = ["UNDER_VERIFICATION", "REFUND_FORM_SUBMITTED"].includes(o.status);
+      if (!isVerifying) return false;
+      const subTime = new Date(o.refundDetails?.submittedAt || o.updatedAt).getTime();
+      return subTime <= thirtyDaysAgo;
+    }).length;
+  }, [orders, role]);
 
   return (
     <div className="mx-auto w-full pb-24 md:pb-10 px-4 md:px-0">
       
       {/* Navigation Space Management */}
       <div className="pt-4 md:pt-0" />
+
+      {/* SLA Alert Banner for 30+ Days Delayed Verifications */}
+      {role === "ADMIN" && stuckOver30Count > 0 && (
+        <div className="mb-6 p-4 rounded-3xl bg-gradient-to-r from-rose-500/10 via-amber-500/10 to-transparent border border-rose-200 dark:border-rose-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="p-2.5 rounded-2xl bg-rose-500/20 text-rose-600 dark:text-rose-400 shrink-0">
+              <AlertTriangle className="w-5 h-5" />
+            </span>
+            <div>
+              <p className="text-xs font-black text-slate-900 dark:text-white">
+                {stuckOver30Count} Order{stuckOver30Count > 1 ? "s" : ""} Delayed &gt; 30 Days in Under Verification
+              </p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Passed 30 days after refund form submission without mediator approval.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/app/admin/stuck-verifications"
+            className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-black uppercase tracking-wider shrink-0 transition-all shadow-md shadow-rose-600/20 flex items-center justify-center gap-1.5 self-start sm:self-auto"
+          >
+            <span>Resolve Delayed Orders</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      )}
+
       {role === "ADMIN" && (
         <div className="flex flex-col md:flex-row items-center gap-4 mb-8">
            <div className="flex items-center gap-2 p-1.5 bg-white dark:bg-[#0E1526] rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm w-fit">
