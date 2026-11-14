@@ -34,11 +34,25 @@ export async function GET(req: Request) {
       query.role = roleFilter.toUpperCase();
     }
     if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { aspireMintId: { $regex: search, $options: "i" } }
+      const trimmedSearch = search.trim();
+      const cleanedDigits = trimmedSearch.replace(/[^0-9]/g, "");
+
+      const orConditions: any[] = [
+        { name: { $regex: trimmedSearch, $options: "i" } },
+        { email: { $regex: trimmedSearch, $options: "i" } },
+        { aspireMintId: { $regex: trimmedSearch, $options: "i" } },
+        { mobile: { $regex: trimmedSearch, $options: "i" } },
       ];
+
+      // If search contains numbers (e.g. +91 7001235875, spaces, dashes), also match against raw digits
+      if (cleanedDigits.length >= 3) {
+        orConditions.push({ mobile: { $regex: cleanedDigits, $options: "i" } });
+        if (cleanedDigits.length >= 10) {
+          orConditions.push({ mobile: { $regex: cleanedDigits.slice(-10), $options: "i" } });
+        }
+      }
+
+      query.$or = orConditions;
     }
     if (isApproved !== null) {
       if (isApproved === "true") {

@@ -25,6 +25,13 @@ export default function AdminUserDirectory() {
     return `${local.slice(0, 3)}***@${domain}`;
   };
 
+  const maskMobile = (mobile: string) => {
+    if (!mobile) return "N/A";
+    const clean = mobile.trim();
+    if (clean.length < 5) return "****";
+    return `${clean.slice(0, 3)}*****${clean.slice(-2)}`;
+  };
+
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -154,7 +161,7 @@ export default function AdminUserDirectory() {
               <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               <input 
                  type="text" 
-                 placeholder="Search by name or email..." 
+                 placeholder="Search by name, email, mobile, or AspireMint ID..." 
                  value={search}
                  onChange={(e) => {setSearch(e.target.value); setCurrentPage(1);}}
                  className="w-full pl-12 pr-6 h-12 rounded-2xl bg-slate-50 border border-slate-100 outline-none focus:ring-2 focus:bg-white focus:ring-indigo-100 transition-all font-bold text-sm text-slate-900 placeholder:text-slate-400"
@@ -223,8 +230,28 @@ export default function AdminUserDirectory() {
                               />
                            </div>
                            <div>
-                              <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{user.name}</p>
-                              <p className="text-xs font-bold text-slate-400 mt-0.5">{isSubAdmin ? maskEmail(user.email) : user.email}</p>
+                              <div className="flex items-center gap-2">
+                                 <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{user.name}</p>
+                                 {user.aspireMintId && (
+                                    <span className="text-[10px] font-black font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100/80">
+                                       {user.aspireMintId}
+                                    </span>
+                                 )}
+                              </div>
+                              <div className="flex items-center gap-2.5 mt-1 text-xs font-bold text-slate-400">
+                                 <span>{isSubAdmin ? maskEmail(user.email) : user.email}</span>
+                                 {user.mobile && (
+                                    <>
+                                       <span className="text-slate-300">•</span>
+                                       <span className="text-slate-600 font-mono font-bold flex items-center gap-1">
+                                          <svg className="w-3 h-3 text-emerald-600 inline shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                          </svg>
+                                          {isSubAdmin ? maskMobile(user.mobile) : user.mobile}
+                                       </span>
+                                    </>
+                                 )}
+                              </div>
                            </div>
                         </div>
                      </td>
@@ -290,8 +317,23 @@ export default function AdminUserDirectory() {
                         />
                      </div>
                      <div className="overflow-hidden">
-                        <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight truncate leading-tight">{user.name}</h3>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                           <h3 className="text-base font-black text-slate-900 uppercase tracking-tight truncate leading-tight">{user.name}</h3>
+                           {user.aspireMintId && (
+                              <span className="text-[9px] font-black font-mono text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md border border-indigo-100/80 shrink-0">
+                                 {user.aspireMintId}
+                              </span>
+                           )}
+                        </div>
                         <p className="text-[10px] font-bold text-slate-400 mt-1 truncate">{isSubAdmin ? maskEmail(user.email) : user.email}</p>
+                        {user.mobile && (
+                           <p className="text-[10px] font-mono font-bold text-slate-600 mt-0.5 flex items-center gap-1">
+                              <svg className="w-2.5 h-2.5 text-emerald-600 inline shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                              </svg>
+                              {isSubAdmin ? maskMobile(user.mobile) : user.mobile}
+                           </p>
+                        )}
                      </div>
                   </div>
                </div>
